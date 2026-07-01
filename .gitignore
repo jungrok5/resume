@@ -5,3 +5,6 @@ dist-ssr
 .DS_Store
 .vercel
 .vite
+
+# Claude Code: share launch.json, keep personal settings local
+.claude/settings.local.json
