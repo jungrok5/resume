@@ -1,0 +1,135 @@
+import { sections, profile, timeline, stack } from '../data/resume'
+
+function Metric({ metric }) {
+  if (!metric) return null
+  if (metric.pairs) {
+    return (
+      <div className="pairs">
+        {metric.pairs.map((p) => (
+          <div className="pair" key={p.label}>
+            <span className="lbl">{p.label}</span>
+            <span className="vals">
+              <s>{p.from}</s>
+              <em>→</em>
+              <b>{p.to}</b>
+            </span>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  return (
+    <div className="metric">
+      <span className="big">{metric.big}</span>
+      <span className="cap">{metric.cap}</span>
+    </div>
+  )
+}
+
+function Tags({ tags }) {
+  if (!tags?.length) return null
+  return (
+    <div className="tags">
+      {tags.map((t) => (
+        <span className="tag" key={t}>
+          {t}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function Summary() {
+  return (
+    <div className="summary">
+      <div>
+        <h3>학력</h3>
+        <p>{profile.education}</p>
+      </div>
+      <div>
+        <h3>수상 · 활동</h3>
+        <ul>
+          {profile.recognition.map((r) => (
+            <li key={r}>· {r}</li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <h3>기술 스택</h3>
+        <div style={{ display: 'grid', gap: 6 }}>
+          {Object.entries(stack).map(([group, items]) => (
+            <div className="stackrow" key={group}>
+              <b>{group}</b>
+              <span>{items.join(' · ')}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Panel({ s }) {
+  if (s.id === 'hero') {
+    return (
+      <div className="panel panel--hero">
+        <p className="kicker">{s.kicker}</p>
+        <h1 className="hero-name">
+          {s.name}
+          <span className="sub">{s.sub}</span>
+        </h1>
+      </div>
+    )
+  }
+
+  return (
+    <div className="panel">
+      <p className="kicker">
+        {s.num && <span className="num">{s.num}</span>} {s.kicker}
+      </p>
+      {s.year && <div className="year">{s.year}</div>}
+      <h2 className="title">{s.title}</h2>
+      <Metric metric={s.metric} />
+      <p className="blurb">{s.blurb}</p>
+
+      {s.isTimeline && (
+        <div className="tl">
+          {timeline.map(([when, org, what]) => (
+            <div className="tl-row" key={org}>
+              <span className="tl-when">{when}</span>
+              <span>
+                <div className="tl-org">{org}</div>
+                <div className="tl-what">{what}</div>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Tags tags={s.tags} />
+
+      {s.contact && (
+        <div className="cta">
+          <a href={`mailto:${profile.email}`}>{profile.email}</a>
+          <a href={profile.github} target="_blank" rel="noreferrer">
+            github.com/jungrok5
+          </a>
+        </div>
+      )}
+
+      {s.summary && <Summary />}
+    </div>
+  )
+}
+
+export default function Overlay() {
+  return (
+    <>
+      {sections.map((s) => (
+        <section className={`section ${s.align || 'left'}`} key={s.id}>
+          <Panel s={s} />
+        </section>
+      ))}
+    </>
+  )
+}
