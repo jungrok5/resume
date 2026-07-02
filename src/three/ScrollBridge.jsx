@@ -12,6 +12,16 @@ export default function ScrollBridge() {
 
   useEffect(() => {
     scrollStore.set({ el: data.el, total: sections.length })
+
+    // 스크롤 컨테이너의 스크롤바 폭을 재서 상단바가 그만큼 양보하게 한다
+    // (문서 페이지의 윈도우 스크롤바와 같은 기하 — 페이지 전환 시 흔들림 없음)
+    const setSbw = () => {
+      const sbw = data.el ? data.el.offsetWidth - data.el.clientWidth : 0
+      document.documentElement.style.setProperty('--sbw', `${sbw}px`)
+    }
+    setSbw()
+    window.addEventListener('resize', setSbw)
+    return () => window.removeEventListener('resize', setSbw)
   }, [data.el])
 
   useFrame(() => {
