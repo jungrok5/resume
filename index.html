@@ -254,14 +254,14 @@
   .edu .deg { font-weight: 700; }
   .edu .sub { color: var(--muted); font-size: 13px; }
 
-  /* theme toggle — 다크 바 위 아이콘 원형 버튼 (26px) */
+  /* theme toggle — 다크 바 위 아이콘 원형 버튼 (26px, SVG라 항상 정중앙) */
   .toggle {
     background: transparent; border: 1px solid rgba(255, 255, 255, 0.18); color: #939eba;
-    border-radius: 50%; width: 26px; height: 26px; padding: 0 0 2px; /* 글리프 광학 센터 보정 */
-    font-size: 13px;
-    line-height: 1; cursor: pointer;
+    border-radius: 50%; width: 26px; height: 26px; padding: 0;
+    line-height: 0; cursor: pointer;
     font-family: inherit; display: inline-flex; align-items: center; justify-content: center; flex: none;
   }
+  .toggle svg { display: block; }
   .toggle:hover { border-color: #35e6ff; color: #35e6ff; }
 
   @media (max-width: 640px) {
@@ -1428,10 +1428,13 @@
     var saved = null;
     try { saved = localStorage.getItem('resume-theme'); } catch (e) {}
     if (saved) root.setAttribute('data-theme', saved);
+    /* 텍스트 글리프(☀/☾)는 폰트마다 베이스라인이 달라 원 중앙에서 어긋난다 → SVG */
+    var SUN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.4"/><path d="M12 2.2v2.6M12 19.2v2.6M2.2 12h2.6M19.2 12h2.6M4.8 4.8l1.9 1.9M17.3 17.3l1.9 1.9M19.2 4.8l-1.9 1.9M6.7 17.3l-1.9 1.9"/></svg>';
+    var MOON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 14.7A8.6 8.6 0 0 1 9.3 3.8a8.6 8.6 0 1 0 10.9 10.9z"/></svg>';
     function label() {
       var cur = root.getAttribute('data-theme');
       var dark = cur === 'dark' || (!cur && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      btn.textContent = dark ? '☀' : '☾';
+      btn.innerHTML = dark ? SUN : MOON;
     }
     label();
     btn.addEventListener('click', function () {

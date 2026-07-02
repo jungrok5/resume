@@ -160,14 +160,15 @@ a {
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: #939eba;
-  font-size: 13px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding-bottom: 2px; /* 글리프 광학 센터 보정 */
   flex: none;
   opacity: 0.35;
   cursor: default;
+}
+.toggle3d svg {
+  display: block;
 }
 
 /* FallbackDoc(정적 문서)에서 쓰는 돌아가기 링크 */
