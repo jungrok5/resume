@@ -84,16 +84,38 @@
   <body>
     <!-- '← 이력서' 링크는 React Chrome(상단 좌측 바)에 통합되어 있음 -->
     <div id="root"></div>
-    <!-- GA: 연락처·탭 클릭 추적 (위임) -->
+    <!-- GA·Clarity: 연락처·탭 클릭, JS 에러, WebGL 컨텍스트 손실 추적 -->
     <script>
-      document.addEventListener('click', function (e) {
-        var a = e.target.closest ? e.target.closest('a[href]') : null;
-        if (!a || !window.gtag) return;
-        var h = a.getAttribute('href') || '';
-        if (h.indexOf('mailto:') === 0) gtag('event', 'contact_click', { method: 'email', page: '3d' });
-        else if (h.indexOf('github.com') !== -1) gtag('event', 'contact_click', { method: 'github', page: '3d' });
-        else if (h.indexOf('./') === 0) gtag('event', 'view_change', { view: h.indexOf('ats') !== -1 ? 'ats' : h.indexOf('detail') !== -1 ? 'detail' : 'design', from: '3d' });
-      });
+      (function () {
+        function ev(name, params) { if (window.gtag) window.gtag('event', name, params || {}); }
+        if (window.clarity) window.clarity('set', 'page', '3d');
+
+        document.addEventListener('click', function (e) {
+          var a = e.target.closest ? e.target.closest('a[href]') : null;
+          if (!a) return;
+          var h = a.getAttribute('href') || '';
+          if (h.indexOf('mailto:') === 0 || h.indexOf('github.com') !== -1) {
+            var method = h.indexOf('mailto:') === 0 ? 'email' : 'github';
+            ev('contact_click', { method: method, page: '3d' });
+            if (window.clarity) {
+              window.clarity('set', 'contacted', method);
+              window.clarity('upgrade', 'contact_click');
+            }
+          } else if (h.indexOf('./') === 0) {
+            ev('view_change', { view: h.indexOf('ats') !== -1 ? 'ats' : h.indexOf('detail') !== -1 ? 'detail' : 'design', from: '3d' });
+          }
+        });
+
+        /* 3D 페이지의 런타임 에러·WebGL 컨텍스트 손실은 치명적 — 반드시 수집 */
+        window.addEventListener('error', function (e) {
+          ev('js_error', { message: String(e.message || 'unknown').slice(0, 100), page: '3d' });
+          if (window.clarity) window.clarity('upgrade', 'js_error');
+        });
+        document.addEventListener('webglcontextlost', function () {
+          ev('webgl_context_lost', { page: '3d' });
+          if (window.clarity) window.clarity('upgrade', 'webgl_lost');
+        }, true);
+      })();
     </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>

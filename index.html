@@ -8,6 +8,8 @@
 <!-- 3D 페이지와 동일한 상단바 폰트 (Noto Sans KR) — 렌더 비차단 로드 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://www.googletagmanager.com">
+<link rel="dns-prefetch" href="https://www.clarity.ms">
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
@@ -1527,15 +1529,22 @@
   (function () {
     function ev(name, params) { if (window.gtag) window.gtag('event', name, params || {}); }
 
-    /* 뷰 탭 전환 + 3D 이동 */
+    /* 뷰 탭 전환 + 3D 이동 — GA 가상 페이지뷰 + Clarity 세션 태그 */
     document.querySelectorAll('.switcher button').forEach(function (b) {
       b.addEventListener('click', function () {
-        ev('view_change', { view: b.getAttribute('data-view') });
+        var v = b.getAttribute('data-view');
+        ev('view_change', { view: v });
+        ev('page_view', {
+          page_title: '이력서 — ' + v,
+          page_location: location.origin + location.pathname + '?view=' + v,
+        });
+        if (window.clarity) window.clarity('set', 'view', v);
         if (window.__resetDepth) window.__resetDepth();
       });
     });
     var v3 = document.querySelector('.switcher a.view3d');
     if (v3) v3.addEventListener('click', function () { ev('view_change', { view: '3d' }); });
+    if (window.clarity) window.clarity('set', 'view', 'design');
 
     /* 테마 토글 */
     var tg = document.getElementById('themeToggle');
@@ -1546,11 +1555,42 @@
       var a = e.target.closest ? e.target.closest('a[href]') : null;
       if (!a) return;
       var h = a.getAttribute('href') || '';
-      if (h.indexOf('mailto:') === 0) ev('contact_click', { method: 'email' });
-      else if (h.indexOf('github.com') !== -1) ev('contact_click', { method: 'github' });
-      else if (h.indexOf('http') === 0 && h.indexOf('jungrok5.github.io') === -1)
+      if (h.indexOf('mailto:') === 0 || h.indexOf('github.com') !== -1) {
+        var method = h.indexOf('mailto:') === 0 ? 'email' : 'github';
+        ev('contact_click', { method: method });
+        /* 연락처를 누른 세션은 중요 — Clarity 녹화 우선순위 승격 + 태그 */
+        if (window.clarity) {
+          window.clarity('set', 'contacted', method);
+          window.clarity('upgrade', 'contact_click');
+        }
+      } else if (h.indexOf('http') === 0 && h.indexOf('jungrok5.github.io') === -1) {
         ev('outbound_click', { url: h.slice(0, 100) });
+      }
     });
+
+    /* JS 에러 — 실사용 환경 오류 수집 (해당 세션 녹화도 승격) */
+    window.addEventListener('error', function (e) {
+      ev('js_error', { message: String(e.message || 'unknown').slice(0, 100) });
+      if (window.clarity) window.clarity('upgrade', 'js_error');
+    });
+
+    /* Web Vitals (LCP·CLS) — 이탈 시 1회 전송 */
+    try {
+      var lcp = 0, cls = 0, sentVitals = false;
+      new PerformanceObserver(function (l) {
+        var es = l.getEntries();
+        if (es.length) lcp = es[es.length - 1].startTime;
+      }).observe({ type: 'largest-contentful-paint', buffered: true });
+      new PerformanceObserver(function (l) {
+        l.getEntries().forEach(function (en) { if (!en.hadRecentInput) cls += en.value; });
+      }).observe({ type: 'layout-shift', buffered: true });
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden' && !sentVitals) {
+          sentVitals = true;
+          ev('web_vitals', { lcp_ms: Math.round(lcp), cls_x1000: Math.round(cls * 1000) });
+        }
+      });
+    } catch (err) {}
 
     /* 스크롤 깊이 (뷰 전환 시 리셋) */
     var sent = {};

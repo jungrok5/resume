@@ -54,6 +54,8 @@ export default function ScrollBridge() {
         tr.idx = index
         tr.t = nowMs
       }
+      // Clarity 세션 태그: 이 방문자가 어느 씬까지 도달했는지 (녹화 필터용)
+      if (window.clarity && sections[index]) window.clarity('set', 'scene', sections[index].id)
     }
   })
 
