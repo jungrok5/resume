@@ -1,24 +1,1586 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#05060a" />
-    <meta
-      name="description"
-      content="오정록 — 테크니컬 디렉터 · MMO 서버 아키텍트. 20년의 분산 게임 시스템을, 눈에 보이게."
-    />
-    <title>오정록 · MMO 서버 아키텍트</title>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오정록 · Technical Director / MMO Server Architect</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<!-- ===== SEO ===== -->
+<meta name="description" content="오정록 (Jeongrok Oh) — 20년차 MMO 서버 아키텍트 · Technical Director. 분산 서버(Orleans), 대규모 트래픽 최적화, 서버 물리·네비게이션, AI 개발 생산성. NCSOFT 판테라·미니버스·AION2." />
+<meta name="author" content="오정록 (Jeongrok Oh)" />
+<meta name="keywords" content="MMO 서버, 서버 아키텍트, Technical Director, Orleans, 분산 서버, 게임 서버 프로그래머, 오정록, Jeongrok Oh, NCSOFT" />
+<link rel="canonical" href="https://jungrok5.github.io/resume/" />
+
+<!-- Open Graph / Twitter (링크 공유 미리보기) -->
+<meta property="og:type" content="profile" />
+<meta property="og:title" content="오정록 · Technical Director / MMO Server Architect" />
+<meta property="og:description" content="20년차 MMO 서버 아키텍트. 분산 서버 · 대규모 트래픽 최적화 · AI 개발 생산성. 기본 · ATS · 링크드인 · 상세 · 3D 인터랙티브 뷰." />
+<meta property="og:url" content="https://jungrok5.github.io/resume/" />
+<meta property="og:locale" content="ko_KR" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="오정록 · Technical Director / MMO Server Architect" />
+<meta name="twitter:description" content="20년차 MMO 서버 아키텍트 · 분산 서버 · 대규모 트래픽 최적화 · AI 개발 생산성." />
+<!-- TODO(og:image): 1200×630 미리보기 이미지를 만들어 public/og.png 로 넣고 아래 주석을 해제하세요.
+<meta property="og:image" content="https://jungrok5.github.io/resume/og.png" />
+<meta name="twitter:image" content="https://jungrok5.github.io/resume/og.png" /> -->
+
+<!-- 구조화 데이터(JSON-LD): 구글이 인물 정보를 이해하도록 -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "오정록",
+  "alternateName": "Jeongrok Oh",
+  "jobTitle": "Technical Director · MMO Server Architect",
+  "email": "mailto:jungrok5@gmail.com",
+  "url": "https://jungrok5.github.io/resume/",
+  "sameAs": ["https://github.com/jungrok5"],
+  "worksFor": { "@type": "Organization", "name": "NCSOFT" },
+  "alumniOf": { "@type": "CollegeOrUniversity", "name": "홍익대학교" },
+  "knowsAbout": ["MMO 서버 아키텍처", "분산 시스템", "Orleans", "성능 최적화", "gRPC", "서버 물리", "네비게이션", "AI 개발 생산성"]
+}
+</script>
+
+<!-- ===== Google Search Console 소유 확인 =====
+     서치 콘솔에서 발급한 토큰을 아래 content 값에 붙여넣으세요.
+     (또는 HTML 파일 업로드 방식을 쓰려면 SETUP.md 참고) -->
+<meta name="google-site-verification" content="PASTE_YOUR_GOOGLE_SITE_VERIFICATION_TOKEN" />
+
+<!-- ===== Google Analytics (GA4) =====
+     아래 __GA_ID__ 값을 실제 측정 ID(G-XXXXXXXXXX)로 바꾸면 자동 활성화됩니다.
+     플레이스홀더 상태에서는 아무 것도 로드하지 않습니다. -->
+<script>
+  window.__GA_ID__ = 'G-XXXXXXXXXX'; /* ← GA4 측정 ID 입력 */
+  (function () {
+    var id = window.__GA_ID__;
+    if (!id || id.indexOf('XXXX') !== -1) return; /* 플레이스홀더면 비활성 */
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', id);
+  })();
+</script>
+
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f6f8fa;
+    --text: #1f2328;
+    --muted: #59636e;
+    --faint: #818b98;
+    --border: #d1d9e0;
+    --border-soft: #e6eaee;
+    --accent: #0969da;
+    --accent-soft: #ddf4ff;
+    --chip-bg: #f6f8fa;
+    --chip-border: #d1d9e0;
+    --maxw: 860px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1117; --bg-soft: #161b22; --text: #e6edf3; --muted: #9198a1;
+      --faint: #7d8590; --border: #30363d; --border-soft: #21262d;
+      --accent: #4493f8; --accent-soft: #121d2f; --chip-bg: #161b22; --chip-border: #30363d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1117; --bg-soft: #161b22; --text: #e6edf3; --muted: #9198a1;
+    --faint: #7d8590; --border: #30363d; --border-soft: #21262d;
+    --accent: #4493f8; --accent-soft: #121d2f; --chip-bg: #161b22; --chip-border: #30363d;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo",
+                 "Noto Sans KR", "Malgun Gothic", Helvetica, Arial, sans-serif;
+    font-size: 15.5px;
+    line-height: 1.75;
+    letter-spacing: 0;
+    word-break: keep-all;
+  }
+  .page {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 56px 48px 72px;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Header */
+  header { margin-bottom: 26px; }
+  .name {
+    font-size: 33px; font-weight: 800; letter-spacing: -0.01em; margin: 0;
+    display: flex; align-items: baseline; gap: 13px; flex-wrap: wrap; line-height: 1.2;
+  }
+  .name .en { font-size: 17px; font-weight: 500; color: var(--faint); letter-spacing: 0; }
+  .role {
+    margin: 9px 0 0; font-size: 16.5px; font-weight: 600; color: var(--accent);
+  }
+  .contact {
+    margin-top: 13px; font-size: 13.5px; color: var(--muted);
+    display: flex; flex-wrap: wrap; gap: 7px 15px; align-items: center;
+  }
+  .contact .sep { color: var(--border); }
+
+  /* Summary */
+  .summary {
+    margin: 24px 0 4px; font-size: 15px; line-height: 1.92; color: var(--text);
+  }
+  .summary strong { font-weight: 700; }
+  .summary .lead { color: var(--accent); font-weight: 700; }
+
+  /* Section */
+  section { margin-top: 34px; }
+  h2 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--muted); margin: 0 0 18px; padding-bottom: 9px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Expertise grid */
+  .themes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 30px; }
+  .theme { padding-left: 14px; border-left: 2px solid var(--accent); }
+  .theme .t { font-weight: 700; font-size: 14.5px; }
+  .theme .d { color: var(--muted); font-size: 13.3px; line-height: 1.62; margin-top: 3px; }
+  .theme.full { grid-column: 1 / -1; }
+
+  /* Experience */
+  .job { margin-bottom: 26px; }
+  .job:last-child { margin-bottom: 0; }
+  .job-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .job-title { font-weight: 700; font-size: 16.5px; letter-spacing: -0.005em; }
+  .job-title .genre { font-weight: 500; color: var(--muted); font-size: 13.5px; }
+  .job-meta { font-size: 13px; color: var(--faint); white-space: nowrap; }
+  .job-meta b { color: var(--muted); font-weight: 600; }
+  .job-sub {
+    display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center;
+    margin-top: 7px; font-size: 12.8px;
+  }
+  .scale {
+    color: var(--accent); font-weight: 600;
+    background: var(--accent-soft); border-radius: 5px; padding: 1px 9px;
+  }
+  .stack { color: var(--faint); font-variant-numeric: tabular-nums; }
+  ul.bul { margin: 11px 0 0; padding: 0; list-style: none; }
+  ul.bul li {
+    position: relative; padding-left: 17px; margin: 7px 0;
+    font-size: 14.3px; line-height: 1.7; color: var(--text);
+  }
+  ul.bul li::before {
+    content: ""; position: absolute; left: 2px; top: 10px;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  }
+  ul.bul li b { font-weight: 700; }
+  ul.bul li .note { color: var(--muted); font-weight: 500; font-size: 13px; }
+  .metric { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* Earlier career */
+  .early-lead { color: var(--muted); font-size: 13.3px; line-height: 1.65; margin: 0 0 14px; }
+  .early { display: grid; gap: 13px; }
+  .early .row {
+    display: grid; grid-template-columns: 100px 1fr; gap: 18px; align-items: baseline;
+    font-size: 14px; padding: 4px 0; border-bottom: 1px dashed var(--border-soft);
+  }
+  .early .row:last-child { border-bottom: none; }
+  .early .yr { color: var(--faint); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .early .who { font-weight: 700; font-size: 14.5px; }
+  .early .who span { font-weight: 500; color: var(--muted); font-size: 13px; }
+  .early .who .eng { color: var(--faint); font-size: 12px; }
+  .early .who2 { font-weight: 500; color: var(--muted); font-size: 12.5px; margin-top: 1px; }
+  .early .what { color: var(--muted); font-size: 13.3px; margin-top: 3px; line-height: 1.6; }
+
+  /* footer cols */
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; }
+  .cols.narrow { grid-template-columns: 1.3fr 1fr; }
+
+  /* skills */
+  .skillgroup { margin-bottom: 13px; }
+  .skillgroup .lbl { font-size: 11.5px; font-weight: 700; color: var(--faint); text-transform: uppercase; letter-spacing: 0.05em; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .chip {
+    font-size: 12.3px; padding: 3px 10px; border-radius: 999px;
+    background: var(--chip-bg); border: 1px solid var(--chip-border); color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rec { margin: 0; padding: 0; list-style: none; }
+  .rec li { position: relative; padding-left: 19px; margin: 10px 0; font-size: 13.7px; line-height: 1.6; }
+  .rec li::before { content: "▹"; position: absolute; left: 0; top: 0; color: var(--accent); }
+  .rec b { font-weight: 700; }
+  .rec .sub { color: var(--muted); font-size: 12.8px; }
+
+  .edu { font-size: 14px; }
+  .edu .deg { font-weight: 700; }
+  .edu .sub { color: var(--muted); font-size: 13px; }
+
+  /* theme toggle */
+  .toggle {
+    background: var(--bg-soft); border: 1px solid var(--border); color: var(--muted);
+    border-radius: 999px; padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer;
+    font-family: inherit; display: inline-flex; align-items: center; gap: 6px; flex: none;
+  }
+  .toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+  @media (max-width: 640px) {
+    .page { padding: 32px 22px 48px; }
+    .themes, .cols, .cols.narrow { grid-template-columns: 1fr; }
+    .name { font-size: 27px; }
+    .job-meta { white-space: normal; }
+    /* 넓은 표는 페이지 전체가 아니라 표 자체만 가로 스크롤 */
+    .detail table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  }
+
+  @media print {
+    .toggle { display: none; }
+    :root { --bg:#fff; --text:#1f2328; --muted:#57606a; --faint:#6e7781;
+            --border:#d0d7de; --border-soft:#e4e8ec; --accent:#0b62c4;
+            --accent-soft:#eef4fb; --chip-bg:#fff; --chip-border:#d0d7de; }
+    body { font-size: 11px; line-height: 1.6; }
+    .page { max-width: none; padding: 0; margin: 0; }
+    @page { margin: 14mm 15mm; }
+    header { margin-bottom: 14px; }
+    .name { font-size: 24px; } .name .en { font-size: 13px; }
+    .role { font-size: 13px; }
+    .summary { font-size: 11px; line-height: 1.65; }
+    section { margin-top: 18px; }
+    .job { page-break-inside: avoid; }
+    section, .theme, .early .row { break-inside: avoid; }
+    a { color: var(--text); }
+    .topbar, .switcher { display: none !important; }
+  }
+
+  /* ===== view switcher ===== */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; margin: 0 0 28px;
+  }
+  .switcher {
+    display: flex; gap: 2px; padding: 2px; width: fit-content;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 999px;
+  }
+  .switcher button {
+    border: none; background: transparent; color: var(--muted); font-family: inherit;
+    font-size: 12px; font-weight: 600; padding: 3px 12px; border-radius: 999px; cursor: pointer;
+  }
+  .switcher button:hover { color: var(--text); }
+  .switcher button.on { background: var(--border-soft); color: var(--text); }
+  /* 3D 탭: 뷰 토글이 아니라 별도 인터랙티브 페이지로 이동하는 링크 */
+  .switcher a.view3d {
+    display: inline-flex; align-items: center; text-decoration: none;
+    color: var(--accent); font-family: inherit;
+    font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 999px;
+  }
+  .switcher a.view3d:hover { background: var(--accent-soft); text-decoration: none; }
+  .view { display: none; }
+  .view.on { display: block; }
+
+  /* ===== ATS single-column view ===== */
+  .ats { font-size: 14.5px; line-height: 1.68; }
+  .ats h1 { font-size: 26px; font-weight: 800; margin: 0; }
+  .ats .role { color: var(--accent); font-weight: 600; font-size: 15.5px; margin: 5px 0 0; }
+  .ats .ct { color: var(--muted); font-size: 13.5px; margin: 9px 0 0; }
+  .ats h2 {
+    font-size: 12.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted);
+    border-bottom: 1px solid var(--border); padding-bottom: 8px; margin: 28px 0 13px;
+  }
+  .ats p.sum { margin: 0; line-height: 1.82; }
+  .ats ul { margin: 5px 0 0; padding-left: 19px; }
+  .ats ul li { margin: 3px 0; font-size: 13.8px; line-height: 1.56; }
+  .ats ul.core li { margin: 5px 0; }
+  .ats .exp { font-weight: 700; font-size: 15px; margin: 18px 0 0; }
+  .ats .exp .m { font-weight: 500; color: var(--muted); font-size: 13px; }
+  .ats .tech { color: var(--faint); font-size: 12.5px; margin: 2px 0 3px; }
+  .ats .k { font-weight: 700; }
+  .ats .co { font-weight: 700; font-size: 15px; margin: 20px 0 4px; }
+  .ats .co .m { font-weight: 500; color: var(--muted); font-size: 13px; }
+  .ats .pre-note { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 22px 0 2px; }
+
+  /* ===== LinkedIn view ===== */
+  .linkedin .hint { color: var(--muted); font-size: 13.5px; margin: 0 0 12px; line-height: 1.65; }
+  .linkedin .copybtn {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px; font-family: inherit;
+    font-size: 13px; font-weight: 600; padding: 9px 18px; cursor: pointer; margin-bottom: 12px;
+  }
+  .linkedin .copybtn:hover { opacity: .9; }
+  .linkedin textarea {
+    width: 100%; height: 66vh; box-sizing: border-box; resize: vertical;
+    background: var(--bg-soft); color: var(--text); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "D2Coding", monospace;
+    font-size: 12.5px; line-height: 1.7; white-space: pre-wrap; overflow-y: auto; overflow-x: hidden;
+  }
+
+  /* ===== Detail (통합 경력서) view — GitHub markdown style ===== */
+  .detail { font-size: 14px; line-height: 1.72; }
+  .detail h1 { font-size: 25px; font-weight: 800; margin: 0 0 6px; padding-bottom: 9px; border-bottom: 1px solid var(--border); }
+  .detail h2 { font-size: 19px; font-weight: 700; margin: 32px 0 14px; padding-bottom: 7px; border-bottom: 1px solid var(--border); }
+  .detail h3 { font-size: 16px; font-weight: 700; margin: 24px 0 8px; color: var(--accent); }
+  .detail p { margin: 9px 0; }
+  .detail ul, .detail ol { margin: 7px 0; padding-left: 24px; }
+  .detail li { margin: 3px 0; }
+  .detail li::marker { color: var(--faint); }
+  .detail strong { font-weight: 700; }
+  .detail em { color: var(--muted); font-style: italic; }
+  .detail blockquote {
+    margin: 12px 0; padding: 8px 16px; color: var(--muted);
+    border-left: 3px solid var(--accent); background: var(--bg-soft); border-radius: 0 8px 8px 0;
+  }
+  .detail blockquote p { margin: 4px 0; }
+  .detail hr { border: none; border-top: 1px solid var(--border-soft); margin: 26px 0; }
+  .detail code {
+    background: var(--bg-soft); border: 1px solid var(--border-soft); border-radius: 5px;
+    padding: 1px 6px; font-size: 12.3px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .detail table { border-collapse: collapse; margin: 14px 0; font-size: 12.8px; width: 100%; }
+  .detail th, .detail td { border: 1px solid var(--border); padding: 6px 11px; text-align: left; vertical-align: top; }
+  .detail th { background: var(--bg-soft); font-weight: 700; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar">
+    <div class="switcher" role="tablist">
+      <button data-view="design" class="on">기본</button>
+      <button data-view="ats">ATS</button>
+      <button data-view="linkedin">링크드인</button>
+      <button data-view="detail">상세</button>
+      <a class="view3d" href="./interactive.html" aria-label="3D 인터랙티브 이력서 보기">✨ 3D</a>
+    </div>
+    <button class="toggle" id="themeToggle" aria-label="테마 전환">◐ 테마</button>
+  </div>
+
+  <div id="view-design" class="view on">
+
+  <header>
+    <h1 class="name">오정록 <span class="en">Jeongrok Oh</span></h1>
+    <p class="role">Technical Director · MMO Server Architect</p>
+    <div class="contact">
+      <span>게임 서버 프로그래머 / 기술 디렉터 · 경력 20년</span>
+      <span class="sep">·</span>
+      <a href="mailto:jungrok5@gmail.com">jungrok5@gmail.com</a>
+      <span class="sep">·</span>
+      <a href="https://github.com/jungrok5">github.com/jungrok5</a>
+    </div>
+  </header>
+
+  <p class="summary">
+    <span class="lead">20년간 MMO 서버 프레임워크를 백지에서 반복 설계·구축해온 Technical Director.</span>
+    서버의 네트워크·동시성·네비게이션·서버 물리를 근본부터 다루면서 <strong>클라이언트·DB·웹까지 직접 구현</strong>하고, <strong>대규모 트래픽 최적화와 난제 해결</strong>이 강점입니다.
+    <strong>매니징보다 기술을 직접 주도하고 혁신을 만들어내는 역할을 지향</strong>해, 전체 약 150명 조직에서 <strong>~40명 프로그래밍 조직의 기술 방향과 표준</strong>을 세우고, 최근에는 <strong>AI(MCP·로컬 LLM)로 팀 개발 생산성</strong>을 끌어올리는 데 주력합니다.
+    새로운 MMO를 처음부터 설계해야 하는 팀에서, <strong>서버의 근간을 끝까지 책임질 수 있는 사람</strong>입니다.
+  </p>
+
+  <section>
+    <h2>핵심 역량</h2>
+    <ul class="bul">
+      <li><b>MMO 서버를 백지에서 끝까지 반복 설계·구축</b> — 네트워크·동시성(락프리)·네비게이션·서버 물리·분산 서버(Orleans)를 근본부터 (여러 프로젝트에서 0→1)</li>
+      <li>PC MMORPG · 모바일 RPG · 유저 창작 메타버스 · 분산 서버 RPG 등 <b>폭넓은 장르·플랫폼·아키텍처</b> 경험</li>
+      <li><b>난제 해결과 성능 최적화</b> — MMO 특유의 서버 난제를 풀고 프로파일링으로 CPU·메모리·네트워크·DB 병목을 제거해 동접·처리량을 수 배로 (한 필드 2,000 vs 2,000 대규모 전투, 거대 NPC 전투, 파괴되는 지형, 캐릭터 충돌 처리, 3D 비행 네비게이션, 채널 없는 대규모 동시 서비스, 동접 4배 향상, DB 부하 개선)</li>
+      <li>서버에 그치지 않고 <b>클라이언트·웹·DB·툴·개발 인프라·CI</b>까지 커버하는 폭넓은 실무</li>
+      <li>신기술 빠른 습득·적응 + <b>AI 개발 도구(MCP·에이전트·로컬 LLM) 도입 주도</b></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>주요 경력 — NCSOFT (2016 – 현재)</h2>
+
+    <div class="job">
+      <div class="job-head">
+        <div class="job-title">판테라 <span class="genre">— 블레이드&amp;소울 IP 키우기류 RPG (분산 서버 백엔드)</span></div>
+        <div class="job-meta"><b>Technical Director</b> · 2024 – 현재</div>
+      </div>
+      <div class="job-sub">
+        <span class="stack">C# · C++ · Orleans · gRPC/TCP · MSSQL · Redis/Garnet · Unreal Engine 5</span>
+      </div>
+      <ul class="bul">
+        <li><b>분산 서버 아키텍처 방향 결정·팀 표준 정착</b> — Orleans Grain 모델 채택을 주도, gRPC→TCP 전송 계층 전환·샤딩 기반 데이터 분산 구조를 팀 표준으로 확립</li>
+        <li><b>데이터·스탯 파이프라인 단일 소스 표준화</b> — proto 단일 소스에서 서버·클라 코드·CSV·유효성 검증을 자동 생성, 스탯 계산 코드 생성으로 신규 항목 추가 비용 최소화 → 팀 전체 작업 방식으로 채택</li>
+        <li><b>대형 컨텐츠 서버 설계·구현</b> — 영역전(대규모 진영전)·슬라임대난투(3:3 실시간 팀 PvP)·용던(웨이브 던전)·랭킹/PvP, 오픈필드 실시간 멀티플레이어 동기화, 소셜·성장·버프 시스템</li>
+        <li><b>부하 테스트 인프라·서버/DB 최적화 주도</b> — gRPC <span class="metric">초당 24만 요청</span>급 처리 규명, EF <span class="metric">5만 TPS</span> 튜닝, 저장프로시저 전환·dacpac 형상 관리, Orleans·브로드캐스팅·DB 계층 병목 제거</li>
+        <li><b>AI 개발 생산성 혁신 주도</b> — MCP 서버 자체 구현으로 자연어 기반 서버 테스트 자동화, AI 테스트·코드리뷰 에이전트 팀, 사내 유출 없는 로컬 LLM 코딩 스택 구축·배포</li>
+      </ul>
+    </div>
+
+    <div class="job">
+      <div class="job-head">
+        <div class="job-title">미니버스 (언리얼엔진) <span class="genre">— 유저 창작 샌드박스 MMO</span></div>
+        <div class="job-meta"><b>Technical Director</b> · 2023 – 2024</div>
+      </div>
+      <div class="job-sub">
+        <span class="scale">전체 40~50명 · 프로그래머 ~20명 기술 디렉팅</span>
+        <span class="stack">C# · C++ · MSSQL · Unreal Engine 5</span>
+      </div>
+      <ul class="bul">
+        <li><b>초대규모 UGC 처리</b> — 단일 공간 <span class="metric">5,000만 프랍</span> 풀 틱 실시간 처리 + 동시 <span class="metric">2,000명</span> 밀집 건축, 공간당 단일 디스패처 액터 모델의 락프리·zero-copy 브로드캐스트로 대규모 동기화 락 경합 제거</li>
+        <li><b>대량 공간 데이터·영속화 설계</b> — 집터 단위 계층적 저장·배치 처리로 수천만 프랍 영속화, 3단 공간 분할(집터·청크·셀)과 시야 기반 전송으로 트래픽·메모리 관리</li>
+        <li><b>렌더링·물리 최적화</b> — ISM 인스턴싱·플레이어 주변 물리 청킹으로 드로우콜 <span class="metric">20,967 → 503</span>, FPS <span class="metric">16.5 → 47.4</span></li>
+        <li><b>서버사이드 다이나믹 네비메시 + 서버 시각화 뷰어 자체 개발</b> — 유저가 실시간으로 바꾸는 지형에 대응하는 동적 길찾기(복셀 기반, 영향 타일만 재계산), 지형·길찾기·충돌을 실시간 시각화하는 Godot 기반 서버 뷰어로 개발·디버깅 생산성 향상</li>
+        <li><b>유저 창작 하우징 컨텐츠 구현</b> — 마인크래프트 레드스톤류 전기 회로 로직 키트(14종, 순환 없는 신호 전파 구조), 클라-서버 결정론적 동기화 이동체(무빙 플랫폼), 에셋 없는 프로시저럴 사운드, Grab 복사·Undo/Redo 등 빌드 편의 기능</li>
+      </ul>
+    </div>
+
+    <div class="job">
+      <div class="job-head">
+        <div class="job-title">미니버스 (웹·고도엔진) <span class="genre">— 유저 창작 메타버스</span></div>
+        <div class="job-meta"><b>Technical Director</b> · 2021 – 2023</div>
+      </div>
+      <div class="job-sub">
+        <span class="stack">C# · C++ · Node.js · WebSocket · MSSQL · MongoDB · Godot Engine</span>
+      </div>
+      <ul class="bul">
+        <li><b>유저 창작 스크립트 런타임 R&amp;D</b> — 무패치 로직 다운로드 실행, 서버 권위 판정(치팅 방지) 구조를 백지에서 설계·프로토타이핑</li>
+        <li><b>서버 구조 전환·성능 리서치</b> — 프로토타입(Node.js)을 C# 데디케이트 서버로 전환·구조 개선, 소켓/프로토콜 성능 규명(WebSocket vs TCP 등), 루아 런타임 부하를 정량 측정해 다인스턴스 스케일아웃 구조로 방향 결정</li>
+        <li><b>웹 실시간 협업 에디터</b> — 브라우저에서 <span class="metric">1,000명 이상</span> 동시 커서 동기화, 충돌·병합 없는 동시 편집 구현</li>
+        <li><b>클라이언트 엔진·플랫폼 선정 리서치</b> — Unity·Godot·웹(Three.js/React/Flutter)·모바일 네이티브 연동 매트릭스를 실증해 엔진·플랫폼 결정 근거 확보</li>
+        <li><b>프랍 조합 미니게임 구현</b> — 서바이벌·페인트맨(팀전) 등을 유저 스크립트·프랍 메시지 교환만으로 제작, 한 공간에서 다중 게임 동시 플레이 실증 (사내 취업 설명회 공개 <a href="https://www.youtube.com/shorts/Jqbj27VUMDI" target="_blank" rel="noopener">영상</a>)</li>
+      </ul>
+    </div>
+
+    <div class="job">
+      <div class="job-head">
+        <div class="job-title">AION2 · 아이온 모바일 <span class="genre">— MMORPG</span></div>
+        <div class="job-meta"><b>Technical Director</b> · 2016 – 2021</div>
+      </div>
+      <div class="job-sub">
+        <span class="scale">전체 ~140명 · 프로그래머 ~40명 기술 디렉팅</span>
+        <span class="stack">C++ · C# · MSSQL · Unreal Engine 4</span>
+      </div>
+      <ul class="bul">
+        <li><b>MMO 서버 프레임워크 전체를 백지에서 설계·구축</b> — 네트워크·스레딩·메시지 처리·네비게이션·서버 물리·필드 오브젝트 구조. NCSOFT AION실 입사 후 초기 '아이온 모바일'(조직명 Tempest)로 시작해 AION2로 발전, 언어(C++→C#)·DB·장르 전환에 대응하며 처음부터 재설계</li>
+        <li><b>채널 없는 대규모 밀집 전투 최적화</b> <span class="note">(NCDP 2019 최우수상 발표작)</span> — 한 시야 1,000명 전투에서 발생하는 <span class="metric">초당 1,300만 패킷</span>을 ① 네트워크 부하 기준 Session/Field 서버 분산(세션 서버 확장으로 처리량 <span class="metric">3배↑</span>), ② 셀 기반 가상 관심영역 브로드캐스팅(유저 밀집도와 무관하게 전송 데이터 크기 고정), ③ Packet Shrink 비트 패킹(트래픽 <span class="metric">~36%↓</span>)으로 해결 → 이후 <span class="metric">2,000 vs 2,000</span> 전투로 확장</li>
+        <li><b>3D 공간 비행 네비게이션 처리</b> — 지상 평면을 넘어 비행체의 3차원 이동·길찾기를 서버에서 처리하는 네비게이션 구조 설계 (복셀 기반 3D 네비게이션)</li>
+        <li><b>서버 충돌·물리 아키텍처, 대규모 Agent(NPC) 처리·심리스 필드 R&amp;D</b> — 멀티코어 대용량 메시지 처리 모델 연구, 서버 비주얼 디버깅 툴(FieldViewer)·NPC 행동 편집기 개발</li>
+        <li><b>2017 NCSOFT 디렉터스컷에서 최초 공개</b> (<a href="https://www.youtube.com/watch?v=8rDww2tLRaY" target="_blank" rel="noopener">영상1</a> · <a href="https://www.youtube.com/watch?v=nXP8cgOKiHE" target="_blank" rel="noopener">영상2</a>)</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>이전 경력 (2007 – 2015)</h2>
+    <p class="early-lead">이 시기 국내·일본·중국·태국 등에서 다수 타이틀을 <b>정식 상용 서비스·라이브 운영</b>하며 서버 안정화·장애 대응·라이브 패치를 직접 경험했습니다.</p>
+    <div class="early">
+      <div class="row">
+        <div class="yr">2014–2015</div>
+        <div><div class="who">ONE for kakao <span>— 모바일 액션RPG</span></div>
+          <div class="who2">프로그램팀장 · 코어크리에이티브 · Unreal Engine 3</div>
+          <div class="what">서버 구조 설계 및 네트워크 프레임워크 전체 구현(C++ boost asio · C# · 언리얼스크립트 클라). 서버 컨텐츠(전투·스킬·PVP·퀘스트)와 클라이언트 UI(Hud), 빌드 자동화·운영·패치·UI 익스포터 등 툴 다수 개발. 사내 개발환경(웹·SVN·빌드머신) 구축과 서버 신입 교육, 서버 팀 리드. 국내 정식 서비스.</div></div>
+      </div>
+      <div class="row">
+        <div class="yr">2013–2014</div>
+        <div><div class="who">트리니티사가 · 드리프트러시 <span>— 모바일 RPG · 레이싱</span></div>
+          <div class="who2">서버파트리더 · 위메이드엔터테인먼트(오르카) · Unity3D</div>
+          <div class="what">웹(HTTP)+소켓(TCP)을 아우르는 C# 서버 프레임워크 전체를 고성능 네트워크 모델부터 구현. 로그인·채팅·Redis 랭킹 등 서버 컨텐츠, 클라이언트 네트워크 모듈, 결제 검증 통합 서버, 운영툴·부하 테스트 시스템까지 담당. 서버 파트 리드.</div></div>
+      </div>
+      <div class="row">
+        <div class="yr">2011–2013</div>
+        <div><div class="who">형!·오빠·드래곤 도와줘 <span>— 모바일 시뮬레이션RPG</span></div>
+          <div class="who2">프로그램팀장 · 자이언트드림 · Unity3D</div>
+          <div class="what">C++ 서버와 Unity 클라이언트 전반 구현, 국내·일본(MTI)·중국(샨다) 서비스 및 직접 서비스 운영. AssetBundle 패치 자동화·소스코드 생성 툴·NGUI 플러그인 개발, DB 악성 쿼리·인덱스 최적화. 프로그램 팀 리드.</div></div>
+      </div>
+      <div class="row">
+        <div class="yr">2010–2011</div>
+        <div><div class="who">슈퍼 다다다 <span>— PC 캐주얼 레이싱</span></div>
+          <div class="who2">서버팀장 · KB온라인(SEED) · Gamebryo</div>
+          <div class="what">기존 서버팀 전원 이탈 상황에 투입되어 서버 프레임워크를 재검토·교체 판단·진행. 서버 컨텐츠(커플·좀비 모드·광장 등), 퍼블리셔 빌링·보안 모듈 연동, 웹 기반 서버 모니터링 툴 구축. 국내(클베·오베)·태국 서비스, 서버 팀 리드.</div></div>
+      </div>
+      <div class="row">
+        <div class="yr">2007–2010</div>
+        <div><div class="who">와일드 플래닛 <span>— PC MMORPG</span></div>
+          <div class="who2">서버팀원 · 액토즈소프트(프롬나인) · Gamebryo</div>
+          <div class="what">파티·클랜전·점령전·전장 등 대규모 멀티플레이 시스템을 서버·클라 양쪽으로 구현. DB 쿼리·인덱스 튜닝, 자동 패치 시스템, 리소스 관리·서버 컨트롤 시스템, GM 툴 개발.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="cols narrow">
+      <div>
+        <h2>기술 스택</h2>
+        <div class="skillgroup">
+          <div class="lbl">언어</div>
+          <div class="chips">
+            <span class="chip">C++ (11–20)</span><span class="chip">C#</span><span class="chip">TypeScript / JS</span>
+            <span class="chip">Python</span><span class="chip">Lua</span><span class="chip">GDScript</span>
+          </div>
+        </div>
+        <div class="skillgroup">
+          <div class="lbl">서버 · 분산</div>
+          <div class="chips">
+            <span class="chip">Orleans</span><span class="chip">gRPC / TCP</span>
+            <span class="chip">ASP.NET</span><span class="chip">Node.js</span><span class="chip">IOCP</span><span class="chip">WebSocket</span>
+          </div>
+        </div>
+        <div class="skillgroup">
+          <div class="lbl">데이터</div>
+          <div class="chips">
+            <span class="chip">MSSQL · 저장프로시저</span><span class="chip">Redis / Garnet</span>
+            <span class="chip">MongoDB</span><span class="chip">EntityFramework</span><span class="chip">샤딩</span>
+          </div>
+        </div>
+        <div class="skillgroup">
+          <div class="lbl">클라이언트 엔진 · 네비 · 물리</div>
+          <div class="chips">
+            <span class="chip">Unreal Engine 3/4/5</span><span class="chip">Unity3D</span><span class="chip">Godot Engine</span>
+            <span class="chip">Gamebryo</span><span class="chip">Recast / Detour</span><span class="chip">복셀 네비메시</span><span class="chip">서버 충돌</span>
+          </div>
+        </div>
+        <div class="skillgroup">
+          <div class="lbl">AI 개발 · 인프라</div>
+          <div class="chips">
+            <span class="chip">Claude · Agent SDK</span><span class="chip">MCP (자체 구현)</span><span class="chip">로컬 LLM (llama.cpp)</span>
+            <span class="chip">Perforce</span><span class="chip">Jenkins</span><span class="chip">.NET Aspire</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h2>수상 · 기술 자문 · 활동</h2>
+        <ul class="rec">
+          <li><b>NCDP 개발자 컨퍼런스 최우수상</b> (2019)
+            <div class="sub">주제: "1000 vs 1000 대규모 유저를 채널 없이 서비스 하기 위한 고민들"</div></li>
+          <li><b>서버 최적화 · 기술 자문 (타 프로젝트 · 타 회사)</b>
+            <div class="sub">트릭스터M 서버 최적화 파견 — 안정 동접 2천 → 8천(4배) · 타 회사·프로젝트 서버 기술 자문 요청 지원</div></li>
+          <li><b>NCSOFT 시니어 전문면접관 · Job Title 운영위원</b>
+            <div class="sub">Programming 직군 (2019–2021)</div></li>
+          <li><b>ETRI 공동 기술 개발</b> (2010)
+            <div class="sub">시나리오 기반 온라인 게임 서버 부하 테스트 기술 개발 협력</div></li>
+        </ul>
+        <h2 style="margin-top:26px">학력</h2>
+        <div class="edu">
+          <div class="deg">홍익대학교</div>
+          <div class="sub">컴퓨터정보통신소프트웨어전공 · 2000 – 2007</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </div><!-- /view-design -->
+
+  <!-- ============ ATS (단일 컬럼) 뷰 ============ -->
+  <div id="view-ats" class="view ats">
+    <h1>오정록 (Jeongrok Oh)</h1>
+    <div class="role">Technical Director / MMO Server Architect</div>
+    <div class="ct">게임 서버 프로그래머 / 기술 디렉터 · 경력 20년 &nbsp;|&nbsp; <a href="mailto:jungrok5@gmail.com">jungrok5@gmail.com</a> &nbsp;|&nbsp; <a href="https://github.com/jungrok5">github.com/jungrok5</a></div>
+
+    <h2>Summary</h2>
+    <p class="sum">20년간 MMO 서버 프레임워크를 백지에서 반복 설계·구축해온 Technical Director. 서버의 네트워크·동시성·네비게이션·서버 물리를 근본부터 다루면서 클라이언트·DB·웹까지 직접 구현하고, 대규모 트래픽 최적화와 난제 해결이 강점이다. 매니징보다 기술을 직접 주도하고 혁신을 만들어내는 역할을 지향해, 전체 약 150명 조직에서 ~40명 프로그래밍 조직의 기술 방향과 표준을 세우고, 최근에는 AI(MCP·로컬 LLM)로 팀 개발 생산성을 끌어올리는 데 주력한다. 새로운 MMO를 처음부터 설계해야 하는 팀에서, 서버의 근간을 끝까지 책임질 수 있는 사람이다.</p>
+
+    <h2>Core Expertise</h2>
+    <ul class="core">
+      <li><span class="k">MMO 서버 0→1</span> — 네트워크·동시성(락프리)·네비게이션·서버 물리·분산 서버(Orleans)를 근본부터 반복 설계·구축</li>
+      <li><span class="k">폭넓은 장르·아키텍처</span> — PC MMORPG, 모바일 RPG, 유저 창작 메타버스, 분산 서버 RPG</li>
+      <li><span class="k">난제 해결·성능 최적화</span> — 프로파일링으로 CPU/메모리/네트워크/DB 병목 제거, 동접·처리량 수 배 향상 (한 필드 2,000 vs 2,000 전투, 채널 없는 대규모 서비스, 동접 4배)</li>
+      <li><span class="k">풀스택 커버</span> — 서버 / 클라이언트 / DB / 웹 / 툴 / 개발 인프라·CI</li>
+      <li><span class="k">AI 개발 생산성</span> — MCP 자체 구현, AI 테스트/코드리뷰 에이전트, 로컬 LLM 코딩 스택 도입 주도</li>
+    </ul>
+
+    <h2>Experience</h2>
+
+    <div class="exp">Technical Director — 판테라 (블레이드&amp;소울 IP 키우기류 RPG, 분산 서버 백엔드) <span class="m">· NCSOFT · 2024 – 현재</span></div>
+    <div class="tech">기술: C#, C++, Orleans, gRPC/TCP, MSSQL, Redis/Garnet, Unreal Engine 5</div>
+    <ul>
+      <li>분산 서버 아키텍처 방향 결정·팀 표준 정착 — Orleans Grain 모델 채택 주도, gRPC→TCP 전송 계층 전환, 샤딩 기반 데이터 분산 구조 확립</li>
+      <li>데이터·스탯 파이프라인 단일 소스 표준화 — proto 단일 소스에서 서버·클라 코드·CSV·유효성 검증 자동 생성, 스탯 계산 코드 생성 → 팀 전체 작업 방식으로 채택</li>
+      <li>대형 컨텐츠 서버 설계·구현 — 영역전, 슬라임대난투(3:3 팀 PvP), 용던, 오픈필드 실시간 동기화, 소셜, 성장, 버프 시스템</li>
+      <li>부하 테스트 인프라·서버/DB 최적화 주도 — gRPC 초당 24만 요청급 처리, EntityFramework 5만 TPS, 저장프로시저 전환·dacpac 형상 관리·자동 배포(CI/CD)</li>
+      <li>AI 개발 생산성 혁신 주도 — MCP 서버 자체 구현, AI 테스트/코드리뷰 에이전트 팀, 사내 유출 없는 로컬 LLM 코딩 스택 구축</li>
+    </ul>
+
+    <div class="exp">Technical Director — 미니버스 (언리얼엔진, 유저 창작 샌드박스 MMO) <span class="m">· NCSOFT · 2023 – 2024 · 전체 40~50명, 프로그래머 ~20명 기술 디렉팅</span></div>
+    <div class="tech">기술: C#, C++, MSSQL, Unreal Engine 5</div>
+    <ul>
+      <li>초대규모 UGC 처리 — 단일 공간 5,000만 프랍 풀 틱 실시간 처리 + 동시 2,000명 밀집 건축, 액터 모델 락프리 동시성·zero-copy 브로드캐스트로 대규모 동기화 락 경합 제거</li>
+      <li>대량 공간 데이터·영속화 설계(집터 단위 계층 저장, 3단 공간 분할, 시야 기반 전송)</li>
+      <li>렌더링·물리 최적화 — ISM 인스턴싱·물리 청킹으로 드로우콜 20,967→503, FPS 16.5→47.4</li>
+      <li>서버사이드 다이나믹 네비메시(복셀 기반, 영향 타일만 재계산) + Godot 기반 서버 시각화 뷰어 자체 개발(지형·길찾기·충돌 시각화)</li>
+      <li>유저 창작 하우징 컨텐츠 — 전기 회로 로직 키트(14종), 결정론적 동기화 이동체, 프로시저럴 사운드</li>
+    </ul>
+
+    <div class="exp">Technical Director — 미니버스 (웹·고도엔진, 유저 창작 메타버스) <span class="m">· NCSOFT · 2021 – 2023</span></div>
+    <div class="tech">기술: C#, C++, Node.js, WebSocket, MSSQL, MongoDB, Godot Engine</div>
+    <ul>
+      <li>유저 창작 스크립트 런타임 R&amp;D — 무패치 로직 다운로드 실행, 서버 권위 판정(치팅 방지)</li>
+      <li>서버 구조 전환(Node.js→C# 데디)·소켓/프로토콜 성능 리서치, 루아 런타임 부하 한계 규명 → 다인스턴스 스케일아웃 구조 결정</li>
+      <li>웹 실시간 협업 에디터 — 1,000명 이상 동시 커서 동기화, 충돌·병합 없는 동시 편집</li>
+      <li>클라이언트 엔진·플랫폼 선정 리서치(Unity/Godot/웹/모바일 연동 매트릭스 실증)</li>
+      <li>프랍 조합 미니게임 구현(서바이벌, 페인트맨) — 유저 스크립트·프랍 메시지 교환만으로 제작, 사내 취업 설명회 공개 (<a href="https://www.youtube.com/shorts/Jqbj27VUMDI" target="_blank" rel="noopener">영상</a>)</li>
+    </ul>
+
+    <div class="exp">Technical Director — AION2 · 아이온 모바일 (MMORPG) <span class="m">· NCSOFT · 2016 – 2021 · 전체 ~140명, 프로그래머 ~40명 기술 디렉팅</span></div>
+    <div class="tech">기술: C++, C#, MSSQL, Unreal Engine 4</div>
+    <ul>
+      <li>MMO 서버 프레임워크 전체를 백지에서 설계·구축(네트워크·스레딩·메시지 처리·네비게이션·서버 물리·필드 오브젝트). NCSOFT AION실 입사 후 초기 '아이온 모바일'(조직명 Tempest)로 시작해 AION2로 발전, 언어(C++→C#)·DB·장르 전환에 대응하며 처음부터 재설계</li>
+      <li>채널 없는 대규모 밀집 전투 최적화 (NCDP 2019 최우수상 발표작) — 한 시야 1,000명 전투에서 발생하는 초당 1,300만 패킷을 ① 네트워크 부하 기준 Session/Field 서버 분산(처리량 3배↑) ② 셀 기반 가상 관심영역 브로드캐스팅(밀집도와 무관하게 전송량 고정) ③ Packet Shrink 비트 패킹(트래픽 ~36%↓)으로 해결 → 이후 2,000 vs 2,000 전투로 확장</li>
+      <li>3D 공간 비행 네비게이션 처리(복셀 기반 3D 네비게이션)</li>
+      <li>서버 충돌·물리 아키텍처, 대규모 Agent(NPC) 처리, 심리스 필드 R&amp;D, 서버 비주얼 디버깅 툴 개발</li>
+      <li>2017 NCSOFT 디렉터스컷에서 최초 공개 (<a href="https://www.youtube.com/watch?v=8rDww2tLRaY" target="_blank" rel="noopener">영상1</a> · <a href="https://www.youtube.com/watch?v=nXP8cgOKiHE" target="_blank" rel="noopener">영상2</a>)</li>
+    </ul>
+
+    <div class="pre-note">이전 경력(2007–2015): 국내·일본·중국·태국 등에서 다수 타이틀을 정식 상용 서비스·라이브 운영하며 서버 안정화·장애 대응·라이브 패치를 직접 경험.</div>
+    <div class="co">프로그램팀장 — ONE for kakao (모바일 액션RPG) <span class="m">· 코어크리에이티브 · 2014 – 2015 · Unreal Engine 3</span></div>
+    <ul><li>서버 구조·네트워크 프레임워크 전체 구현(C++ boost asio·C#·언리얼 클라), 서버 컨텐츠·클라 UI·툴 다수·사내 개발환경 구축, 서버 팀 리드, 국내 정식 서비스</li></ul>
+
+    <div class="co">서버파트리더 — 트리니티사가·드리프트러시 (모바일 RPG·레이싱) <span class="m">· 위메이드엔터테인먼트(오르카) · 2013 – 2014 · Unity3D</span></div>
+    <ul><li>웹(HTTP)+소켓(TCP) 통합 C# 서버 프레임워크 전체 구현, 서버 컨텐츠·결제 검증·운영툴·부하 테스트, 서버 파트 리드</li></ul>
+
+    <div class="co">프로그램팀장 — 형!·오빠·드래곤 도와줘 (모바일 시뮬레이션RPG) <span class="m">· 자이언트드림 · 2011 – 2013 · Unity3D</span></div>
+    <ul><li>C++ 서버·Unity 클라 전반, 국내·일본·중국 서비스 및 직접 운영, 자동화 툴·DB 최적화, 프로그램 팀 리드</li></ul>
+
+    <div class="co">서버팀장 — 슈퍼 다다다 (PC 캐주얼 레이싱) <span class="m">· KB온라인(SEED) · 2010 – 2011 · Gamebryo</span></div>
+    <ul><li>서버 프레임워크 재검토·교체, 서버 컨텐츠·빌링/보안 연동·모니터링 툴, 국내·태국 서비스, 서버 팀 리드</li></ul>
+
+    <div class="co">서버팀원 — 와일드 플래닛 (PC MMORPG) <span class="m">· 액토즈소프트(프롬나인) · 2007 – 2010 · Gamebryo</span></div>
+    <ul><li>파티·클랜전·점령전·전장 등 대규모 멀티플레이 시스템을 서버·클라 양쪽 구현, DB 튜닝, 자동 패치·리소스 관리·서버 컨트롤 시스템, GM 툴</li></ul>
+
+    <h2>Technical Skills</h2>
+    <ul>
+      <li><span class="k">Languages</span> — C++ (11-20), C#, TypeScript/JavaScript, Python, Lua, GDScript</li>
+      <li><span class="k">Server / Distributed</span> — Orleans, gRPC/TCP, ASP.NET, Node.js, IOCP, WebSocket</li>
+      <li><span class="k">Data</span> — MSSQL(저장프로시저), Redis/Garnet, MongoDB, EntityFramework, Sharding</li>
+      <li><span class="k">Client Engine / Nav / Physics</span> — Unreal Engine 3/4/5, Unity3D, Godot Engine, Gamebryo, Recast/Detour, Voxel Navmesh</li>
+      <li><span class="k">AI Development</span> — Claude/Agent SDK, MCP(자체 구현), Local LLM(llama.cpp)</li>
+      <li><span class="k">Infrastructure</span> — Perforce, Git, Jenkins, .NET Aspire</li>
+    </ul>
+
+    <h2>Recognition / Activities</h2>
+    <ul>
+      <li>NCDP 개발자 컨퍼런스 최우수상 (2019) — 주제: "1000 vs 1000 대규모 유저를 채널 없이 서비스 하기 위한 고민들"</li>
+      <li>서버 최적화 · 기술 자문 (타 프로젝트·타 회사) — 트릭스터M 서버 최적화 파견, 안정 동접 2천→8천(4배)</li>
+      <li>NCSOFT 시니어 전문면접관 · Job Title 운영위원 (Programming, 2019–2021)</li>
+      <li>ETRI 공동 기술 개발 (2010) — 시나리오 기반 온라인 게임 서버 부하 테스트 기술 개발 협력</li>
+    </ul>
+
+    <h2>Education</h2>
+    <ul><li>홍익대학교 컴퓨터정보통신소프트웨어전공 (2000 – 2007)</li></ul>
+  </div>
+
+  <!-- ============ 링크드인 (복사용) 뷰 ============ -->
+  <div id="view-linkedin" class="view linkedin">
+    <p class="hint">아래 텍스트를 링크드인 프로필에 붙여넣으세요. <b>[ ]</b> 로 구분된 섹션(헤드라인·소개·경력·기술)을 각 항목에 맞게 복사하면 됩니다. 서식 없는 순수 텍스트라 ATS·링크드인 모두에 안전합니다.</p>
+    <button class="copybtn" id="copyLinkedin">📋 전체 복사</button>
+    <textarea id="linkedinText" readonly spellcheck="false">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 헤드라인 / Headline ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Technical Director · MMO Server Architect | 20년차 게임 서버 | 분산 서버 · 대규모 트래픽 최적화 · AI 개발 생산성
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 소개 / About ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+20년간 MMO 서버 프레임워크를 백지에서 반복 설계·구축해온 Technical Director입니다.
+서버의 네트워크·동시성·네비게이션·서버 물리를 근본부터 다루면서 클라이언트·DB·웹까지 직접 구현하고,
+대규모 트래픽 최적화와 난제 해결이 강점입니다.
+매니징보다 기술을 직접 주도하고 혁신을 만들어내는 역할을 지향해, 전체 약 150명 조직에서
+~40명 프로그래밍 조직의 기술 방향과 표준을 세우고, 최근에는 AI(MCP·로컬 LLM)로 팀 개발 생산성을
+끌어올리는 데 주력합니다.
+새로운 MMO를 처음부터 설계해야 하는 팀에서, 서버의 근간을 끝까지 책임질 수 있는 사람입니다.
+
+[ 핵심 역량 ]
+· MMO 서버 0→1 — 네트워크·동시성(락프리)·네비게이션·서버 물리·분산 서버(Orleans)를 근본부터 반복 설계·구축
+· 폭넓은 장르·아키텍처 — PC MMORPG, 모바일 RPG, 유저 창작 메타버스, 분산 서버 RPG
+· 난제 해결·성능 최적화 — 프로파일링으로 CPU/메모리/네트워크/DB 병목 제거, 동접·처리량 수 배 향상 (한 필드 2,000 vs 2,000 전투, 채널 없는 대규모 서비스, 동접 4배)
+· 풀스택 커버 — 서버/클라이언트/DB/웹/툴/개발 인프라·CI
+· AI 개발 생산성 — MCP 자체 구현, AI 테스트/코드리뷰 에이전트, 로컬 LLM 코딩 스택 도입 주도
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 경력 / Experience ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+● Technical Director — 판테라 (블레이드&소울 IP 키우기류 RPG)
+  NCSOFT | 2024 – 현재
+  기술: C#, C++, Orleans, gRPC/TCP, MSSQL, Redis/Garnet, Unreal Engine 5
+  - 분산 서버 아키텍처 방향 결정·팀 표준 정착(Orleans Grain 채택 주도, gRPC→TCP 전환, 샤딩 데이터 분산)
+  - 데이터·스탯 파이프라인 단일 소스 표준화(proto → 서버·클라 코드·CSV·검증 자동 생성) → 팀 작업 방식으로 채택
+  - 대형 컨텐츠 설계·구현: 영역전, 슬라임대난투(3:3), 용던, 오픈필드 실시간 동기화, 소셜, 성장, 버프
+  - 부하 테스트 인프라·서버/DB 최적화 주도(gRPC 초당 24만 요청급, EntityFramework 5만 TPS, 저장프로시저 전환·dacpac 자동 배포)
+  - AI 개발 생산성 혁신 주도: MCP 자체 구현, AI 테스트/코드리뷰 에이전트 팀, 사내 유출 없는 로컬 LLM 코딩 스택
+
+● Technical Director — 미니버스 (언리얼엔진, 유저 창작 샌드박스 MMO)
+  NCSOFT | 2023 – 2024 | 전체 40~50명, 프로그래머 ~20명 기술 디렉팅
+  기술: C#, C++, MSSQL, Unreal Engine 5
+  - 초대규모 UGC 처리(단일 공간 5,000만 프랍, 동시 2,000명 밀집 건축, 락프리·zero-copy 브로드캐스트)
+  - 대량 공간 데이터·영속화 설계(집터 단위 계층 저장, 3단 공간 분할, 시야 기반 전송)
+  - 렌더링·물리 최적화(드로우콜 20,967→503, FPS 16.5→47.4)
+  - 서버사이드 다이나믹 네비메시(복셀 기반) + Godot 기반 서버 시각화 뷰어 자체 개발
+  - 유저 창작 하우징 컨텐츠(전기 회로 14종, 결정론적 이동체, 프로시저럴 사운드)
+
+● Technical Director — 미니버스 (웹·고도엔진, 유저 창작 메타버스)
+  NCSOFT | 2021 – 2023
+  기술: C#, C++, Node.js, WebSocket, MSSQL, MongoDB, Godot Engine
+  - 유저 창작 스크립트 런타임 R&D(무패치 로직 다운로드, 서버 권위 판정)
+  - 서버 구조 전환(Node.js→C#)·소켓/프로토콜 성능 리서치, 루아 부하 한계 규명 → 다인스턴스 스케일아웃 결정
+  - 웹 실시간 협업 에디터(1,000명 이상 동시 커서 동기화)
+  - 클라이언트 엔진·플랫폼 선정 리서치(Unity/Godot/웹/모바일 연동)
+  - 프랍 조합 미니게임 구현(서바이벌, 페인트맨), 사내 취업 설명회 공개 (youtube.com/shorts/Jqbj27VUMDI)
+
+● Technical Director — AION2 · 아이온 모바일 (MMORPG)
+  NCSOFT | 2016 – 2021 | 전체 ~140명, 프로그래머 ~40명 기술 디렉팅
+  기술: C++, C#, MSSQL, Unreal Engine 4
+  - MMO 서버 프레임워크 전체를 백지에서 설계·구축. NCSOFT AION실 입사 후 초기 '아이온 모바일'
+    (조직명 Tempest)로 시작해 AION2로 발전, 언어(C++→C#)·DB·장르 전환에 대응하며 처음부터 재설계
+  - 채널 없는 대규모 밀집 전투 최적화 (NCDP 2019 최우수상): 한 시야 1,000명 전투의
+    초당 1,300만 패킷을 네트워크 부하 분산(3배)·셀 기반 브로드캐스팅·Packet Shrink(36%↓)로
+    해결 → 2,000 vs 2,000 확장
+  - 3D 공간 비행 네비게이션(복셀 기반)
+  - 서버 충돌·물리 아키텍처, 대규모 NPC 처리, 심리스 필드 R&D, 서버 비주얼 디버깅 툴 개발
+  - 2017 NCSOFT 디렉터스컷에서 최초 공개
+    (youtube.com/watch?v=8rDww2tLRaY, youtube.com/watch?v=nXP8cgOKiHE)
+
+※ 이전 경력(2007–2015): 국내·일본·중국·태국 등에서 다수 타이틀을 정식 상용 서비스·라이브 운영하며
+  서버 안정화·장애 대응·라이브 패치를 직접 경험.
+
+● 프로그램팀장 — ONE for kakao (모바일 액션RPG)
+  코어크리에이티브 | 2014 – 2015 (Unreal Engine 3)
+  - 서버 구조·네트워크 프레임워크 전체 구현, 클라 UI·툴·사내 개발환경, 서버 팀 리드
+
+● 서버파트리더 — 트리니티사가·드리프트러시 (모바일 RPG·레이싱)
+  위메이드엔터테인먼트(오르카) | 2013 – 2014 (Unity3D)
+  - 웹+소켓 통합 C# 서버 프레임워크, 결제·운영툴·부하 테스트
+
+● 프로그램팀장 — 형!·오빠·드래곤 도와줘 (모바일 시뮬레이션RPG)
+  자이언트드림 | 2011 – 2013 (Unity3D)
+  - 국내·일본·중국 서비스, 직접 운영, 자동화 툴·DB 최적화
+
+● 서버팀장 — 슈퍼 다다다 (PC 캐주얼 레이싱)
+  KB온라인(SEED) | 2010 – 2011 (Gamebryo)
+  - 서버 프레임워크 교체, 빌링/보안 연동, 국내·태국 서비스
+
+● 서버팀원 — 와일드 플래닛 (PC MMORPG)
+  액토즈소프트(프롬나인) | 2007 – 2010 (Gamebryo)
+  - 대규모 멀티플레이 시스템, DB 튜닝, 패치·리소스 시스템
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 보유 기술 / Skills ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+C++ · C# · TypeScript · Python · Lua · GDScript · Orleans · gRPC · ASP.NET ·
+Node.js · IOCP · WebSocket · MSSQL · Redis · Garnet · MongoDB · EntityFramework ·
+Unreal Engine · Unity3D · Godot Engine · Recast/Detour · MCP · Local LLM · Perforce · Jenkins
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 수상 · 활동 ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+· NCDP 개발자 컨퍼런스 최우수상 (2019) — 주제: "1000 vs 1000 대규모 유저를 채널 없이 서비스 하기 위한 고민들"
+· 서버 최적화·기술 자문 (타 프로젝트·타 회사) — 트릭스터M 동접 2천→8천(4배)
+· NCSOFT 시니어 전문면접관·Job Title 운영위원 (Programming, 2019–2021)
+· ETRI 공동 기술 개발 (2010) — 온라인 게임 서버 부하 테스트 기술 개발 협력
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 학력 / Education ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+홍익대학교 컴퓨터정보통신소프트웨어전공 (2000 – 2007)</textarea>
+  </div>
+
+  <!-- ============ 상세 (통합 경력서) 뷰 ============ -->
+  <div id="view-detail" class="view detail">
+<!-- DETAIL:START -->
+<h1>오정록 (Jeongrok Oh) — Technical Director / MMO Server Architect</h1>
+<hr />
+<h2>0. 인적 사항</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>이름</td>
+<td>오정록 (Jeongrok Oh / 吳貞祿)</td>
+</tr>
+<tr>
+<td>E-mail</td>
+<td><a href="mailto:jungrok5@gmail.com">jungrok5@gmail.com</a></td>
+</tr>
+<tr>
+<td>GitHub</td>
+<td><a href="https://github.com/jungrok5">github.com/jungrok5</a></td>
+</tr>
+<tr>
+<td>병역</td>
+<td>육군 병장 만기전역 (전산, 2001-11 ~ 2004-01)</td>
+</tr>
+<tr>
+<td>직무</td>
+<td>게임 서버 프로그래머 / TD (Technical Director)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>1. 핵심 역량</h2>
+<ol>
+<li><strong>MMO 서버를 백지에서 끝까지</strong> 반복 설계·구축 — 네트워크·동시성(락프리)·네비게이션·서버 물리·분산 서버(Orleans)를 근본부터, 여러 프로젝트에서 0→1 (리드 서버 프로그래머 / TD)</li>
+<li>PC MMORPG, 모바일 캐주얼·액션RPG·시뮬레이션RPG, 유저 창작 메타버스, 분산 서버 기반 RPG 등 <strong>다양한 장르·플랫폼·아키텍처</strong> 경험</li>
+<li><strong>난제 해결과 성능 최적화</strong> — MMO 특유의 서버 난제를 풀고 프로파일링으로 CPU·메모리·네트워크·DB 병목을 제거해 동접·처리량을 수 배로 (한 필드 2,000 vs 2,000 대규모 전투, 거대 NPC 전투, 파괴되는 지형, 캐릭터 충돌 처리, 3D 비행 네비게이션, 채널 없는 대규모 동시 서비스, 트릭스터M 동접 2천→8천, DB 부하 개선 등)</li>
+<li>서버뿐 아니라 <strong>클라이언트·툴·웹·운영툴·개발 인프라·CI</strong>까지 커버하는 폭넓은 실무</li>
+<li>새로운 기술에 대한 거부감 없이 <strong>빠른 습득·적응</strong>, 다양한 언어 사용 / 최근 <strong>AI(MCP·에이전트·로컬 LLM)로 팀 개발 생산성 향상</strong>과 <strong>보안·비용·효율 측면의 로컬 LLM 활용</strong>에 관심을 두고 진행</li>
+</ol>
+<blockquote>
+<p><strong>매니징보다 기술을 직접 주도하고 혁신을 만들어내는 역할을 지향</strong>합니다. 현재는 디렉터 직책이 아닌 최전선 실무 트랙에서 <strong>설계 방향을 정하고 팀 표준을 세우는 방식으로 팀의 기술을 이끕니다.</strong></p>
+</blockquote>
+<hr />
+<h2>2. 경력 요약 타임라인</h2>
+<table>
+<thead>
+<tr>
+<th>기간</th>
+<th>회사 / 조직</th>
+<th>직무</th>
+<th>직책</th>
+<th>주요 프로젝트 (플랫폼·장르)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2024-11 ~ 현재</td>
+<td>㈜NCSOFT / 판테라개발실</td>
+<td>TD</td>
+<td>팀원</td>
+<td>Panthera (블소 IP 키우기류 RPG · 분산 서버)</td>
+</tr>
+<tr>
+<td>2023-02 ~ 2024-11</td>
+<td>㈜NCSOFT / 소셜컨버전스실</td>
+<td>TD</td>
+<td>TD</td>
+<td>미니버스 PC버전 (언리얼엔진, 하우징 MMO)</td>
+</tr>
+<tr>
+<td>2021-06 ~ 2023-02</td>
+<td>㈜NCSOFT / Miniverse (NR Seed)</td>
+<td>TD</td>
+<td>팀원</td>
+<td>미니버스 Web버전 (고도엔진, 유저창작 메타버스)</td>
+</tr>
+<tr>
+<td>2020-11 ~ 2021-06</td>
+<td>㈜NCSOFT / AION2 (서버 교체 이후)</td>
+<td>TD</td>
+<td>팀원</td>
+<td>AION2 — 서버 교체·재구축 · <em>트릭스터M 최적화 파견(2020-12~2021-02)</em></td>
+</tr>
+<tr>
+<td>2017-02 ~ 2020-11</td>
+<td>㈜NCSOFT / AION2</td>
+<td>TD</td>
+<td>TD</td>
+<td>AION2 (MMORPG)</td>
+</tr>
+<tr>
+<td>2016-01 ~ 2017-02</td>
+<td>㈜NCSOFT / Tempest</td>
+<td>서버 프로그래머</td>
+<td>팀원 (팀장 대행)</td>
+<td>AION Tempest (아이온 모바일 MMORPG)</td>
+</tr>
+<tr>
+<td>2014-10 ~ 2015-11</td>
+<td>㈜코어크리에이티브 / 개발</td>
+<td>서버 프로그래머</td>
+<td>프로그램팀장</td>
+<td>ONE for kakao (모바일 액션RPG)</td>
+</tr>
+<tr>
+<td>2013-08 ~ 2014-10</td>
+<td>㈜위메이드엔터테인먼트 / 오르카</td>
+<td>서버 프로그래머</td>
+<td>서버파트리더</td>
+<td>트리니티사가, 드리프트러시 (모바일)</td>
+</tr>
+<tr>
+<td>2011-06 ~ 2013-07</td>
+<td>㈜자이언트드림 (KB온라인 분사) / RedRocket</td>
+<td>프로그래머</td>
+<td>프로그램팀장</td>
+<td>형!도와줘!, 오빠 도와줘!, 드래곤 도와줘 (모바일)</td>
+</tr>
+<tr>
+<td>2010-05 ~ 2011-06</td>
+<td>㈜KB온라인 / SEED</td>
+<td>서버 프로그래머</td>
+<td>서버팀장</td>
+<td>슈퍼 다다다 (PC 캐주얼 레이싱)</td>
+</tr>
+<tr>
+<td>2007-03 ~ 2010-05</td>
+<td>㈜액토즈소프트 / 프롬나인</td>
+<td>서버 프로그래머</td>
+<td>팀원</td>
+<td>와일드 플래닛 (PC MMORPG)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>3. 상세 경력 기술 (시간순: 현재 → 과거)</h2>
+<h3>3-1. Panthera (블레이드&amp;소울 IP 키우기류 RPG · 분산 서버 백엔드) 〔현재 프로젝트〕</h3>
+<ul>
+<li><strong>기간</strong>: 2024-11 ~ 현재 (2026-06 기준 진행 중)</li>
+<li><strong>회사 / 부서</strong>: ㈜NCSOFT / 판테라개발실 (→ 2025-04 서버팀)</li>
+<li><strong>직무 / 직책</strong>: TD / 팀원 (기반 설계·아키텍처·컨텐츠·최적화·개발 인프라 전반)</li>
+<li><strong>개발환경</strong>: C#, ASP.NET Core, <strong>Orleans(Grain 분산 서버)</strong>, gRPC → TCP, EntityFramework, C++(StatFormula/C++20), UnrealEngine5, MSSQL(저장프로시저·SQL Server DB 프로젝트/dacpac), Redis(Stack) / Garnet, Protobuf, .NET Aspire, Perforce, Jenkins, VSCode/Copilot·Cline, Claude Code · MCP, 로컬 LLM(llama.cpp)</li>
+</ul>
+<p><strong>핵심 성과 (실측 수치)</strong> <em>(단일 장비 로컬 벤치·병목 규명·상한 측정치, 실서비스 튜닝 전 값)</em></p>
+<ul>
+<li><strong>gRPC RPS</strong>: 순수 gRPC 서버 1만 유저/50만 요청 → <strong>초당 약 24만 req</strong> (Panthera LobbyServer 약 16만, 동일 조건 WebAPI 약 12만 → gRPC 우위)</li>
+<li><strong>WebAPI RPS</strong>: 5만 명까지 지연 없음, 부하 클라 병렬화 개선(Task.WhenAll→Parallel)으로 10만 처리 수 초 → 0.7초, 단일 장비 최대 초당 약 20만 건</li>
+<li><strong>EntityFramework TPS</strong>: 100만 호출 단순 SELECT 초당 4.5만 → (Compiled Query) 4.7만 → (AsNoTracking) <strong>5만 건</strong></li>
+<li><strong>TokenTests</strong>: 요청마다 출력되던 Debug 로그 제거로 <strong>10초 → 0.5초</strong> (5천 명 접속 실패 해결), 이후 1만·5만 명 안정</li>
+<li><strong>전 서버 캐릭터명 검색</strong>: 더미 <strong>1억 건</strong> 벤치로 MSSQL Full Text Search 채택 (LikeContains 타임아웃, Redis String JSON 1억 건 32GB로 포화)</li>
+<li><strong>로컬 LLM 코딩 스택</strong>: 16일·83커밋 체계적 검증으로 3모델(Qwen3.6-35B-A3B Q4 21GB 등) 배포, 구형 <strong>RTX 2080 Ti(11GB)에서 3모델×3CL 9/9 완주</strong> 재현성 검증</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong></p>
+<p><em>I. 서버 기반 / 아키텍처</em></p>
+<ul>
+<li><strong>Orleans 분산 서버 기반 구축</strong> (2025/02~06): 클러스터/Grain 기반 연구·환경 구축, Grain 배치·교차호출 차단, 역할별 서버 분리, 대시보드·타이머·옵저버, 세션 관리 분리, StatelessWorker 생명주기, 제어 서버 제거 및 랭킹/커뮤니티 컴포넌트를 커뮤니티 서버로 이전, 랭킹 서비스 Grain 전환, gRPC→Grain 교체 기반, 리포지토리 Grain 도입, 샤드 레거시 제거, silo graceful shutdown·종료 순서 처리</li>
+<li><strong>데이터 파이프라인 / 코드 생성 / StaticData</strong> (2025/01~ 지속): proto/enum 코드 생성 정비, CSV 로더, FDateTime/Timestamp 지원, proto 문서 생성·멀티라인, StaticData 검증 환경, ConstValue 공통 상수 테이블, StringVsHash·가넷 클러스터 벤치마크, 서비스 인터페이스·DispatchProxy 코드 생성, ObjectMapper 도입, 저장프로시저 자동 생성툴, 에러코드 자동 생성, GameClock으로 DateTime.UtcNow 일괄 교체, 엔티티 문서화</li>
+<li>
+<p><strong>StatFormula(스탯포뮬러) &amp; 전투력 / 전투 검증</strong> (2025/01~2026/06, 장기): C++ StatFormula DLL을 WorldServer 연동·디버깅 환경, 컴뱃매니저 테스트 코드, 클라-서버 스탯·랜덤 시드 동기화, Character/Item Base 데이터 적용, 전투용 스탯 구조화·grain 함수화, Stat/State 컴포넌트화, CombatPower 타입 통일·계산 시점·캐시 구조, Final 스탯·Dirty 분리·버프 반영, 벤치마크 및 버퍼풀→TLS 교체, C++ 테이블 핫리로드, zerocopy·SPAN·메모리풀로 마샬링 복제 제거, 마법인형·펫 스탯 일치화, C++20 설정(안드로이드 빌드 대응), 예외 핸들링 서버 적용, C++ 증분빌드</p>
+</li>
+<li>
+<p><strong>아키텍처 세부 (사내 위키 기반)</strong></p>
+</li>
+<li><strong>StaticData 파이프라인 proto 단일 소스화</strong>: "언리얼 DataTable→proto" 흐름을 역전해 <code>.proto</code>를 스키마 단일 진실원으로 사용. C# protoc 플러그인 버그를 피해 <strong>C++ protoc 플러그인 자체 구현</strong>, 커스텀 필드 옵션(uproperty/default_value/localized/csv_only 등)·주석까지 서버·클라 코드 + CSV로 자동 생성(배치 1회로 동시 반영)</li>
+<li><strong>StatFormula 구조 개선(Raw Input + 코드 생성)</strong>: 서버에 <strong>Roslyn Source Generator</strong>(진단 코드 STAT002~010), 클라에 <strong>CRTP + Trait 2-레이어 검증</strong> 도입 → 신규 스탯 카테고리 추가 시 서버 코드 약 15줄로 축소, 11개 중 8개 GetStat() 자동 생성. 서버 프로그래머가 proto 스펙을 몰라도 컴파일러 진단만으로 작업 완결</li>
+<li><strong>StaticData 유효성 검증</strong>: WorldServer 바이너리를 <code>--validate=true</code>로 검증 도구화(정상 부팅=검증 통과, ExitCode로 CI/퍼포스 트리거 연동), 클라 <code>FGameDataValidator</code> 연동</li>
+<li><strong>샤딩 &amp; 샤드키 주입 개선</strong>: <code>ShardDbContext</code>+Factory로 AddDbContextPool 유지한 채 런타임 샤드 주입, <strong>DispatchProxy 기반 GrpcClientProxy</strong>로 모든 gRPC 호출에 샤드키 자동 주입, Aspire ConnectionString 배열 지원</li>
+<li><strong>DB 형상 관리</strong>: SQL Server 데이터베이스 프로젝트로 테이블/SP/뷰 스크립트화, <strong><code>.dacpac</code> + SqlPackage</strong>로 증분 배포·Pre/PostDeployment 마이그레이션·스키마 비교 CI/CD 체계</li>
+<li><strong>통합 캐릭터 데이터 &amp; 서버 범위</strong>: 통합 캐릭터 데이터 중심, <code>DB &gt; 샤드(1 DB) &gt; 서버 그룹 &gt; 서버</code> 인원 규모 계층 정의로 분산 구조 컨텐츠 범위 통일</li>
+</ul>
+<p><em>II. 전투 / 성장 컨텐츠</em></p>
+<ul>
+<li><strong>PVP &amp; 랭킹</strong> (2025/02~07): 랭킹 테이블/DB 설계, PVP 랭킹, ELO 계산, 퀵매치, 랭킹 리셋·동시성, PlayerGrain으로 PVP/랭킹/컴뱃매니저 이전, PVP 티켓 소모·구매, CombatManager→CombatValidator 분리, 닉네임 변경, CharacterEntity Profile/CombatPower, PVP Currency 전환·승리 보상, 데드락 구조 개선</li>
+<li><strong>영역전 (대형 컨텐츠)</strong> (2025/04~2026/01): Static 테이블·프로토콜 설계, 커뮤니티 서버·DB 신설, 입퇴장·공격 시작/종료, 스케줄링·매칭, 시즌 리셋·재화·입장 횟수, 데이터 변경 구독, 통합 캐릭터 동기화, 봇 입장·운영툴 연동</li>
+<li><strong>슬라임대난투 (3:3 PVP, 대형 컨텐츠)</strong> (2026/01~03, 5월 보강): 3:3 PVP 집중 구현, 시즌 변경·랭킹 삭제, 운영툴·로그 보강, 보상 메일·시즌 데이터 관리, 럭키백 대상 제외, 안정화, 참가 보상 지급</li>
+<li><strong>용던 / 챕터 / 방치보상 / 레벨·EXP</strong> (2025/06~12): 레벨/EXP 보상 테이블·세션 종료 시 레벨 업데이트, 챕터 서버, 방치보상(데이터 모델링·광고 티켓·초기화 빌더), 용던 프로토콜·입장/포기/부활·룰렛·웨이브·클리어 보상·난이도, 방치보상 리뉴얼, 초기화 카운터 KST 5시 통일</li>
+<li><strong>소셜 시스템</strong> (2025/08~2026/01): 친구(Follow) 데이터 모델링·API, 럭키백 API·전송/수령/리셋, 도움 요청/응답/목록, 초기화 카운터, 맞팔, 알림 시스템, 브로드캐스팅, Redis Search 닉네임 검색, 추천 친구, 페이징, 세션 중복 버그 수정, UI 프로토타이핑</li>
+<li><strong>캐릭터 정보 / 칭호 / 버프</strong> (2025/03~2026/01): 타 캐릭터 조회 구조·프로토콜, 버프 구현(서버 무틱·클라 트리거·절대시간 방식)·스탯 계산·클라 연동, 칭호 로직·State 로드·획득 조건, 캐릭터 정보창, Stat &amp; State(나/타인 정보 표현 분리)</li>
+<li><strong>오픈필드 멀티플레이어 동기화</strong>: MO 수준 실시간 이동 동기화(동기화 영역당 100명 이하), 입장/퇴장/위치 갱신/구독 + 생성/소멸/<strong>이동 배치</strong>/외형/강제 퇴장 스트림 알림, 비활동 타임아웃 강제 퇴장</li>
+<li><strong>공용 시스템 설계</strong>: 알림(유저/서버/서비스 전체 단위 범용) · 초기화 카운터(기간 경과 시 자동 초기화되는 횟수 제한)를 기반으로 친구·도움·럭키백 상호 의존 시스템 구축 · 랜덤 동기화(서버 발급 시드로 클라 계산 후 종료 시 서버 재계산 교차검증)</li>
+</ul>
+<p><em>III. 데이터베이스 / 성능 / 테스트</em></p>
+<ul>
+<li><strong>데이터베이스 성능 &amp; 저장프로시저</strong> (2025/09~2026/03): SQL 쿼리 캡쳐·로깅, 저장프로시저 호출 구조화·SP 교체, Dapper GUID 타입핸들러, 데드락 재현·개선, <strong>대규모 "데이터베이스 부하 개선"</strong>(SP 전면 교체, WRITELOG 감소, 배치 처리, holdlock 제거, 데드락/에러코드 리턴 수정, DMV Wait 조회·쿼리스토어 초기화 운영툴 연동)</li>
+<li><strong>부하 테스트 &amp; 통합 테스트 인프라</strong> (2025/04~2026/05): 스크립트 동적 컴파일·FSM·파일 로그, gRPC RPS 측정, Winsock 후킹·소켓옵션·압축·분산 실행·EntityFramework TPS 최적화, 통합 테스트 핫리로드·Aspire 연동·병렬, 젠킨스 통합, 몽키 테스트, CSV 캡쳐, 분산 부하 제어, 메모리 폭증 방지</li>
+</ul>
+<p><em>IV. 네트워크 / 버전 / 빌드 / 도구</em></p>
+<ul>
+<li><strong>네트워크 레이어</strong> (2025/11~2026/06): 네트워크 지연 시뮬레이션, 디버그용 프록시 정리, <strong>gRPC→TCP 교체</strong>(토글 가능한 TCP transport 어댑터, 분산 트레이스 복구, 헬스체크 대응), TCP 레이어 데이터 압축</li>
+<li><strong>프로토 버전 관리 / 버전 정합성</strong> (2026/01~06): proto 체크섬·버전 관리, 젠킨스 빌드 시 프로토버전 수정, 버전 미스매치 알림, 버전 정합성 체계(스태틱 데이터·스탯포뮬러·전투 코드 결정론성 클라-서버 비교), 테이블 데이터 해시 캐시</li>
+<li><strong>운영툴 / 웹콘솔 / 시각화</strong> (2025/12~2026/04): 운영툴 신규·개선, gRPC 로그 공유·시각화, 플레이어 조회·시즌 데이터 관리, 서버 클러스터 시각화툴, 사내 웹 콘솔(개인서버 실행·테스트 스크립트 실행), Shipping 빌드 콘솔명령, 웹콘솔 안정화·등급별 봇 생성</li>
+<li><strong>빌드 / CI / 개발 인프라</strong> (2025/02~2026/06): P4 연동, 서버 빌드 알림(팀즈), UnrealProjectTool·언리얼 버전 셀렉터, 클라이언트 공유 코드 증분 빌드, .NET 9→10 전환, 통합테스트 젠킨스 daily, 서버 리눅스 빌드, StatFormula C++ 증분빌드, 빌드 트리거 전용 job·알림</li>
+<li><strong>AI · Claude 기반 개발 도구</strong> (2026/03~05) — <em>프로젝트의 핵심 차별점</em></li>
+<li><strong>부하 테스트 MCP 서버</strong>: 스크립트 방식이던 부하 테스터에 MCP 서버 추가, AI가 자연어 테스트 요청을 gRPC 호출 시퀀스로 변환·실행. gRPC 리플렉션 기반 API 자동 탐색(신규 API도 설정 없이 즉시 테스트), Protobuf↔JSON 변환, 기존 스크립트 재사용 (<code>ModelContextProtocol</code> .NET SDK)</li>
+<li><strong>AI 게임 서버 테스트 에이전트 팀</strong>: 테스터(자연어→MCP 호출) / 분석가(여러 서버 로그 + 부하 테스트 로그 + DB 3중 교차검증 보고서) / DB 매니저(DB 초기화·정합성) / 서버 매니저 4종을 에이전트로 구성, "캐릭터 5개 접속해 친구 맺고 팀PvP 해줘" 수준의 자연어로 테스트→로그 분석→DB 검증→에러 코드 추적→보고서 자동화. 자기 개선 규칙(인프라 교훈 자동 축적) 내장</li>
+<li><strong>AI 멀티에이전트 코드리뷰</strong>: 에이전트 팀 + 리더 2차 검증 구조로 서버·DB 프로젝트 전수 리뷰, 실제 결함 다수 발견·확정</li>
+<li><strong>로컬 LLM 코딩 스택 구축</strong>(사내 코드 외부 유출 없이): 엔진 Ollama→llama.cpp 이관, Context Collapse(128K에서 92% 저하) 등 실측 규명, Mamba-Transformer(Nemotron) chat template 버그 수정, Hermes↔OpenAI tool-call 호환 레이어, 최종 3모델(Qwen3.6-35B-A3B·Gemma-4-26B·Ministral-3-8B) 원클릭 배포. <strong>결론: 코드 리뷰 품질은 브랜드가 아닌 파라미터 스케일이 좌우</strong>(로컬 30B급 ≈ Claude Haiku, human review 1차 스크린 용도로 재정의)</li>
+<li><strong>사내 웹 콘솔 &amp; 개발 통합 런처 AI 어시스턴트</strong>: 온디바이스 LLM(Qwen2.5-1.5B) 자연어→치트/빌더 명령어 변환, 서버 로그·크래시 분석·P4 CL 코드 리뷰 4종(LLM Provider 추상화로 Claude CLI ↔ 사내 로컬 LLM 서버 전환), 데이터 정의 편집 툴을 Uno Platform으로 1일 바이브 코딩</li>
+<li><strong>개발 통합 런처</strong> (2026/04~06): 신규 구축, 위키 파일 업로드, 서버로그 AI 어시스턴트, 트레이/아이콘/노티, TCP 교체 헬스체크 프로브 대응</li>
+<li><strong>데이터 기반 전투 / 리플레이 (전투 시뮬레이터)</strong> (2026/06): 리플레이 데이터 뷰어·목업 데이터, 데이터 기반 전투 서버 사이드, 전투 시뮬레이터 구조 리뷰·테스트 코드</li>
+</ul>
+<p><strong>주요 성과 요약</strong> (성과평가 2025 기준)</p>
+<ul>
+<li>기반 설계·개선: 기획 데이터 관리·유효성 검증(Proto 문서 기반 도입), 서버 성능 측정(Metric 수집·모니터링), gRPC 테스트·API 문서 공유, 동시성 제어 기반(Lock 없는 컨텐츠·모든 코어 사용·Orleans), Object Mapper, 서버간 상태 관리 체계, gRPC→Grain 전환, Stat &amp; State 개선, 월드 통합 캐릭터 관리, 메시지 브로드캐스팅 구조, 저장 프로시저 도입, DB 동시성·데드락 구조 개선</li>
+<li>컨텐츠: PVP·랭킹·영역전·스탯·버프·EXP 보상·방치 보상·챕터·친구·도움·알림·럭키백·전투·칭호·용던</li>
+<li>최적화: API·gRPC/Orleans 레이어·DB 계층·브로드캐스팅·스탯포뮬러</li>
+<li>개발 환경 개선: 문서/코드 생성 자동화(패킷·기획 테이블·DB 구조·시퀀스 다이어그램), 통합 테스트 환경(스크립트·컨텐츠 단위·데일리 빌드·몽키·네트워크 지연), 다수 툴 개발·유지보수</li>
+</ul>
+<hr />
+<h3>3-2. 미니버스 — PC버전 / 언리얼엔진 (유저 창작 MMO → 하우징 MMO)</h3>
+<ul>
+<li><strong>기간</strong>: 2023-02 ~ 2024-11 (약 21개월) — 조직: 미니버스실 → 소셜컨버전스실</li>
+<li><strong>회사 / 부서</strong>: ㈜NCSOFT / 소셜컨버전스실</li>
+<li><strong>직무 / 직책</strong>: TD / TD (<strong>2023-02-01부터 직책도 TD로 임명</strong>, 2023-02~03-05 EDIT&amp;PLAY팀 팀장 겸직)</li>
+<li><strong>개발환경</strong>: C#(SpaceServer), C++·UnrealEngine5, TypeScript(데디), MSSQL, Windows / Perforce, Visual Studio, Godot(서버 뷰어), Air</li>
+<li><strong>배경</strong>: 모든 디렉터가 나가며 프로젝트 리셋. 조직 재구축·언리얼엔진 교체. 리셋 후에도 유저 창작 유지 → 데디서버에 TypeScript 게임 제작 환경 구축. 이후 방향이 하우징으로 변경되며 유저 스크립트 부분 제거, MMO 서버로 교체. <strong>"수천만 개의 프랍을 단일 공간에 배치해도 견디는" 초대규모 UGC 처리를 서버·클라 양쪽에서 "총량이 아니라 활성량만 처리" 철학으로 설계·구현.</strong></li>
+</ul>
+<p><strong>핵심 성과 (실측 수치)</strong> <em>(단일 장비 로컬 벤치·상한 규명 값)</em></p>
+<ul>
+<li><strong>단일 공간 5,000만 개 이산 메시 프랍</strong>을 풀 틱(타임딜레이션 없음) 처리 — 서버 스테이지 Network/Space/Broadcast 0ms대, Job 7~31ms</li>
+<li><strong>한 시야(viewport) 내 128만 개 프랍(콜리전 ON)</strong> 렌더링 유지 (밀집 11fps / 원경 26.6fps)</li>
+<li><strong>동시 1,000~2,000명대 빌더</strong>(1,100·2,100 봇, 실 클라 패킷 캡처 재생)가 한 공간에서 동시 밀집 건축, 나선/원형 1.5만~1.8만 프랍 즉시 생성 중에도 서버 0ms대(Job 18~19ms)</li>
+<li><strong>ISM 인스턴싱 최적화 실측</strong>(10만 개 스폰): 드로우콜 20,967 → 503회, FPS 16.5 → 47.4, 스폰 49.8s → 2.6s</li>
+<li>서버 메모리 28GB(피크 40GB, 프랍당 약 560B), 클라 17GB(피크 19GB)</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong></p>
+<ul>
+<li>리비저닝: 언리얼 개발 환경 구축, 리비저닝 목표에 맞춘 프로그램 중요 목표 수립, 스크립트 기반 로직 제작 방향성 수립</li>
+<li>방향성·기반 설계: 테이블·템플릿, 공간·채널, 공간·프랍 구조 설계, 아이템-프랍 관계 정리</li>
+<li>리서치: 데디케이트 서버, 포트나이트 에디터, 스테이블 디퓨전, 언리얼 인터넷 라디오 플레이, 웹브라우저 게임 실행, 맵/최소 프랍 사이즈 확정, 높은 곳 이슈, 플레이투게더, 데디 서버 심리스</li>
+<li>데디서버 컨텐츠: 빌드 모드 태핑, EyeDropper, Grab, Undo, 머징 프랍, 벽지 프랍, 연속 행위(설치·삭제·색상), 자석, 미세조정, 피아노 프랍, 로그인 플로우 개선</li>
+<li>데디서버 최적화: 클라 기반 봇 테스트, 데디 스폰 성능·RPC·복제·콜리전 최적화, 언리얼 메모리릭 추적·개선</li>
+<li>MMO 서버 전환: 패킷 제너레이터, 네트워크 샘플 언리얼 클라이언트, 서버측 네비메시 Export·Build, 서버 뷰어, PC·NPC 기본 이동, 서버 지형·충돌 처리 기반, 템플릿 테이블 사용 구조 개선, 서버측 물리 엔진 리서치</li>
+<li>MMO 서버 컨텐츠: 발사체, 미니게임 기반, 플랫포머 프랍, 자동문 프랍, 마인크래프트 레드스톤식 로직 조합 기반 프랍, 노드 프랍, 하우징 리플레이</li>
+<li>MMO 서버 성능·최적화: 프랍 ISM 교체, LoadObject 개선, 바디인스턴스 직접 제어 최적화, 클라측 콜리전 청크 단위 ON/OFF, 네비메시 빌드 &amp; ISM 자료구조 리빌딩 배치 처리, 클라측 프랍 데이터 캐시 개념, 데이터 캐시용 가상 파일 시스템, 폭탄을 통한 대량 프랍 삭제 개선</li>
+<li>서버 사이드 다이나믹 네비메시(실시간 유저 지형 생성 대응 NPC 이동): 복셀 기반 비동기 네비메시 빌드, 동적 네비메시 타일 추가, NPC 이동 처리</li>
+<li>MMO 서버 미니게임 프로토타이핑: 프랍 조합으로 유저가 게임을 만드는 환경 구축</li>
+<li>(2024-11~12, 판테라개발실 이동 초기): 클라-서버 코드 공유(DLL 형태 C++·C# 공유, 리눅스 컴파일), 데이터베이스 형상 관리(코드 형태 버전 관리), 데이터베이스 샤딩 분산 처리(분산 트랜잭션·통합 조회), 배틀 시뮬레이터 서버측(리플레이 데이터 저장 방식, DLL 유지보수 최소화 방식)</li>
+</ul>
+<p><strong>기술 심화 (사내 위키 기반)</strong></p>
+<ul>
+<li><strong>서버 동시성 아키텍처(C#)</strong>: 공간(Space)당 단일 디스패처 스레드(20fps/50ms)가 공유 상태를 독점 변경하는 <strong>액터 모델 락프리</strong> 구조. 한 프레임을 Network→Writable→Space→Broadcast 스테이지로 분리(읽기는 Parallel.ForEach 병렬, 쓰기만 단일 스레드 직렬) → 락 경합 0. IOCP 스레드풀을 P/Invoke로 직접 구현 + 코어 고정(SetThreadIdealProcessor), HangDetector(Job 5초 초과 시 Teams 경보), Snowflake 분산 ID.</li>
+<li><strong>네트워크·대역폭</strong>: Chunk(4800) 공간분할 + 대상별 차등 시야(AOI) 복제, 프랍 전용 복제 모델(PassThroughPcs), Baked Prop 페이징(사전 직렬화 패킷을 틱당 200 전송/300 삭제, 부하 기반 동적 시야 스케일링), <strong>ReferenceBuffer zero-copy 브로드캐스트</strong>(ArrayPool+원자적 참조 카운트로 직렬화 1회·할당 1회, 100명 브로드캐스트에도 GC 최소), SocketAsyncEventArgs 풀링·8KB 배칭.</li>
+<li><strong>클라 렌더/물리 최적화(UE5)</strong>: 논리/표현 이원화(정적=ISM 인스턴스, 상호작용만 액터), 인스턴스 색상=GPU 커스텀 데이터(단일 머티리얼·단일 배치), 공간분할 ISM(128m 격자 컬링), <strong>Prop Chunk</strong>(플레이어 인접 27칸의 충돌 바디만 동적 생성/파괴 → 프랍 1억 개라도 물리 씬 상주 바디는 상수, FBodyInstance 직접 관리), O(1) RemoveAtSwap 삭제, 프랍 병합(비트 플래그 룩업), 오프라인 사전 가공(아틀라스·썸네일·MVExport 커맨드릿), FPS 기반 자동 화질 강등.</li>
+<li><strong>서버사이드 다이나믹 네비메시</strong>: 1,000명이 실시간으로 지형을 만들어 사전 베이크 불가 → 복셀(Recast HeightField, <code>.voxels</code> LZ4) + <strong>DotRecast(Recast/Detour .NET 포팅)</strong>로 프랍 변경 시 영향받은 타일만 재계산(수~수십 ms). 재빌드는 백그라운드 스레드, 결과 교체는 Space 메인 스레드 Job으로(쓰기 단일 스레드 원칙 관철), Interlocked로 중복 빌드 차단.</li>
+<li><strong>서버 물리</strong>: Jitter2로 강체 시뮬 없이 충돌 쿼리만(Raycast·거리 검사), Chunk 브로드페이즈, 빠른 투사체 Capsule-Segment CCD, 대량 쿼리 Parallel.ForEach.</li>
+<li><strong>프랍 영속화(DB)</strong>: 집터(HouseArea) 단위 계층적 더티 플래그 + 1초 배치(같은 타입을 JSON 배열 1건으로 저장해 쿼리 최소화), DbJob 스레드풀 AccountId%N 라우팅, 종료 시 강제 flush, 대량은 LOB+Grid.</li>
+<li><strong>대량 공간 데이터 전략</strong>: 최악 51억 프랍/공간당 422GB 정량 분석, 3단 공간 분할(집터 16m→청크 48m→셀 256m), 프랍을 배경 데이터로 취급하는 SightIn(청크가 '거쳐간 캐릭터' 기록 → 재진입 시 재전송 없음)으로 트래픽 대폭 감소.</li>
+<li><strong>다이나믹 프랍 컨텐츠</strong>: (1) <strong>전기 회로 시스템</strong>(14종, 단방향 링크 그래프+전원 단일성 불변식으로 순환/무한루프 구조적 차단, Space Job 큐로 단계 전파) (2) <strong>MovingPlatform &amp; Node</strong>(클라·서버가 비트 수준 동일한 Hermite 스플라인 공유 → 절대좌표 대신 '구간+거리 4B'만 500ms 전송, dead-reckoning + 1D 오차 보정) (3) <strong>클라이언트-드리븐 NPC</strong>(장식 NPC 이동 시뮬을 근처 클라에 위임, 서버는 200ms 위치 1개만 검증·중계 → 부하가 'NPC 총수'가 아닌 '근처에 사람 있는 NPC 수'로 수렴, 2m 클램프 보안).</li>
+<li><strong>툴링</strong>: Godot(C#) 기반 서버 시각화 뷰어 자체 개발(IServerViewer로 캡슐화, 서비스 빌드 제외), 패킷 제너레이터(C# IDL+리플렉션+T4로 C#/C++ 코드 자동 생성), 기획(Template)·리소스(UE DataTable)·스키마(DB) 3계층 템플릿 구조를 인터페이스(Reader/Writer 주입)로 정리.</li>
+<li><strong>심리스/월드 설계</strong>: 스페이스 그룹 Local/Global 좌표 변환으로 인접 청크 논리 연결, 공간 리스트를 3D 행성 표면에 매핑하는 월드맵 프로토타이핑.</li>
+</ul>
+<p><strong>업무 성과</strong></p>
+<ul>
+<li>2차 사내 FGT 진행</li>
+<li>초대규모 UGC 처리 기법·규모 실증</li>
+</ul>
+<hr />
+<h3>3-3. 미니버스 — Web버전 / 고도엔진 (유저 창작 Web MMO 메타버스)</h3>
+<ul>
+<li><strong>기간</strong>: 2021-06-21 ~ 2023-02 (약 20개월) — 조직 코드명 NR Seed / M1·M2 (2021-06-21 반이동)</li>
+<li><strong>회사 / 부서</strong>: ㈜NCSOFT / Miniverse (NR Seed)</li>
+<li><strong>직무 / 직책</strong>: TD / 팀원 (팀원이지만 비전 구체화·기술 R&amp;D·서버 프레임워크 기술 리딩)</li>
+<li><strong>개발환경</strong>: C++, C#, Javascript, GodotEngine, Linux, Windows, MSSQL, MongoDB, Node.js, React, ASP.NET, WebSocket, HTML5, WebGL / Git, Visual Studio, VSCode, Jira, Confluence</li>
+<li><strong>배경</strong>: "유저가 세상을 만든다"는 비전으로 참여. 서비스 플랫폼·엔진 결정까지 다양한 기술·엔진·영역을 넘나들며 리딩, 스크립트 기반으로 유저가 게임을 만드는 기반 전반을 직접 구축.</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong></p>
+<ul>
+<li>허브스페이스 서버: recast 기반 지형 시스템 개발 — UE4 네비게이션메시 정보 서버 사용 위해 익스포트, recast를 C#으로 포팅하고 네비메시 빌더 구현, 길찾기·네비게이션 모듈화</li>
+<li>클라이언트 기술 스택 리서치: Android/iOS 네이티브 ↔ Godot·Unity 연동, Android ↔ Three.js·WebView, Godot 일부 화면 렌더링, React ↔ Godot, HTML5 JS 한글 입력, Web Worker, Flutter ↔ Godot, UNO, ASP.NET ↔ React</li>
+<li>NRChat 커뮤니티 서버 구축 (공간 기반 UCC 커뮤니티 플랫폼): ASP.NET 웹서비스 프레임워크, ASP.NET WebSocket 실시간 서비스 프레임워크, 로그인·계정생성·서버 생성/리스트·채널 생성/리스트, 채팅(룸 생성·입퇴장·채팅), 이미지·동영상 업로드/다운로드 서버·클라 모듈</li>
+<li>실시간 협업 에디터 태핑: JS 2D canvas 드로잉, Node.js·WebSocket 드로잉 객체 실시간 동기화, 동시 편집 문서 충돌·병합 없는 버전관리, JS 고성능 네트워크 처리 리서치, 웹에서 1000명 이상 마우스 커서 이동 처리, 편집 문서 기반 게임 play, Raycasting NPC 이동, 로블록스식 분산 물리 리서치, BehaviorTree + JS 런타임 실행 기반 유저 로직 제작</li>
+<li>Miniverse EDIT &amp; PLAY (Godot): Node.js 서버 → C# 교체, JSON 문자열 → binary 프로토콜 교체, Unity/Godot GDScript/Godot C# 비교, 실시간 객체 추가용 Godot 네비게이션 처리, ASSET 업로드·다운로드 서비스, 플레이 중 ASSET 배치·스트리밍 객체 생성, 서버사이드 루아 스크립트(CPU 제한·Sandbox), ASP.NET 웹소켓 실시간 서버 → 고도 데디서버 교체, 웹 기반·VSCode 플러그인 기반 루아 스크립트 개발 환경, 고도 기반 미니게임 엔진, 데디서버 개발 환경, 루아 → GDScript 교체, 고도 리소스·소스코드 암호화, 자동화 테스트 스크립트·키보드/마우스 녹화·재생, 다수 클라이언트 테스트용 원격제어(스트리밍)</li>
+<li>(2022년 심화) 스크립트 기반 유저 창작 환경 구축: 로블록스·ZEP·제페토·메이플스토리월드 분석·직접 개발, GDScript·VisualScript 런타임 실행·교체, PICO-8 모방 "GICO-8" 엔진을 고도로 구현하고 슈팅 게임 제작, 웹/VSCode/인게임 스크립트 에디터, 스마트프랍스크립트 개념, 커서 기반 3D 객체 배치, 프랍(텔레포트·도어·스위치·무빙플랫폼·NPC), 하우징·서바이벌·페인트맨 샘플, 유저 스크립트 UI 제작, 미니게임 통합, 유저 단위 저장소</li>
+<li>백엔드·프로파일링: 웹소켓 기반 대규모 유저 처리, 유저 창작 기반 동기화 정보 설계, 애셋 스트리밍·캐시, 공간/채널 설계, 루아 스크립트·스토리지 시스템, 공간 분산 처리, 서버 분산 구조, 데디 기반 서버 런처, TcpSocket/WebSocket/보안 웹소켓 성능 리서치, node.js·고도·C# 봇 클라이언트, 백엔드 최적화·부하분산 계획</li>
+<li>개발 프로세스: C#·GDScript 패킷 제너레이터, 소스·리소스 암호화, 윈도우 앱 빌드, NC 알림 시스템 연동, 웹 기반 클라이언트 로그 시스템, 엔진 로그 파일 분리</li>
+</ul>
+<p><strong>핵심 성과 (실측 수치)</strong> <em>(단일 장비 로컬 벤치·상한 규명 값)</em></p>
+<ul>
+<li>프로토타입(Node.js) → C# 데디 서버 전환, 1차 구조 개선 후 동접 2,000 / 3,000 / 5,000 시나리오 부하 검증</li>
+<li><strong>C# vs Node.js 서버 수용력 벤치</strong>: 동일 조건에서 C#이 약 1.5배 (C# 2,500 안정 / Node.js 1,500 안정)</li>
+<li>웹 실시간 협업 에디터 프로토타입에서 <strong>1,000명 이상 동시 마우스 커서 이동 처리</strong>, 충돌·병합 없는 동시 편집 버전관리</li>
+<li>소켓 성능 리서치: 순수 소켓 기준 WebSocket이 TCP 대비 약 3배 느림 → 상위 레이어 최적화 시 격차 소멸(구현체보다 처리 레이어가 성능 좌우) 규명</li>
+<li>루아 서버사이드 스크립트 부하 한계 규명(단일 스레드 500개 60ms / 1,000개 130ms) → 다인스턴스 스케일아웃 전환 판단</li>
+</ul>
+<p><strong>기술 심화 (사내 위키 기반)</strong></p>
+<ul>
+<li><strong>서버 아키텍처·부하 방법론</strong>: 방(room) 목적지 라우팅 특성상 L4 로드밸런싱 불가 → 커스텀 로드밸런서 설계, 정량 논거(동접 100만·서버당 7천 수렴 → SpaceService 142대)로 게이트웨이 직접 연결 채택. PING을 CLIENT/SERVER/NETWORK 계층으로 분해 계측(서버 네트워크 처리 3ms 미만). 봇 클라 자체 병목을 발견해 C#으로 재구현, 외형/데이터 캐릭터 분리로 순수 서버 부하 측정.</li>
+<li><strong>유저 창작 스크립트 런타임(핵심 R&amp;D)</strong>: "런타임 로직 레이어" 개념 정립(Static/Dynamic Layer, 무패치 런타임 코드·애셋 다운로드, Goal 판정은 서버 전용으로 치팅 방지). Godot 런타임 스크립트 주입 3종 기법을 엔진 소스 레벨까지 분석, MiniScriptApp(스페이스 앱)·SmartPropScript(프랍 앱, 프랍 간 메시지 교환)·스키마리스 커스텀 RPC 구현. GDScript↔VisualScript 변환 실험으로 노드 기능 해상도의 범용성-난이도 트레이드오프 도출.</li>
+<li><strong>클라 기술스택 검증</strong>: Unity vs Godot(GDScript/C#) 벤치, 멀티플랫폼 연동 매트릭스(Android/iOS Native+Godot 부분 렌더링, Three.js+WebView, Flutter·React+Godot) 실증, 웹 GDScript 에디터를 VSCode 플러그인(가상 파일시스템 확장)으로 포팅, EnpClient PCK 암호화(엔진 소스 수정, GDScript AES256 / PCK XOR, 로딩 영향 오차 내).</li>
+<li><strong>프로토타입/컨셉 증명</strong>: PICO-8 벤치마킹 팬터지 콘솔 "gico-8"을 Godot로 자작(슈팅 게임 완주)해 "쉽고 빠른 제작"의 원천 사고실험, 프랍 조합만으로 Survival·페인트맨(4인) 게임 구현, 한 공간 다중 게임 동시 플레이 성공.</li>
+<li><strong>ZEPETO식 모딩 전략 검증(후반)</strong>: 독립 Godot 빌드(game.pck)·웹 멀티게임을 미니버스 위에 동적 주입 성공 → "어떤 고도 게임이든 미니버스 위에서 서비스 가능" 실증, 고급 유저용 에디터 커스터마이징+PCK 업로드 병행 전략과 JS/TS 창작 기반 필요성 제시.</li>
+</ul>
+<p><strong>업무 성과</strong></p>
+<ul>
+<li>사내 FGT 진행</li>
+<li><strong>신입사원 공채 취업 설명회에서 미니버스(웹버전) 공개</strong> (<a href="https://www.youtube.com/shorts/Jqbj27VUMDI">영상</a>)</li>
+<li>인큐베이팅 단계에서 정식 프로젝트로 승격 (+ 알파)</li>
+</ul>
+<hr />
+<h3>3-4. 트릭스터M (캐주얼 MMORPG) — 서버 최적화 파견 〔AION2 재직 중〕</h3>
+<ul>
+<li><strong>기간</strong>: 2020-12 ~ 2021-02 (약 3개월) — AION2 소속을 유지한 채 파견</li>
+<li><strong>회사 / 부서</strong>: ㈜NCSOFT / 트릭스터M 사업부 (파견 지원)</li>
+<li><strong>직무 / 직책</strong>: TD (서버 최적화 지원·자문) / 팀원</li>
+<li><strong>개발환경</strong>: C#, Unity, Linux, Windows, Mysql / Git, Visual Studio</li>
+<li><strong>배경</strong>: 타 프로젝트(트릭스터M)의 요청으로 서버 최적화 지원 파견. 작업 시작 시 동접 약 2천 명 → 최적화 후 약 8천 명대까지 안정적 서비스 가능하도록 성능 개선 후 파견 종료.</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong></p>
+<ul>
+<li>최적화 영역: CPU, 메모리(메모리릭 제거), 필드·월드 수용량, 네트워크 트래픽, 데이터베이스 처리 / 최적화·보안·안정성 검토·가이드</li>
+<li>세부 최적화 내역</li>
+<li>순환 참조·잔존 객체 제거, 특정 객체 집중 종료 처리</li>
+<li>메모리릭 원인 객체 생성·소멸 트래킹 기능 추가</li>
+<li>프로파일러에 안 드러나는 병목 확인용 윈도우 성능 모니터 연동</li>
+<li>데이터량·read/write 빈도에 따른 dictionary/list 적합성 검토</li>
+<li>브로드캐스팅 최적화(시야 통합), DB commit 캐시 정보(횟수·콜스택) 추적, 캐시 기록 지연 추적, Akka 메시지큐 사이즈 추적</li>
+<li>DB 처리를 메인 디스패처 스레드풀과 분리</li>
+<li>동적할당 객체 사전 생성(pool)화, 패킷 수신부 동적할당 제거, Akka 메모리풀을 세션 단위 독립 풀로 사용</li>
+<li>소켓 옵션(nagle·타임아웃·버퍼 크기) 성능 테스트</li>
+<li>시야 진입 브로드캐스팅 패킷·이동 브로드캐스팅 패킷 동적할당 제거·재사용</li>
+<li>로그 파일 기록 동기 → 비동기, 메시지당 파일 open/close를 모아서 일괄 기록</li>
+<li>패킷 조합 버퍼 정적화·메모리풀, 소켓 send를 gathering 전송용 버퍼로 개선</li>
+<li>불필요한 런타임 동적 리플렉션 제거, 윈도우 &amp; 리눅스 성능 비교 테스트</li>
+<li>가이드 전달: 암호화 위험·성능, 트랜잭션 일관성, C# 객체 생성·소멸 처리, 잦은 DB 접근 최소화, DB 처리 검토·평가, 브로드캐스팅 최적화·필드 수용량 증대</li>
+</ul>
+<p><strong>업무 성과</strong></p>
+<ul>
+<li>국내 정식 서비스</li>
+</ul>
+<hr />
+<h3>3-5. AION2 — 서버 교체 이후 (MMORPG)</h3>
+<ul>
+<li><strong>기간</strong>: 2020-11 ~ 2021-06 (약 7개월, 미니버스 이동 직전까지)</li>
+<li><strong>회사 / 부서</strong>: ㈜NCSOFT / AION2</li>
+<li><strong>직무 / 직책</strong>: TD / 팀원 (<strong>2020-11-16 직책을 TD → 팀원으로 반납, 실무 집중</strong>)</li>
+<li><strong>개발환경</strong>: C++, UnrealEngine4, Windows, MSSQL / Perforce, Visual Studio, Redmine, StarUML</li>
+<li><strong>배경</strong>: 프로젝트 방향 재설정에 따라 서버를 교체·재구축하는 단계로, 이 시기에는 서버 실무(지형·네비게이션·비주얼 툴)에 집중했습니다.</li>
+<li><strong>비고</strong>: 이 기간 중 <strong>트릭스터M 서버 최적화 파견(2020-12 ~ 2021-02)</strong>을 다녀옴 (트릭스터M 파견 항목 참조 — 별도 소속 이동이 아닌 파견 지원).</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong></p>
+<ul>
+<li>교체 서버 코드베이스 분석: 네트워크·스레딩·메시지 처리 모델 분석 및 개선 리서치, 심리스용 필드 &amp; 액터 메시지·업데이트 처리 분석 및 한계 개선, 지형 처리·길찾기 분석</li>
+<li>서버 지형 처리 &amp; 길찾기 개선: 지형 데이터 익스포트 툴, 10K × 10K 필드 처리를 위한 지형·길찾기 정보 생성·로드 개선, 길찾기 문제 개선</li>
+<li>복셀 네비게이션 &amp; 복층 구현 + 서버사이드 3D 비주얼 툴 (2.5D 셀 기반 → 3D 복셀 기반 전환, 비행·3D 네비게이션 가능화)</li>
+<li>10K × 10K 복셀 지형 데이터 구조 설계</li>
+<li>복층 가능하도록 길찾기·객체 이동 로직 구현·수정</li>
+<li>서버상 OpenGL로 3D 맵뷰 구현</li>
+<li>지형 충돌 처리(활강, line of sight)</li>
+<li>3D 기본 객체 표현·픽킹·카메라 구현·구조 설계</li>
+<li>복셀 네비게이션 디버깅 기능</li>
+<li>서버사이드 2D 비주얼 툴 추가·개선: UI 모듈 업데이트, 렌더러 OpenGL 교체, 대규모 NPC 스폰, 에디터 멀티 뷰포트·탭, 오브젝트 찾기 개선, 메시지큐 모니터, 창 레이아웃 수동 저장, DebugDraw 정책, 에디터 렌더링 로직 개선, 필드 이미지 기반 이미지맵(필드 크기 제한 없이 2D 뷰어)</li>
+<li>서버 기반 자동 전투 리서치: Offline 상태일 때 BehaviorTree 기반 유저 캐릭터 자동 전투</li>
+</ul>
+<p><strong>업무 성과</strong></p>
+<ul>
+<li>필드 크기를 10K × 10K(10km)로 확장</li>
+<li>필드를 2.5D에서 3D로 전환 (복층·비행 네비게이션 가능화)</li>
+<li>서버사이드 3D 뷰어 도입</li>
+</ul>
+<hr />
+<h3>3-6. AION2 (MMORPG)</h3>
+<ul>
+<li><strong>기간</strong>: 2017-02 ~ 2020-11 (약 45개월)</li>
+<li><strong>회사 / 부서</strong>: ㈜NCSOFT / AION2 — 아이온 모바일(Tempest)에서 이어져 <strong>처음부터 구축한 프로젝트</strong></li>
+<li><strong>직무 / 직책</strong>: TD / TD (직책 TD는 ~2020-11-16까지 유지)</li>
+<li><strong>개발환경</strong>: C++, C#, UnrealEngine4, Windows, MSSQL, ASP.NET, Javascript / Perforce, Visual Studio, Redmine, StarUML</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong> (TD 역할 수행 중 실무 위주 기록)</p>
+<ul>
+<li>서버 구조 &amp; 프레임워크 전체 베이스 구현: 네트워크, 스레딩, 메시지 처리, 길찾기 &amp; 네비게이션, 필드 오브젝트 구조</li>
+<li>서버 컨텐츠 기본 구현: 캐릭터 이동 &amp; 활강, 전투 &amp; 스킬 &amp; 버프, 파티 &amp; 파티매칭, NPC FSM &amp; 이동 &amp; 그룹 이동, 대기열</li>
+<li>대규모 트래픽 처리 기술 리서치</li>
+<li>한 필드 2000 vs 2000 전투 구현</li>
+<li>네트워크 트래픽 분산 서버 구조</li>
+<li>셀 기반 분산 브로드캐스팅(기존 시야 주변 셀 브로드캐스팅 대비)</li>
+<li>사용되지 않는 비트 제거를 통한 네트워크 트래픽 감소</li>
+<li><strong>NCDP2019 발표</strong> (대규모 유저를 채널 없이 서비스 하기 위한 고민들)</li>
+<li>서버 충돌 처리 방향성 수립·아키텍처 설계</li>
+<li>클라이언트 스태틱 메시를 서버에서 충돌 가능한 환경 구축</li>
+<li>PC vs PC, NPC vs NPC, PC vs NPC 충돌 기본 구현</li>
+<li>사용 충돌체 종류·개념, 시야 Ray·이동 Ray 개념 정리</li>
+<li>서버-클라 충돌 정보 사용 방향 정리 및 UE4 데이터 익스포트 리서치</li>
+<li>PhysicsWorld, PhysicsSystem, CollisionShapes 아키텍처 설계</li>
+<li>충돌 성능 확보 리서치(grid, kd-tree, 시야 ray 높이 기반 전처리 데이터 생성 등)</li>
+<li>서버 사이드 대규모 Agent 처리 리서치: PC vs NPC 20000개 이동 충돌 테스트, 네비게이션·길찾기 Agent 재구현, 이동 범위 기반 충돌 분산·업데이트 tick 분할</li>
+<li>거대 객체 전투 방안 리서치: 방향·위치·높이 기반 부위 판정, 리소스 부위 데이터로 서버 본 애니메이션 처리 판정, 애니메이션 HIT 정보 추출로 충돌 처리·이동 애니메이션 동기화, 이동 궤적을 통한 큰 객체 스킬 처리</li>
+<li>멀티코어 대용량 메시지 처리 리서치: lock 없는 동기화를 넘어 모든 코어 효율 사용, 메시지큐 producer-consumer 효율 처리, 스레드풀 job 비동기 핸들링별 코어 활용성</li>
+<li>심리스 필드 리서치: 넓은 지형 네비게이션·빌드 성능 개선, 필드 단위 구성, 경계면 데이터 전달, 심리스 필드용 서버 구조</li>
+<li>개발 환경 편의·효율성: 운영툴(웹) 비주얼 기능(맵뷰어·draw·UI), 서버상 비주얼 디버깅, AI 실시간 디버깅, 기획 테이블 빌드 타임 검증·Report 시스템, 클라·서버 Crash Report 수집, 버그를 게임 정보·스크린샷과 함께 제보하는 시스템, 분산 환경 프로토콜 이동·데이터 비주얼 디버깅, 로그·수치 수집 확인 시스템</li>
+</ul>
+<p><strong>업무 성과</strong></p>
+<ul>
+<li><strong>2017 NCSOFT 디렉터스컷에서 AION2(아이온 모바일) 최초 공개</strong> (<a href="https://www.youtube.com/watch?v=8rDww2tLRaY">영상1</a> · <a href="https://www.youtube.com/watch?v=nXP8cgOKiHE">영상2</a>)</li>
+<li>AION IP 차기작으로 AION2 프로젝트 인정</li>
+<li>조직 단위 SEED에서 CAMP로 승격</li>
+<li><strong>NCDP 개발자 컨퍼런스 최우수상 수상</strong> — 주제: "1000 vs 1000 대규모 유저를 채널 없이 서비스 하기 위한 고민들" (구성원 다수 NCDP 수상)</li>
+</ul>
+<hr />
+<h3>3-7. 아이온 모바일 → AION2 시작 (Tempest) 〔NCSOFT AION실 입사〕</h3>
+<ul>
+<li><strong>기간</strong>: 2016-01 ~ 2017-02 (약 13개월)</li>
+<li><strong>회사 / 부서</strong>: ㈜NCSOFT / AION실 → Tempest (AION2의 시작)</li>
+<li><strong>직무 / 직책</strong>: 서버 프로그래머 / 팀원 (<strong>프로그램팀장 대행</strong>)</li>
+<li><strong>개발환경</strong>: C++, C#, UnrealEngine4, Windows, MSSQL, Mysql, ASP.NET, Javascript / Perforce, Visual Studio, Redmine, StarUML</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong></p>
+<ul>
+<li><strong>NCSOFT AION실로 입사, 이 프로젝트를 처음부터 시작</strong> — AION실 내에서 프로토타이핑 → 정식 프로젝트로 인정 → 조직이 'Tempest'로 분리. 초기엔 '아이온 모바일'이었고 이후 'AION2'로 발전. 서버를 처음부터 전담 구축 (정식 팀 이전이라 팀장 부재 → 팀장 업무 대행)</li>
+<li>언어·DB·장르 변화에 모두 대응하며 서버 구조 설계·프레임워크 구현</li>
+<li>(초기) 액션RPG · C++ · MSSQL 기반 설계·구현</li>
+<li>(변경 후) MMORPG · C# · Mysql 기반 재설계·구현 (비용 절감 위해 Linux/Mysql/C#으로 전환, 구조·프레임워크 재구축, Seed 목표는 병행 가능한 형태로 유지)</li>
+<li>MMORPG 대규모 전투 기반 시스템·컨텐츠 구현(C++, C#): 전송 속도·빈도 극대화 리서치, lock 없는 컨텐츠 설계·구현, 캐릭터 동기화(이동), 아이템 &amp; 인벤토리, 전투 &amp; 스킬, MMO 필드 &amp; 오브젝트, NavMesh 길찾기</li>
+<li>운영툴 구현: 서버와 실시간 통신 가능한 웹 기반 프레임워크, 캐릭터 조회·삭제·채팅, 서버 상태 조회·ON/OFF</li>
+<li>성능 테스트 시스템: 테스트 서버·클라이언트 명령·결과 조회 툴, 봇 &amp; AI</li>
+<li>지속적 시스템 개선·성능 향상: 프로파일링을 통한 hot path 제거, 문제 추적(웹로그·slack 로그·REST API), 실시간 Visual 디버깅용 서버상 맵·오브젝트 3D Viewer, UE4 엔진 길찾기 코드 분석·서버 적용</li>
+<li>개발 환경 구축: 위키·이슈관리 시스템 도입·연동, 자동화 빌드 딜리버리 시스템</li>
+<li>팀장 대행: 업무 분담, 일정관리·목표 제시, 팀간 업무 조율</li>
+</ul>
+<p><strong>업무 성과</strong></p>
+<ul>
+<li>AION IP를 이은 정식 모바일 프로젝트로 인정</li>
+<li>AION 모바일 프로젝트 조직으로 독립</li>
+</ul>
+<hr />
+<h3>3-8. ONE for kakao / 프로젝트V (가칭) (모바일 액션 RPG)</h3>
+<ul>
+<li><strong>기간</strong>: 2014-10 ~ 2015-11 (13개월)</li>
+<li><strong>회사 / 부서</strong>: ㈜코어크리에이티브 / 개발</li>
+<li><strong>직무 / 직책</strong>: 서버 프로그래머 / 프로그램팀장 (서버 구조 설계·프레임워크·컨텐츠·클라이언트·툴·사내 개발환경 구축)</li>
+<li><strong>개발환경</strong>: Windows, MSSQL, IIS, ucloud(KT), Visual Studio, boost asio(TCP/IOCP), SVN, UnrealEngine3, Eclipse, Xcode, Redmine, StarUML</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong></p>
+<ul>
+<li>서버 구조 설계</li>
+<li>네트워크 프레임워크 전체 구현: C++(boost asio) 서버 프레임워크, C# 서버 프레임워크, 언리얼스크립트·C++ 클라이언트 네트워크 프레임워크</li>
+<li>서버 컨텐츠 구현(C++): 로그인/계정/캐릭터, 전투 시작·종료·보상, 버프/스킬, 채팅, 비접속 자동성장, 퀘스트, 수련/습격 및 복수/현상수배 구조 설계·구현, 옵션, 실시간 1:1 PVP·팀 PVP·난투장, 광장, 문자열 필터링·공지 전송·다국어·운영자 명령어·부하테스트</li>
+<li>서버 구현(C#): 안드로이드·iOS 푸시 전송, 푸시 예약 발송 시스템</li>
+<li>클라이언트 구현(UnrealScript, C++): 언리얼 콘솔 기능 확장, 커맨드렛 확장, 비휘발성 데이터 기능, HTTP 호출 모듈화, DB 테이블에서 템플릿 클래스 자동 로드·저장, 실시간 동기화용 네트워크 PawnBase, QWORD 유틸·UI 컴포넌트 일부</li>
+<li>클라이언트 UI(Hud) 구현: 로그인·팝업·상점·채팅·퀘스트·옵션·도감, 캐릭터/스킬/뽑기/아이템강화 UI 연출</li>
+<li>툴 구현: (C#) 언리얼 AndroidPackager·프론트엔드 수정(빌드 자동화), (Java) 내부 테스트용 APK 다운로드 런처, (ASP.NET) 운영툴, (C++/MFC/Java) 클라이언트 패치 시스템, (JS) 포토샵 UI 이미지 익스포터(PNG·HTML·UnrealScript UI 코드 생성), (C#) UI 텍스처 아틀라스 생성 툴</li>
+<li>사내 개발 환경 구축: 홈페이지·웹서버·FTP·SVN·레드마인·이메일·자동빌드 및 빌드머신</li>
+<li>팀장 업무: 서버 신입 교육(C#·Unity3D·Web·Database), 팀원 관리·역량 강화 교육</li>
+</ul>
+<p><strong>업무 성과</strong></p>
+<ul>
+<li>국내 정식 서비스</li>
+<li>(당시) 인도네시아 퍼블리싱 계약 진행</li>
+</ul>
+<hr />
+<h3>3-9. 드리프트러시 (모바일 레이싱)</h3>
+<ul>
+<li><strong>기간</strong>: 2013-08 ~ 2014-10 기간 내 (약 7개월)</li>
+<li><strong>회사 / 부서</strong>: ㈜위메이드엔터테인먼트 / 오르카</li>
+<li><strong>직무 / 직책</strong>: 서버 프로그래머 / 서버파트리더</li>
+<li><strong>개발환경</strong>: Windows, MSSQL, IIS(WebServer), Visual Studio, SVN, Unity3D, Xcode, Eclipse, Redmine, StarUML</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong></p>
+<ul>
+<li>서버 구현(Classic ASP Web): 구조 설계, 프레임워크, 모든 컨텐츠 개발</li>
+<li>서버 구현(C# Web ASP.NET): GooglePlay·AppStore 결제 검증 통합 서버, Classic ASP 서버를 C#(ASP.NET)으로 재구현</li>
+<li>클라이언트 구현(Unity3D, C#, Java): 타이틀→로비 입장 데이터 로드·로그인 프로세스, 위미SDK(카카오) 연동 전체(로그인·쿠폰·공지·결제·푸시·로그), 웹뷰 플러그인, 웹통신 네트워크 모듈, 기획 템플릿 데이터 로드·실시간 패치</li>
+<li>툴 구현: 개발 웹툴(에러코드·패킷 내용·송수신 함수 자동생성 API Document), 운영툴(ASP.NET MVC, Bootstrap, JS), 빌드→핸드폰 설치 자동화 시스템, 자동 빌드 시스템</li>
+</ul>
+<p><strong>업무 성과</strong></p>
+<ul>
+<li>FunQA/FQA 진행 후 프로젝트 드랍</li>
+</ul>
+<hr />
+<h3>3-10. 트리니티사가 / 큐브프로젝트 (가칭) (모바일 RPG)</h3>
+<ul>
+<li><strong>기간</strong>: 2013-08 ~ 2014-10 기간 내 (약 5개월)</li>
+<li><strong>회사 / 부서</strong>: ㈜위메이드엔터테인먼트 / 오르카</li>
+<li><strong>직무 / 직책</strong>: 서버 프로그래머 / 서버파트리더</li>
+<li><strong>개발환경</strong>: Windows, MSSQL, Redis, IIS(WebServer), TCP/IOCP, Visual Studio, SVN, Unity3D, Redmine, StarUML</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong></p>
+<ul>
+<li>웹(HTTP) &amp; 소켓(TCP) 모두 포함하는 서버 프레임워크 전체 구현(C#)</li>
+<li>C#에서 고성능을 위한 네트워크 모델 연구</li>
+<li>서버 네트워크 코어 모듈 / 클라이언트 웹·소켓 통신 모듈</li>
+<li>로깅·덤프·서비스·윈도우서비스·타이머스레드·스트림 등 유틸 기능</li>
+<li>서버 네트워크 모듈 확장</li>
+<li>서버 구현(C# Web ASP.NET &amp; Application): 구조 설계, 로그인·인증, 접속종료·재접속, 채팅(채널·월드·시스템)·필터링, Redis 랭킹, 운영자 명령어, 로그 모듈</li>
+<li>클라이언트 구현(Unity3D, C#): 네트워크 모듈, 가상 서버, 데이터 구조 설계, 템플릿 로드·저장, DB 테이블 구조 소스코드 자동생성 툴</li>
+<li>운영툴(ASP.NET, C#, JS): PC·모바일 범용 웹, 서버 실시간 채팅, 실시간 모니터링·제어·수치 확인, 메뉴·계정 권한 자동 설정, 클라와 동일한 운영자 명령어</li>
+<li>부하 테스트 시스템: 다중 스트레스 테스트 서버, 운영툴 통합 테스트·결과 확인 기능</li>
+</ul>
+<p><strong>업무 성과</strong></p>
+<ul>
+<li>국내 클로즈베타 서비스 (FunQA 진행)</li>
+</ul>
+<hr />
+<h3>3-11. 드래곤 도와줘 (가칭) (모바일 카드배틀)</h3>
+<ul>
+<li><strong>기간</strong>: 2011-06 ~ 2013-07 기간 내 (약 5개월)</li>
+<li><strong>회사 / 부서</strong>: ㈜자이언트드림 / RedRocket(날개달린고양이)</li>
+<li><strong>직무 / 직책</strong>: 프로그래머 / 프로그램팀장</li>
+<li><strong>개발환경</strong>: Windows, MSSQL, ucloud(KT), TCP/IOCP, Visual Studio, SVN, Unity3D, Xcode, Eclipse, StarUML</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong></p>
+<ul>
+<li>서버 구현(C++): 서버 구조 설계, 프레임워크, 서버간·클라이언트 세션관리, 게임 컨텐츠 설계·기본 구현, 시뮬레이션 전투</li>
+<li>서버 구현(C#): GooglePlay·AppStore·TStore 결제 검증 통합 서버</li>
+<li>서버 구현(ASP Web): HTTP/JSON 웹 게임 서버, 데이터 조작·암호화 보안 처리</li>
+<li>클라이언트 구현(Unity3D, C#): Native·웹통신 네트워크 모듈, 컷씬(연출) 제작 프레임워크, 기획 템플릿 데이터 로드 모듈, AssetBundle 생성·패치·버전관리 통합 자동화, Python·C# 소스코드 생성 툴, 그래픽 리소스 아틀라스 변경 확인 툴(NGUI), NGUI 코드 자동생성·자동화 플러그인, 빌드→핸드폰 설치 자동화(안드로이드 앱)</li>
+<li>팀장 업무: 신입 교육, 전체 일정 스케줄링, 개인 역량 강화용 자체 연구 발표 프로그램 진행</li>
+</ul>
+<p><strong>업무 성과</strong></p>
+<ul>
+<li>(별도 기재 없음 — 개발 단계)</li>
+</ul>
+<hr />
+<h3>3-12. 오빠 도와줘! 온라인 (모바일 시뮬레이션 RPG)</h3>
+<ul>
+<li><strong>기간</strong>: ~2013 (약 12개월)</li>
+<li><strong>회사 / 부서</strong>: ㈜자이언트드림 / RedRocket(날개달린고양이)</li>
+<li><strong>직무 / 직책</strong>: 프로그래머 / 프로그램팀장</li>
+<li><strong>개발환경</strong>: Windows, MSSQL, ucloud(KT), TCP/IOCP, Visual Studio, SVN, Unity3D, Xcode, Eclipse, StarUML</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong></p>
+<ul>
+<li>서버 구현(C++): "형도와줘" 서버 기반으로 "오빠 도와줘" 서버로 수정, 신규 시스템 전체 설계·구현, 형도와줘 계정 DB 연동</li>
+<li>클라이언트 구현(Unity3D, C#): 클라 수정, 선물상자 UI(NGUI 도입 후 신규 UI), 동생 &amp; 고양이 감정 AI, 결제 및 UI, 리소스 관리 모듈, AssetBundle 패치</li>
+<li>안드로이드·iOS 런처 구현(Eclipse/Java, Xcode/obj-c): 런처 UI, 웹연동 공지, 결제 UI·결제, 안드로이드 푸시 C2DM → GCM 교체</li>
+<li>효율화: 자동화 빌드 시스템(VB, WScript), 기획 데이터 DB 입력 툴(Excel, VB)</li>
+<li>직접 서비스 운영: 형도와줘 운영툴 웹(ASP·PHP) 기능 추가(이벤트·결제 통계·그래프), 월드 추가 작업(서버 셋팅·DB·운영툴·홈페이지), 서버 패치·DB 백업·인덱스 재설정·점검</li>
+<li>중국 샨다 서비스: 샨다 모바일 플랫폼(GPlus) 모듈(안드로이드·iOS), 로그인·결제 서버 연동, 중국 출장</li>
+<li>팀장 업무: 신입 교육(개인 역량에 따라 4~7주), 프로그램 전체 일정 스케줄링</li>
+</ul>
+<p><strong>업무 성과</strong></p>
+<ul>
+<li>국내 정식 서비스 (종료)</li>
+<li>중국(샨다) 퍼블리싱 계약</li>
+</ul>
+<hr />
+<h3>3-13. 형! 도와줘! 온라인 (모바일 시뮬레이션 RPG)</h3>
+<ul>
+<li><strong>기간</strong>: 2011-06 ~ (약 10개월)</li>
+<li><strong>회사 / 부서</strong>: ㈜자이언트드림(KB온라인 분사) / RedRocket(날개달린고양이)</li>
+<li><strong>직무 / 직책</strong>: 프로그래머 / 프로그램팀장 (서버 프레임워크·컨텐츠·툴 구현·서비스 운영)</li>
+<li><strong>개발환경</strong>: Windows, MSSQL, ucloud(KT), TCP/IOCP, Visual Studio, SVN, Unity3D, Xcode, Eclipse, StarUML</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong></p>
+<ul>
+<li>서버 구현(C++): 개인상점, 칭호/업적, 히든 코스, 서바이벌 모드, 길드 &amp; 길드전, 비속어·금지어 필터링, GooglePlay·AppStore 푸시 메시지 서버</li>
+<li>서버 성능 향상: DB(MSSQL) 악성 쿼리 진단·수정, 인덱스 재설계, 관련 소스코드 수정</li>
+<li>클라이언트 컨텐츠 구현(Unity3D, C#): 개인상점, 칭호/업적 + 최적화·안정화</li>
+<li>iOS 버전 개발 (크로스플랫폼 엔진이나 일부 기능 수정·추가)</li>
+<li>서비스 플랫폼 대응: iOS(Xcode/obj-c) 런처 신규 제작, APNS 시스템, IAP(결제) 시스템, 안드로이드 런처 유지보수, C2DM(안드로이드 푸시) 시스템</li>
+<li>효율화: 플레이 모드에서 UI 좌표 수정·저장 기능 구현 (NGUI 같은 플러그인이 없던 시절 개선)</li>
+<li>게임 서비스: 운영(GM) 툴 웹(ASP), 서버 모니터링용 안드로이드 위젯 앱(다운 알람·상태 조회)</li>
+<li>직접 서비스 운영: 결제시스템 운영, 홈페이지 게시판 유저 응대, KT 클라우드 서버 셋팅·점검·패치·안정화, 무통장 입금 확인 및 아이템 자동 지급용 SMS 전송 시스템(안드로이드폰) 개발</li>
+<li>일본 MTI 서비스: 일본 모바일 플랫폼 모듈(안드로이드), 로그인·결제 서버 연동, 유니코드 버전으로 클라·서버·DB 컨버팅</li>
+</ul>
+<p><strong>업무 성과</strong></p>
+<ul>
+<li>국내 정식 서비스 (2011-06 ~, 현재 종료)</li>
+<li>일본(MTI사) 오픈 서비스 (2012-01, 현재 종료)</li>
+</ul>
+<hr />
+<h3>3-14. 슈퍼 다다다 (PC 캐주얼 레이싱)</h3>
+<ul>
+<li><strong>기간</strong>: 2010-05 ~ 2011-06 (13개월)</li>
+<li><strong>회사 / 부서</strong>: ㈜KB온라인 / SEED</li>
+<li><strong>직무 / 직책</strong>: 서버 프로그래머 / 서버팀장 (서버 프레임워크·컨텐츠·툴 구현)</li>
+<li><strong>개발환경</strong>: Windows, MSSQL, TCP/UDP, IOCP, P2P, Visual Studio, SVN, SourceSafe, AlienBrain, Gamebryo, Redmine, StarUML</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong></p>
+<ul>
+<li>서버 프레임워크 교체</li>
+<li>기존 서버팀이 모두 나간 상태에서 투입</li>
+<li>기존 서버 프레임워크 재검토 후 교체 판단 및 교체 진행</li>
+<li>클라이언트 네트워크 라이브러리 수정</li>
+<li>일부 로직 UDP → TCP로 변경 / NAT 판별 및 홀펀칭 로직 수정</li>
+<li>서버 컨텐츠 개발(C++): 커플 시스템, 멀티트랙 모드, 프시켓 모드(좀비 모드), 광장 시스템, 낚시, 트레이닝, 가차폰 시스템, 퀘스트, 그림첩, 쿠폰번호 발급 기능 및 툴(MFC)</li>
+<li>게임 서비스 작업</li>
+<li>퍼블리셔 웹 로그인 모듈 / 빌링 모듈 서버 연동</li>
+<li>보안모듈 서버 연동 및 자동 패치 기능</li>
+<li>각종 이벤트 진행 시 툴(웹)·서버·DB 작업</li>
+<li>운영(GM) 툴, 서버 ON/OFF 모니터링 툴(MFC 유지보수), 서버 모니터링 툴 웹 재구현, 서버 상태(HDD·메모리·CPU) 모니터링 툴 웹 구현</li>
+<li>태국 서비스 작업: 서버·DB 셋팅, 로컬라이징, 태국 GM 툴 교육, 태국 빌링(TrueMoney) 서버 연동, 태국 출장</li>
+</ul>
+<p><strong>업무 성과</strong></p>
+<ul>
+<li>국내 클로즈베타 (2010-08) / 국내 오픈베타 (2010-12 ~ 2011-12)</li>
+<li>태국 클로즈베타 (2011-03) / 태국 오픈베타 (2011-03 ~ 2011-05)</li>
+<li>(재직 중 최우수 직원 선정)</li>
+</ul>
+<hr />
+<h3>3-15. 와일드 플래닛 (PC MMORPG)</h3>
+<ul>
+<li><strong>기간</strong>: 2007-03 ~ 2010-05 (38개월)</li>
+<li><strong>회사 / 부서</strong>: ㈜액토즈소프트 / 프롬나인</li>
+<li><strong>직무 / 직책</strong>: 서버 프로그래머 / 팀원 (서버·클라이언트 컨텐츠·툴 구현)</li>
+<li><strong>개발환경</strong>: Windows, MSSQL, TCP/IOCP, IIS, Visual Studio, SVN, Gamebryo, Mantis, StarUML</li>
+</ul>
+<p><strong>주요 역할 및 담당</strong></p>
+<ul>
+<li>서버·클라이언트(UI) 컨텐츠 구현</li>
+<li>채팅 및 채널 / 비속어·금지어 필터링</li>
+<li>파티(효과·보상·룰렛) &amp; 파티매칭 시스템</li>
+<li>클랜 &amp; 클랜전 시스템</li>
+<li>개인상점 &amp; 오픈마켓</li>
+<li>전장(대기열 기능, 인던 형태) 시스템</li>
+<li>점령전(일반 맵에 인원 제한 없이 다수 대 다수) 시스템</li>
+<li>명예 시스템 / NPC 대사 기능 / NPC AI 코드 리팩토링</li>
+<li>데이터베이스 튜닝: DB 쿼리 최적화 및 인덱스 재설계</li>
+<li>자동 패치 시스템</li>
+<li>패치 업로더 툴(MFC, 웹): 버전관리 및 패치 데이터 생성 후 FTP 업로드</li>
+<li>패치 다운로더 툴(MFC, ActiveX)</li>
+<li>팀 내부 툴 업데이트 및 CBT 서비스 클라이언트 업데이트 적용</li>
+<li>리소스 관리 시스템 개발</li>
+<li>리소스 관리 서버(C++) / 리소스 관리 툴(MFC)</li>
+<li>작업 단위 할당 → 팀원 업로드 → 책임자 검수 형태의 작업+파일 관리 시스템 구현</li>
+<li>서버 컨트롤 시스템</li>
+<li>서버 컨트롤 서버(C++) / 컨트롤 툴(MFC)</li>
+<li>서버 상태 모니터링, 서버 ON/OFF, 전체 서버 패치 기능</li>
+<li>서비스 운영 툴 개발: GM 툴(웹) 개발, 서버·클라이언트 패치 담당</li>
+</ul>
+<p><strong>업무 성과</strong></p>
+<ul>
+<li>국내 클로즈베타 서비스 (2010-04)</li>
+<li>국내 정식 서비스 (오픈 서비스는 미참여)</li>
+</ul>
+<hr />
+<h2>4. 기술 스택</h2>
+<ul>
+<li><strong>언어</strong>: C++(11~20), C#, JavaScript/TypeScript, Java, Python, UnrealScript, GDScript, Lua, PHP/Perl, VB</li>
+<li><strong>엔진</strong>: UnrealEngine 3/4/5, Unity3D, GodotEngine, Gamebryo</li>
+<li><strong>서버·프레임워크</strong>: Orleans(Grain 분산), boost asio, ASP.NET Core, Node.js, Akka(분석/최적화), WebSocket, gRPC/TCP, IOCP, .NET Aspire</li>
+<li><strong>DB·데이터</strong>: MSSQL(저장프로시저·SQL Server DB 프로젝트/dacpac), MySQL, MongoDB, Redis(Stack)/Garnet, Dapper, EntityFramework, Protobuf, 샤딩</li>
+<li><strong>네비/물리</strong>: Recast/Detour·DotRecast, 복셀·다이나믹 네비메시, Jitter2, PhysX/UE 물리</li>
+<li><strong>인프라·툴</strong>: Perforce, Git, SVN, Jenkins(CI), .NET Aspire, Redmine/Jira/Confluence, StarUML, ucloud/Linux/Windows</li>
+<li><strong>AI 개발도구</strong>: Claude Code·Agent SDK, MCP(자체 서버 구현), 멀티에이전트 코드리뷰/테스트, 로컬 LLM(llama.cpp·Cline, Qwen/Gemma/Ministral/Nemotron), 온디바이스 자연어 명령</li>
+<li><strong>전문 분야</strong>: 네트워크·스레딩·메시지 처리, 액터 모델 락프리 동시성, 네비게이션·길찾기, 물리·충돌, 브로드캐스팅·zero-copy, 분산 서버(Orleans/샤딩), 성능 프로파일링·최적화, 유저 창작·스크립트 런타임, 대규모 부하 테스트, AI 기반 개발 생산성</li>
+</ul>
+<hr />
+<h2>5. 기타 활동 · 수상 · 대외 활동</h2>
+<table>
+<thead>
+<tr>
+<th>기간</th>
+<th>내용</th>
+<th>기관</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2020-12 ~ 2021-02</td>
+<td>타 조직(트릭스터M) 서버 최적화 지원 및 자문 (AION2 재직 중 파견)</td>
+<td>NCSOFT</td>
+</tr>
+<tr>
+<td>2019-04 ~ 2021-04</td>
+<td>시니어급 후보자 전문성 검증 전문면접관 활동 (Programming 직군)</td>
+<td>NCSOFT</td>
+</tr>
+<tr>
+<td>2019-04 ~ 2020-04</td>
+<td>Job Title 운영위원회 활동 (Programming 직군)</td>
+<td>NCSOFT</td>
+</tr>
+<tr>
+<td>2019-04</td>
+<td><strong>NCDP 개발자 컨퍼런스 발표 및 최우수상 수상</strong> — 주제: "1000 vs 1000 대규모 유저를 채널 없이 서비스 하기 위한 고민들"</td>
+<td>NCSOFT</td>
+</tr>
+<tr>
+<td>2014-12</td>
+<td>타 회사(NCSOFT) 프로젝트 자문 지원</td>
+<td>코어크리에이티브</td>
+</tr>
+<tr>
+<td>2014-10</td>
+<td>타 회사(퍼플오션) 프로젝트 기술 지원</td>
+<td>코어크리에이티브</td>
+</tr>
+<tr>
+<td>2010-05 ~ 2011-06</td>
+<td>최우수 직원 선정</td>
+<td>KB온라인</td>
+</tr>
+<tr>
+<td>2010-06 ~ 2010-12</td>
+<td>시나리오 기반 온라인 게임 서버 부하 테스트 기술 개발 협력</td>
+<td>ETRI</td>
+</tr>
+<tr>
+<td>2006-11</td>
+<td>3D 캐주얼 온라인 게임 Cudice, 지스타 2006 아카데미관 출품 (서버파트)</td>
+<td>지스타</td>
+</tr>
+<tr>
+<td>2006-06 ~ 2006-12</td>
+<td>제1회 GF게임원정대 최종 3팀 진출 (서버파트)</td>
+<td>GF게임 / MBC게임</td>
+</tr>
+<tr>
+<td>2005-12 ~ 2006-12</td>
+<td>학과 홈페이지·교내 전산실 페이지 제작(PHP), 유닉스/리눅스 서버 관리</td>
+<td>홍익대학교</td>
+</tr>
+<tr>
+<td>2004-09 ~ 2005-12</td>
+<td>Hongik University Security Team 활동 / 교내 학술제 발표 (Stack Overflow 해킹 기법)</td>
+<td>홍익대학교</td>
+</tr>
+<tr>
+<td>2002-01 ~ 2003-08</td>
+<td>군 부대(80연대 본부·전차대대·헌병대) 홈페이지 제작 (Perl/PHP)</td>
+<td>28사단</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>6. 학력</h2>
+<table>
+<thead>
+<tr>
+<th>재학기간</th>
+<th>학교 및 전공</th>
+<th>구분</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2000-03 ~ 2007-02</td>
+<td>홍익대학교 컴퓨터정보통신소프트웨어전공</td>
+<td>졸업</td>
+</tr>
+</tbody>
+</table>
+<!-- DETAIL:END -->
+  </div>
+
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var saved = null;
+    try { saved = localStorage.getItem('resume-theme'); } catch (e) {}
+    if (saved) root.setAttribute('data-theme', saved);
+    function label() {
+      var cur = root.getAttribute('data-theme');
+      var dark = cur === 'dark' || (!cur && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      btn.textContent = dark ? '☀ 라이트' : '☾ 다크';
+    }
+    label();
+    btn.addEventListener('click', function () {
+      var cur = root.getAttribute('data-theme');
+      var dark = cur === 'dark' || (!cur && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var next = dark ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('resume-theme', next); } catch (e) {}
+      label();
+    });
+  })();
+
+  /* ===== view switcher ===== */
+  (function () {
+    var btns = document.querySelectorAll('.switcher button');
+    var views = { design: 'view-design', ats: 'view-ats', linkedin: 'view-linkedin', detail: 'view-detail' };
+    function show(v) {
+      if (!views[v]) v = 'design';
+      Object.keys(views).forEach(function (k) {
+        document.getElementById(views[k]).classList.toggle('on', k === v);
+      });
+      btns.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-view') === v); });
+      try { localStorage.setItem('resume-view', v); } catch (e) {}
+    }
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () { show(b.getAttribute('data-view')); window.scrollTo(0, 0); });
+    });
+    var saved = null;
+    try { saved = localStorage.getItem('resume-view'); } catch (e) {}
+    if (saved) show(saved);
+  })();
+
+  /* ===== linkedin copy ===== */
+  (function () {
+    var btn = document.getElementById('copyLinkedin');
+    var ta = document.getElementById('linkedinText');
+    if (!btn || !ta) return;
+    btn.addEventListener('click', function () {
+      var done = function () { var t = btn.textContent; btn.textContent = '✓ 복사됨'; setTimeout(function () { btn.textContent = t; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(ta.value).then(done, function () { ta.select(); document.execCommand('copy'); done(); });
+      } else {
+        ta.select(); document.execCommand('copy'); done();
+      }
+    });
+  })();
+</script>
+</body>
 </html>

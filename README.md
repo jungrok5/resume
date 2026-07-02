@@ -1,4 +1,17 @@
-# Interactive 3D Résumé — Jeongrok Oh
+# Résumé — Jeongrok Oh (오정록)
+
+One GitHub Pages site, two ways to read the same résumé:
+
+| Path | What | Notes |
+|------|------|-------|
+| `/` (`index.html`) | **Document résumé** — 4 views (기본 · ATS · 링크드인 · 상세) + dark mode + print | Static HTML, fast, SEO/ATS-friendly. **Default landing.** |
+| `/interactive.html` | **Interactive 3D résumé** — scroll-driven WebGL experience | Heavy Three.js bundle loads only here. |
+
+The document view's top switcher has a **`✨ 3D`** tab that opens the interactive
+page; the interactive page has a **`← 이력서`** link back. See
+[`SETUP.md`](SETUP.md) for GitHub Pages, Google Search Console, and Analytics setup.
+
+## The interactive 3D view
 
 A scroll-driven WebGL résumé that visualizes 20 years of MMO server engineering.
 Each section pairs a text panel with a simplified, animated 3D scene of the
