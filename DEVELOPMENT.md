@@ -45,7 +45,7 @@ src/
     CameraRig.jsx       interpolates per-section camera keyframes (lib/cameras.js)
     ScrollBridge.jsx    publishes drei scroll offset to scrollStore (for Chrome)
     Effects.jsx         Bloom + Vignette (disabled on mobile)
-    scenes/             one file per section (13)
+    scenes/             one file per section (15)
     lib/                palette.js (colors), util.js (math), useScene.js
                         (per-scene frame hook: gives localProgress + active),
                         cameras.js (keyframes keyed by section id)
@@ -55,12 +55,15 @@ Data flow: `useScene(index, total, (p, active, state, dt) => …)` runs every
 frame, hands each scene its local progress `p` (0..1 within its scroll slot) and
 whether it's `active`; the scene toggles `group.visible` and animates by `p`.
 
-## The 13 scenes (résumé order)
+## The 15 scenes (résumé order)
 
-hero · career timeline · Orleans actors (Pantera) · data pipeline (Pantera) ·
-sharding · dynamic voxel navmesh · 3D raycast steering · client-delegated NPC ·
-render/physics opt · web collab (1000+ cursors) · prop mini-games · dense-combat
-broadcast opt (AION2, NCDP 2019) · AI-driven dev (MCP) + contact/summary.
+hero · career timeline · Orleans actors (Pantera) · proto pipeline (Pantera) ·
+sharding+load-test (Pantera) · dense build 50M props (Miniverse UE5) ·
+render/physics opt · dynamic voxel navmesh · client-delegated distributed sim ·
+web collab 1000+ cursors (Miniverse Web) · prop mini-games · channel-less
+1000v1000 (AION2, NCDP 2019) · 3D flight navigation (AION2) · TricksterM 2k→8k ·
+AI-driven dev (MCP) + contact/summary. Order mirrors the document résumé
+(기본 뷰), newest first, grouped by company/period.
 
 All animations are **scroll-driven visual mocks** (choreographed to *look* like
 the real algorithm) — the one exception is the raycast scene, which does real
