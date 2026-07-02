@@ -249,9 +249,17 @@ a {
 }
 /* hero: no card, let the name float over the scene */
 .panel--hero {
-  background: none;
+  /* 카드 박스 대신, 가장자리 없이 사라지는 방사형 스크림 —
+     떠 있는 히어로 느낌은 유지하면서 밝은 씬 위에서도 글자가 읽힌다 */
+  background: radial-gradient(
+    ellipse 68% 64% at 50% 50%,
+    rgba(4, 5, 9, 0.9),
+    rgba(4, 5, 9, 0.62) 52%,
+    rgba(4, 5, 9, 0.28) 70%,
+    transparent 84%
+  );
   border: none;
-  padding: 0;
+  padding: 56px 64px;
   box-shadow: none;
   max-width: 860px;
 }
