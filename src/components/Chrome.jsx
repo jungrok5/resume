@@ -1,10 +1,10 @@
-import { profile, sections } from '../data/resume'
-import { scrollStore, useScrollState } from '../lib/scrollStore'
+import { profile } from '../data/resume'
+import { useScrollState } from '../lib/scrollStore'
 
-// Fixed DOM chrome layered over the canvas: brand, links, progress rail,
-// scroll hint. Reads the scroll offset from the external store.
+// Fixed DOM chrome layered over the canvas: back link, brand, links,
+// scroll hint. Reads scroll state from the external store.
 export default function Chrome() {
-  const { index: active, atTop } = useScrollState()
+  const { atTop } = useScrollState()
 
   return (
     <>
@@ -24,18 +24,6 @@ export default function Chrome() {
           GITHUB
         </a>
       </div>
-
-      <nav className="rail" aria-label="Sections">
-        {sections.map((s, i) => (
-          <button
-            key={s.id}
-            data-active={i === active}
-            onClick={() => scrollStore.scrollTo(i)}
-            aria-label={s.title || s.id}
-            title={s.title || s.kicker}
-          />
-        ))}
-      </nav>
 
       {atTop && <div className="scrollhint">Scroll ↓</div>}
     </>
