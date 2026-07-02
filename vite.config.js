@@ -10,6 +10,16 @@ export default defineConfig({
   base: './',
   build: {
     rollupOptions: {
+      output: {
+        // 벤더를 별도 청크로 — 배포(콘텐츠 수정)마다 바뀌는 건 작은 앱 청크뿐이라
+        // 재방문·재배포 시 three/react 대용량은 브라우저 캐시(304)로 해결된다.
+        // postprocessing은 lazy Effects 청크에 남도록 여기 넣지 않는다(모바일 미다운로드 유지).
+        manualChunks: {
+          three: ['three'],
+          react: ['react', 'react-dom'],
+          r3f: ['@react-three/fiber', '@react-three/drei'],
+        },
+      },
       input: {
         // Static entry points:
         //   index.html       → document résumé (기본·ATS·상세) = default landing (SEO-first)
