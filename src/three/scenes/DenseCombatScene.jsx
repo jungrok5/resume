@@ -49,11 +49,18 @@ export default function DenseCombatScene({ index, total }) {
   const pos = useMemo(() => model.base.map((v) => v.clone()), [model])
 
   const fill = (L) => {
+    // 배열 리터럴 없이 직접 기록 — 프레임당 수천 개의 임시 배열 할당(GC 히치) 방지
     const arr = L.obj.geometry.attributes.position.array
     for (let i = 0; i < L.pairs.length; i++) {
       const a = pos[L.pairs[i][0]]
       const b = pos[L.pairs[i][1]]
-      arr.set([a.x, a.y, a.z, b.x, b.y, b.z], i * 6)
+      const o = i * 6
+      arr[o] = a.x
+      arr[o + 1] = a.y
+      arr[o + 2] = a.z
+      arr[o + 3] = b.x
+      arr[o + 4] = b.y
+      arr[o + 5] = b.z
     }
     L.obj.geometry.attributes.position.needsUpdate = true
   }

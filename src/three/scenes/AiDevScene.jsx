@@ -64,7 +64,15 @@ export default function AiDevScene({ index, total }) {
     if (agentsM.current.instanceColor) agentsM.current.instanceColor.needsUpdate = true
 
     const lp = lines.geometry.attributes.position.array
-    for (let i = 0; i < A; i++) lp.set([center.x, center.y, center.z, apos[i].x, apos[i].y, apos[i].z], i * 6)
+    for (let i = 0; i < A; i++) {
+      const o = i * 6
+      lp[o] = center.x
+      lp[o + 1] = center.y
+      lp[o + 2] = center.z
+      lp[o + 3] = apos[i].x
+      lp[o + 4] = apos[i].y
+      lp[o + 5] = apos[i].z
+    }
     lines.geometry.attributes.position.needsUpdate = true
     lines.material.opacity = 0.5 * fade
 
