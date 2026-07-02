@@ -43,6 +43,7 @@ export default function ShardingScene({ index, total }) {
   }, [shardPos])
 
   const tmpA = useMemo(() => new THREE.Vector3(), [])
+  const load = useMemo(() => new Array(NSHARD).fill(0), [])
 
   useScene(index, total, (p, active, state) => {
     if (!g.current) return
@@ -50,7 +51,7 @@ export default function ShardingScene({ index, total }) {
     if (!active) return
     const t = state.clock.elapsedTime
     const fade = clamp01(p / 0.2)
-    const load = new Array(NSHARD).fill(0)
+    load.fill(0)
 
     for (let i = 0; i < ENTITIES; i++) {
       const d = data[i]

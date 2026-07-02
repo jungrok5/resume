@@ -13,7 +13,8 @@
   --amber: #ffcf5c;
   --red: #ff5d6c;
 
-  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* 모노 영역의 한글이 시스템 굴림체로 떨어지지 않도록 Noto Sans KR 폴백 필수 */
+  --mono: 'JetBrains Mono', 'Noto Sans KR', ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: 'Space Grotesk', 'Noto Sans KR', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --kr: 'Noto Sans KR', 'Space Grotesk', system-ui, sans-serif;
 
@@ -76,10 +77,8 @@ a {
   gap: 6px;
   padding: 7px 14px;
   border-radius: 999px;
-  background: rgba(10, 12, 20, 0.62);
+  background: rgba(10, 12, 20, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   color: var(--ink);
   font-size: 13px;
   font-weight: 600;
@@ -190,22 +189,14 @@ a {
 .panel {
   max-width: 560px;
   pointer-events: auto;
-  /* 연한 글라스: 뒤의 3D 씬이 보이도록 투명도·블러를 낮게 유지하고,
-     가독성은 텍스트 새도우로 보강. 읽을 때(hover)만 살짝 진해진다. */
-  background: linear-gradient(180deg, rgba(6, 8, 14, 0.44), rgba(6, 8, 14, 0.3));
+  /* 블러 없음(backdrop-filter는 움직이는 캔버스 위에서 상시 GPU 비용) —
+     충분히 어두운 반투명 배경 + 텍스트 새도우로 어떤 씬 위에서도 글자가 읽힌다. */
+  background: linear-gradient(180deg, rgba(5, 7, 12, 0.82), rgba(5, 7, 12, 0.7));
   border: 1px solid var(--line);
   border-radius: 18px;
   padding: 30px 34px;
-  backdrop-filter: blur(3px) saturate(1.05);
-  -webkit-backdrop-filter: blur(3px) saturate(1.05);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.55);
-  transition: background 0.3s ease, backdrop-filter 0.3s ease;
-}
-.panel:hover {
-  background: linear-gradient(180deg, rgba(6, 8, 14, 0.68), rgba(6, 8, 14, 0.56));
-  backdrop-filter: blur(9px) saturate(1.1);
-  -webkit-backdrop-filter: blur(9px) saturate(1.1);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
 }
 .section.center .panel {
   max-width: 720px;
@@ -215,8 +206,6 @@ a {
   background: none;
   border: none;
   padding: 0;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   box-shadow: none;
   max-width: 860px;
 }
@@ -359,8 +348,7 @@ h2.title {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.015);
-  backdrop-filter: blur(3px);
+  background: rgba(9, 12, 20, 0.55);
 }
 
 .year {
@@ -494,8 +482,6 @@ h2.title {
     max-height: calc(100svh - 84px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    /* 모바일은 hover가 없으므로 기본 배경을 조금 더 진하게(가독성) */
-    background: linear-gradient(180deg, rgba(6, 8, 14, 0.6), rgba(6, 8, 14, 0.48));
   }
   h2.title {
     font-size: clamp(26px, 7.4vw, 34px);
