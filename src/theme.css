@@ -60,17 +60,88 @@ a {
   pointer-events: none;
 }
 
-/* 좌상단 바: back 링크 + 브랜드를 한 줄로 배치 (서로 겹치지 않게) */
-.topbar3d {
+/* 문서형 페이지와 같은 형태의 고정 상단바 (다크 톤) */
+.bar3d {
   position: fixed;
-  top: 16px;
-  left: 20px;
-  z-index: 21;
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: rgba(5, 7, 12, 0.85);
+  border-bottom: 1px solid var(--line);
   pointer-events: auto;
 }
+.bar3d-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  pointer-events: none;
+}
+.bar3d-progress i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--cyan);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.bar3d-inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 7px 26px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.bar3d-now {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: nowswap3d 0.35s ease;
+}
+@keyframes nowswap3d {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: none; }
+}
+.switcher3d {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(10, 13, 22, 0.6);
+  flex: none;
+}
+.switcher3d a,
+.switcher3d span {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink-dim);
+}
+.switcher3d a:hover {
+  color: var(--ink);
+}
+.switcher3d .on {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--ink);
+}
+
+/* FallbackDoc(정적 문서)에서 쓰는 돌아가기 링크 */
 .backlink {
   display: inline-flex;
   align-items: center;
@@ -87,36 +158,6 @@ a {
 }
 .backlink:hover {
   border-color: rgba(53, 230, 255, 0.7);
-  color: var(--cyan);
-}
-.brandmark {
-  font-family: var(--mono);
-  font-size: 13px;
-  letter-spacing: 0.18em;
-  color: var(--ink-dim);
-  text-transform: uppercase;
-}
-.brandmark b {
-  color: var(--ink);
-  font-weight: 700;
-}
-
-.toplinks {
-  position: fixed;
-  top: 20px;
-  right: 26px;
-  display: flex;
-  gap: 18px;
-  font-family: var(--mono);
-  font-size: 12.5px;
-  letter-spacing: 0.06em;
-  pointer-events: auto;
-}
-.toplinks a {
-  color: var(--ink-dim);
-  transition: color 0.2s;
-}
-.toplinks a:hover {
   color: var(--cyan);
 }
 
@@ -499,12 +540,6 @@ h2.title {
   }
   .blurb {
     font-size: 14.5px;
-  }
-  .toplinks {
-    display: none;
-  }
-  .brandmark {
-    display: none; /* 좁은 화면에선 back 링크만 남긴다 */
   }
   .summary .stackrow {
     grid-template-columns: 1fr;

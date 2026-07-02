@@ -1,29 +1,33 @@
-import { profile } from '../data/resume'
+import { sections } from '../data/resume'
 import { useScrollState } from '../lib/scrollStore'
 
-// Fixed DOM chrome layered over the canvas: back link, brand, links,
-// scroll hint. Reads scroll state from the external store.
+// 문서형 페이지와 같은 형태의 고정 상단바:
+// [현재 섹션(좌)] … [기본·출력·상세·3D 탭(우)] + 화면 최상단 진행 게이지.
+// 게이지(#gauge3d)는 ScrollBridge가 매 프레임 scaleX로 직접 갱신한다(리렌더 없음).
 export default function Chrome() {
-  const { atTop } = useScrollState()
+  const { index, atTop } = useScrollState()
+  const s = sections[index] || sections[0]
+  const now = s.title || s.name || '오정록'
 
   return (
     <>
-      {/* 좌상단: 문서형 이력서로 돌아가는 링크 + 브랜드를 한 줄로 (겹침 방지) */}
-      <div className="topbar3d">
-        <a className="backlink" href="./" aria-label="문서형 이력서로 돌아가기">
-          ← 이력서
-        </a>
-        <div className="brandmark">
-          <b>Jeongrok Oh</b> · MMO Server Architect
+      <header className="bar3d">
+        <div className="bar3d-progress" aria-hidden="true">
+          <i id="gauge3d" />
         </div>
-      </div>
-
-      <div className="toplinks">
-        <a href={`mailto:${profile.email}`}>EMAIL</a>
-        <a href={profile.github} target="_blank" rel="noreferrer">
-          GITHUB
-        </a>
-      </div>
+        <div className="bar3d-inner">
+          {/* key로 리마운트해 교체 애니메이션 재생 */}
+          <div className="bar3d-now" key={now}>
+            {now}
+          </div>
+          <nav className="switcher3d" aria-label="이력서 뷰">
+            <a href="./">기본</a>
+            <a href="./?view=ats">출력</a>
+            <a href="./?view=detail">상세</a>
+            <span className="on">3D</span>
+          </nav>
+        </div>
+      </header>
 
       {atTop && <div className="scrollhint">Scroll ↓</div>}
     </>
