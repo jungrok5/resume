@@ -190,13 +190,16 @@ a {
   max-width: 560px;
   pointer-events: auto;
   /* 블러 없음(backdrop-filter는 움직이는 캔버스 위에서 상시 GPU 비용) —
-     충분히 어두운 반투명 배경 + 텍스트 새도우로 어떤 씬 위에서도 글자가 읽힌다. */
-  background: linear-gradient(180deg, rgba(5, 7, 12, 0.82), rgba(5, 7, 12, 0.7));
+     뒤의 씬이 비쳐 보일 만큼 투명하게 유지하고, 가독성은 강한 텍스트
+     새도우(이중)로 확보한다. */
+  background: linear-gradient(180deg, rgba(5, 7, 12, 0.55), rgba(5, 7, 12, 0.42));
   border: 1px solid var(--line);
   border-radius: 18px;
   padding: 30px 34px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.9),
+    0 2px 14px rgba(0, 0, 0, 0.7);
 }
 .section.center .panel {
   max-width: 720px;
@@ -477,11 +480,12 @@ h2.title {
   .panel {
     max-width: 100%;
     padding: 20px 18px;
-    /* 긴 패널(마지막 요약 등)이 화면을 넘으면 패널 안에서 스크롤 —
-       섹션 슬롯(1페이지) 안에 항상 다 들어가도록 */
-    max-height: calc(100svh - 84px);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    /* 내부 스크롤 없음 — 긴 패널은 섹션(min-height)을 자연스럽게 늘리고,
+       전체 스크롤 길이는 Experience가 오버레이 실제 높이를 재서 pages로 보정 */
+  }
+  .section {
+    padding-top: 64px; /* 상단 고정 크롬(← 이력서)과 겹치지 않게 */
+    padding-bottom: 32px;
   }
   h2.title {
     font-size: clamp(26px, 7.4vw, 34px);

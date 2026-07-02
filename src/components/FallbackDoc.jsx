@@ -11,7 +11,7 @@ export default function FallbackDoc() {
       <header style={{ marginBottom: 48 }}>
         <p className="kicker">20 Years · Server Systems</p>
         <h1 style={{ fontSize: 'clamp(34px,7vw,64px)', margin: '0 0 10px', letterSpacing: '-0.02em' }}>
-          {profile.name} <span style={{ color: 'var(--ink-faint)', fontSize: '0.5em' }}>{profile.hangul}</span>
+          {profile.name} <span style={{ color: 'var(--ink-faint)', fontSize: '0.5em' }}>{profile.nameEn}</span>
         </h1>
         <p style={{ color: 'var(--ink-dim)', fontSize: 18, margin: 0 }}>{profile.title}</p>
         <p className="cta" style={{ marginTop: 20 }}>
