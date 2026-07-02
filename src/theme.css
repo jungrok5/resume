@@ -120,34 +120,6 @@ a {
   color: var(--cyan);
 }
 
-/* progress rail */
-.rail {
-  position: fixed;
-  right: 26px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  z-index: 20;
-  pointer-events: auto;
-}
-.rail button {
-  all: unset;
-  cursor: pointer;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 1px solid var(--ink-faint);
-  transition: all 0.25s ease;
-}
-.rail button[data-active='true'] {
-  border-color: var(--cyan);
-  background: var(--cyan);
-  box-shadow: 0 0 14px rgba(53, 230, 255, 0.8);
-  transform: scale(1.25);
-}
-
 .scrollhint {
   position: fixed;
   bottom: 24px;
@@ -527,14 +499,6 @@ h2.title {
   }
   .blurb {
     font-size: 14.5px;
-  }
-  .rail {
-    right: 8px;
-    gap: 10px;
-  }
-  .rail button {
-    width: 8px;
-    height: 8px;
   }
   .toplinks {
     display: none;

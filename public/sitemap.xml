@@ -5,5 +5,9 @@
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
-  <!-- interactive.html 은 완성 후 다시 등록 -->
+  <url>
+    <loc>https://jungrok5.github.io/resume/interactive.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
 </urlset>

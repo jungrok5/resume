@@ -225,12 +225,12 @@
   .edu .deg { font-weight: 700; }
   .edu .sub { color: var(--muted); font-size: 13px; }
 
-  /* theme toggle — 스위처와 같은 30px 높이로 통일 */
+  /* theme toggle — 아이콘 원형 버튼 (스위처와 같은 30px 높이) */
   .toggle {
     background: var(--bg-soft); border: 1px solid var(--border); color: var(--muted);
-    border-radius: 999px; height: 30px; padding: 0 14px; font-size: 12px; font-weight: 600;
+    border-radius: 50%; width: 30px; height: 30px; padding: 0; font-size: 14px;
     line-height: 1; cursor: pointer;
-    font-family: inherit; display: inline-flex; align-items: center; gap: 6px; flex: none;
+    font-family: inherit; display: inline-flex; align-items: center; justify-content: center; flex: none;
   }
   .toggle:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -262,10 +262,34 @@
     .topbar, .switcher { display: none !important; }
   }
 
-  /* ===== view switcher ===== */
+  /* ===== view switcher (스크롤해도 유지되는 고정 상단바) ===== */
   .topbar {
+    position: sticky; top: 0; z-index: 40;
     display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; flex-wrap: wrap; margin: 0 0 28px;
+    gap: 12px; margin: 0 0 28px; padding: 12px 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  /* 지금 읽고 있는 섹션 제목 — 스크롤에 따라 교체 표시 */
+  .topbar-now {
+    flex: 1; min-width: 0;
+    text-align: right;
+    font-size: 12.5px; font-weight: 600; color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .topbar-now.swap { animation: nowswap 0.35s ease; }
+  @keyframes nowswap {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: none; }
+  }
+  /* 스크롤 진행 게이지 (상단바 하단의 얇은 바) */
+  .progress {
+    position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+    pointer-events: none;
+  }
+  .progress i {
+    display: block; height: 100%; width: 0;
+    background: var(--accent); border-radius: 2px;
   }
   .switcher {
     display: flex; align-items: center; gap: 2px; padding: 2px; width: fit-content;
@@ -344,13 +368,13 @@
   <div class="topbar">
     <div class="switcher" role="tablist">
       <button data-view="design" class="on">기본</button>
-      <button data-view="ats">ATS</button>
+      <button data-view="ats">출력</button>
       <button data-view="detail">상세</button>
-      <!-- 3D 인터랙티브(./interactive.html)는 완성 전까지 메인에서 비링크 상태.
-           완성되면 여기에 다시 추가:
-           <a class="view3d" href="./interactive.html">✨ 3D</a> -->
+      <a class="view3d" href="./interactive.html" aria-label="3D 인터랙티브 이력서 보기">✨ 3D</a>
     </div>
-    <button class="toggle" id="themeToggle" aria-label="테마 전환">◐ 테마</button>
+    <div class="topbar-now" id="nowReading" aria-hidden="true"></div>
+    <button class="toggle" id="themeToggle" aria-label="테마 전환">◐</button>
+    <div class="progress" aria-hidden="true"><i id="scrollProgress"></i></div>
   </div>
 
   <div id="view-design" class="view on">
@@ -1367,7 +1391,7 @@
     function label() {
       var cur = root.getAttribute('data-theme');
       var dark = cur === 'dark' || (!cur && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      btn.textContent = dark ? '☀ 라이트' : '☾ 다크';
+      btn.textContent = dark ? '☀' : '☾';
     }
     label();
     btn.addEventListener('click', function () {
@@ -1400,6 +1424,43 @@
     if (saved) show(saved);
   })();
 
+  /* ===== 스크롤 진행 게이지 + 현재 섹션 표시 ===== */
+  (function () {
+    var bar = document.getElementById('scrollProgress');
+    var now = document.getElementById('nowReading');
+    if (!bar || !now) return;
+    var ticking = false;
+    function update() {
+      ticking = false;
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - doc.clientHeight;
+      var top = window.pageYOffset || doc.scrollTop || 0;
+      bar.style.width = (max > 0 ? (top / max) * 100 : 0).toFixed(2) + '%';
+
+      /* 활성 뷰의 제목 중, 상단바 아래(110px)를 지난 마지막 것 = 지금 읽는 섹션 */
+      var view = document.querySelector('.view.on');
+      if (!view) return;
+      var hs = view.querySelectorAll('h1, h2, h3');
+      var cur = '';
+      for (var i = 0; i < hs.length; i++) {
+        if (hs[i].getBoundingClientRect().top < 110) cur = hs[i].textContent.trim();
+        else break;
+      }
+      if (now.dataset.cur !== cur) {
+        now.dataset.cur = cur;
+        now.textContent = cur;
+        now.classList.remove('swap');
+        void now.offsetWidth; /* 애니메이션 재시작 */
+        now.classList.add('swap');
+      }
+    }
+    function onScroll() {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    update();
+  })();
 </script>
 </body>
 </html>
