@@ -4,7 +4,7 @@ import { useSyncExternalStore } from 'react'
 // active-section indicator) can read the scroll offset that lives *inside*
 // drei's <ScrollControls>. A bridge component inside the Canvas writes here.
 
-let state = { offset: 0, index: 0, total: 1, el: null }
+let state = { index: 0, atTop: true, total: 1, el: null }
 const subs = new Set()
 
 export const scrollStore = {

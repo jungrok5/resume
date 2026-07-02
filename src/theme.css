@@ -1,9 +1,9 @@
 :root {
   --bg: #05060a;
   --bg-soft: #0a0d16;
-  --ink: #eef1f9;
-  --ink-dim: #bcc5da;
-  --ink-faint: #7681a0;
+  --ink: #f4f6fc;
+  --ink-dim: #d8deee; /* 본문이 회색으로 보이지 않게 흰색에 가깝게 */
+  --ink-faint: #939eba;
   --line: rgba(120, 140, 190, 0.16);
 
   --cyan: #35e6ff;
@@ -192,11 +192,11 @@ a {
   /* 블러 없음(backdrop-filter는 움직이는 캔버스 위에서 상시 GPU 비용) —
      뒤의 씬이 비쳐 보일 만큼 투명하게 유지하고, 가독성은 강한 텍스트
      새도우(이중)로 확보한다. */
-  background: linear-gradient(180deg, rgba(5, 7, 12, 0.55), rgba(5, 7, 12, 0.42));
+  background: linear-gradient(180deg, rgba(5, 7, 12, 0.38), rgba(5, 7, 12, 0.26));
   border: 1px solid var(--line);
   border-radius: 18px;
   padding: 30px 34px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
   text-shadow:
     0 1px 3px rgba(0, 0, 0, 0.9),
     0 2px 14px rgba(0, 0, 0, 0.7);
@@ -259,7 +259,7 @@ h2.title {
 .blurb {
   font-size: clamp(15px, 1.5vw, 18px);
   line-height: 1.62;
-  color: var(--ink-dim);
+  color: var(--ink); /* 본문은 거의 흰색으로 */
   margin: 0 0 26px;
 }
 
@@ -281,6 +281,10 @@ h2.title {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  /* 투명 채움 글자는 부모 text-shadow가 글자 '위로' 비쳐 어두워진다 —
+     새도우를 끄고 clip 이후에 적용되는 drop-shadow로 대체 */
+  text-shadow: none;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.55));
 }
 .metric .cap {
   font-family: var(--mono);

@@ -38,7 +38,7 @@ export const sections = [
     accent: 'cyan',
     kicker: '20년 · 서버 시스템',
     name: profile.name,
-    sub: '20년간 MMO 서버 프레임워크를 백지에서 반복 설계·구축해온 테크니컬 디렉터 — 대규모 게임 월드를 떠받치는 ‘보이지 않는 서버 시스템’을 눈에 보이게.',
+    sub: '20년간 MMO 서버 프레임워크를 백지에서 반복 설계·구축해온 Technical Director. 네트워크·동시성·네비게이션·서버 물리를 근본부터 다루며, 대규모 트래픽 최적화와 난제 해결이 강점입니다.',
   },
   {
     id: 'career',
@@ -50,7 +50,7 @@ export const sections = [
     title: '20년의 서버 여정',
     year: '2007 — 현재',
     blurb:
-      '온라인 게임 서버 개발 20년. 서버 팀원에서 시작해 서버팀장·프로그램팀장·서버파트리더를 거쳐, NCSOFT에서 테크니컬 디렉터로 MMO 서버 프레임워크를 백지에서 구축했다 — 지금은 분산 MMO 백엔드를 설계한다.',
+      '2007년 서버 프로그래머로 시작해 서버팀장·프로그램팀장·서버파트리더를 거쳐, 2016년 NCSOFT 입사 후 테크니컬 디렉터로 MMO 서버 프레임워크를 백지에서 구축했다. 매니징보다 기술을 직접 주도하고 혁신을 만들어내는 역할을 지향한다.',
     isTimeline: true,
     tags: ['Pantera', 'Miniverse', 'AION2', 'NCSOFT', '위메이드', 'Actozsoft'],
   },
@@ -62,7 +62,7 @@ export const sections = [
     align: 'right',
     accent: 'violet',
     num: '02',
-    kicker: 'Pantera · 2024 — 현재',
+    kicker: 'NCSOFT · Pantera · 2024 — 현재',
     title: '분산 액터 아키텍처',
     year: 'Orleans Grain · 팀 표준 확립',
     blurb:
@@ -76,7 +76,7 @@ export const sections = [
     align: 'left',
     accent: 'blue',
     num: '03',
-    kicker: 'Pantera · 2024 — 현재',
+    kicker: 'NCSOFT · Pantera · 2024 — 현재',
     title: 'proto 단일 소스 파이프라인',
     year: '데이터·스탯 파이프라인 표준화',
     blurb:
@@ -90,7 +90,7 @@ export const sections = [
     align: 'right',
     accent: 'green',
     num: '04',
-    kicker: 'Pantera · 2024 — 현재',
+    kicker: 'NCSOFT · Pantera · 2024 — 현재',
     title: '샤딩 · 부하로 규명한 상한',
     year: '데이터 계층 설계 · 부하 테스트 인프라',
     blurb:
@@ -106,7 +106,7 @@ export const sections = [
     align: 'left',
     accent: 'green',
     num: '05',
-    kicker: 'Miniverse (UE5) · 2023 — 2024',
+    kicker: 'NCSOFT · Miniverse (UE5) · 2023 — 2024',
     title: '5,000만 프랍 · 2,000명 밀집 건축',
     year: '초대규모 UGC · 액터 모델 락프리',
     blurb:
@@ -120,7 +120,7 @@ export const sections = [
     align: 'right',
     accent: 'green',
     num: '06',
-    kicker: 'Miniverse (UE5) · 2023 — 2024',
+    kicker: 'NCSOFT · Miniverse (UE5) · 2023 — 2024',
     title: '렌더링 · 물리 최적화',
     year: '수천만 프랍 월드를 그리는 법',
     blurb:
@@ -139,7 +139,7 @@ export const sections = [
     align: 'left',
     accent: 'cyan',
     num: '07',
-    kicker: 'Miniverse (UE5) · 2023 — 2024',
+    kicker: 'NCSOFT · Miniverse (UE5) · 2023 — 2024',
     title: '다이나믹 복셀 네비메시',
     year: '내비게이션 · 서버 물리',
     blurb:
@@ -153,7 +153,7 @@ export const sections = [
     align: 'right',
     accent: 'green',
     num: '08',
-    kicker: 'Miniverse (UE5) · 분산 시뮬레이션',
+    kicker: 'NCSOFT · Miniverse (UE5) · 분산 시뮬레이션',
     title: '클라이언트 위임 분산 시뮬레이션',
     year: '로블록스 분산 물리(네트워크 오너십) 개념을 자체 구현',
     blurb:
@@ -169,7 +169,7 @@ export const sections = [
     align: 'left',
     accent: 'blue',
     num: '09',
-    kicker: 'Miniverse Web (Godot) · 2021 — 2023',
+    kicker: 'NCSOFT · Miniverse Web (Godot) · 2021 — 2023',
     title: '실시간 협업 · 1,000+ 커서',
     year: '브라우저 기반 메타버스',
     blurb:
@@ -183,7 +183,7 @@ export const sections = [
     align: 'right',
     accent: 'amber',
     num: '10',
-    kicker: 'Miniverse Web · UGC 런타임',
+    kicker: 'NCSOFT · Miniverse Web · UGC 런타임',
     title: '프랍 조합 미니게임',
     year: '유저 스크립트 · 프랍 메시징',
     blurb:
@@ -199,7 +199,7 @@ export const sections = [
     align: 'left',
     accent: 'amber',
     num: '11',
-    kicker: 'AION2 · 2016 — 2021',
+    kicker: 'NCSOFT · AION2 · 2016 — 2021',
     title: '채널 없는 1,000 vs 1,000',
     year: 'NCDP 2019 최우수상 · ~40명 기술 디렉팅',
     blurb:
@@ -213,7 +213,7 @@ export const sections = [
     align: 'right',
     accent: 'cyan',
     num: '12',
-    kicker: 'AION2 · 3D 비행 네비게이션',
+    kicker: 'NCSOFT · AION2 · 3D 비행 네비게이션',
     title: '3차원 비행 내비게이션',
     year: '지상 평면을 넘어, 하늘의 길찾기',
     blurb:
@@ -229,7 +229,7 @@ export const sections = [
     align: 'left',
     accent: 'green',
     num: '13',
-    kicker: '기술 자문 · 트릭스터M 파견 (2020 — 2021)',
+    kicker: 'NCSOFT · 트릭스터M 파견 (2020 — 2021)',
     title: '동접 2,000 → 8,000',
     year: '3개월 파견 · 같은 하드웨어에서 4배',
     blurb:
@@ -247,7 +247,7 @@ export const sections = [
     align: 'center',
     accent: 'blue',
     num: '14',
-    kicker: 'Pantera · AI 개발 생산성 혁신 주도',
+    kicker: 'NCSOFT · Pantera · AI 개발 생산성',
     title: 'AI 개발 생산성 혁신',
     year: 'MCP · 에이전트 · 로컬 LLM',
     blurb:
@@ -261,10 +261,10 @@ export const sections = [
 
 // 타임라인 씬 + 폴백 문서가 쓰는 경력 요약 (최신 → 과거)
 export const timeline = [
-  ['2024 — 현재', 'Pantera', '분산 MMO 백엔드 (Orleans / .NET / UE5)'],
-  ['2023 — 2024', 'Miniverse (UE5)', 'UGC 샌드박스 MMO — 5,000만 프랍 · 2,000명'],
-  ['2021 — 2023', 'Miniverse (Web)', '유저 창작 웹 메타버스 (Godot) · 1,000+ 커서'],
-  ['2016 — 2021', 'AION2 Mobile', '테크니컬 디렉터 · MMO 프레임워크 백지 구축'],
+  ['2024 — 현재', 'NCSOFT · Pantera', '분산 MMO 백엔드 (Orleans / .NET / UE5)'],
+  ['2023 — 2024', 'NCSOFT · Miniverse (UE5)', 'UGC 샌드박스 MMO — 5,000만 프랍 · 2,000명'],
+  ['2021 — 2023', 'NCSOFT · Miniverse (Web)', '유저 창작 웹 메타버스 (Godot) · 1,000+ 커서'],
+  ['2016 — 2021', 'NCSOFT · AION2 모바일', '테크니컬 디렉터 · MMO 프레임워크 백지 구축'],
   ['2007 — 2015', '액토즈소프트 · KB온라인 · 자이언트드림 · 위메이드 · 코어크리에이티브', '서버팀장 / 프로그램팀장 / 서버파트리더 — 국내·일본·중국·태국 상용 서비스'],
 ]
 

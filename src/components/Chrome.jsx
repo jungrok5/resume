@@ -4,8 +4,7 @@ import { scrollStore, useScrollState } from '../lib/scrollStore'
 // Fixed DOM chrome layered over the canvas: brand, links, progress rail,
 // scroll hint. Reads the scroll offset from the external store.
 export default function Chrome() {
-  const { offset, total } = useScrollState()
-  const active = Math.round(offset * (total - 1))
+  const { index: active, atTop } = useScrollState()
 
   return (
     <>
@@ -38,7 +37,7 @@ export default function Chrome() {
         ))}
       </nav>
 
-      {active === 0 && <div className="scrollhint">Scroll ↓</div>}
+      {atTop && <div className="scrollhint">Scroll ↓</div>}
     </>
   )
 }

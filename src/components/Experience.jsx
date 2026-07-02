@@ -54,7 +54,9 @@ export default function Experience() {
   return (
     <Canvas
       dpr={mobile ? [1, 1.5] : [1, 2]}
-      gl={{ antialias: true, powerPreference: 'high-performance', alpha: false }}
+      /* 데스크톱은 EffectComposer가 오프스크린 FBO에 렌더하므로 캔버스 MSAA가
+         화면에 적용되지 않는다(비용만 지불) → 컴포저 없는 모바일에서만 AA */
+      gl={{ antialias: mobile, powerPreference: 'high-performance', alpha: false }}
       camera={{ fov: 46, near: 0.1, far: 200, position: [0, 2.4, 10] }}
     >
       <color attach="background" args={[C.bg]} />
@@ -66,7 +68,8 @@ export default function Experience() {
       <directionalLight position={[6, 12, 8]} intensity={1.05} color="#dce6ff" />
 
       <Suspense fallback={null}>
-        <ScrollControls pages={pages} damping={0.3} distance={1}>
+        {/* damping을 낮춰 스크롤 반응을 빠릿하게 (0.3 → 0.15) */}
+        <ScrollControls pages={pages} damping={0.15} distance={1}>
           <CameraRig />
           <ScrollBridge />
           <SceneRig mobile={mobile} />
