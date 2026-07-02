@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useScroll } from '@react-three/drei'
 import { scrollStore } from '../lib/scrollStore'
@@ -8,6 +8,7 @@ import { sections } from '../data/resume'
 // scroll host element to the external store so DOM chrome can read it.
 export default function ScrollBridge() {
   const data = useScroll()
+  const track = useRef({ idx: -1, t: 0 }) // GA 씬 도달/체류 추적
   let gauge = null // 상단 진행 게이지 DOM 캐시
 
   useEffect(() => {
@@ -36,7 +37,24 @@ export default function ScrollBridge() {
     const index = Math.round(o * (sections.length - 1))
     const atTop = o < 0.02
     const s = scrollStore.get()
-    if (index !== s.index || atTop !== s.atTop) scrollStore.set({ index, atTop })
+    if (index !== s.index || atTop !== s.atTop) {
+      scrollStore.set({ index, atTop })
+
+      // GA: 어떤 씬까지 봤고(scene_view) 각 씬에 얼마나 머물렀는지(scene_dwell)
+      if (index !== track.current.idx && window.gtag) {
+        const tr = track.current
+        const nowMs = performance.now()
+        if (tr.idx >= 0 && sections[tr.idx]) {
+          window.gtag('event', 'scene_dwell', {
+            scene: sections[tr.idx].id,
+            seconds: Math.min(Math.round((nowMs - tr.t) / 1000), 600),
+          })
+        }
+        window.gtag('event', 'scene_view', { scene: sections[index] ? sections[index].id : index })
+        tr.idx = index
+        tr.t = nowMs
+      }
+    }
   })
 
   return null
