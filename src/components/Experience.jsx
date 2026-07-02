@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { ScrollControls, Scroll, Preload, AdaptiveDpr } from '@react-three/drei'
 import { sections } from '../data/resume'
@@ -7,8 +7,11 @@ import { C } from '../three/lib/palette'
 import CameraRig from '../three/CameraRig'
 import ScrollBridge from '../three/ScrollBridge'
 import SceneRig from '../three/SceneRig'
-import Effects from '../three/Effects'
 import Overlay from './Overlay'
+
+// 포스트프로세싱(Bloom/Vignette)은 데스크톱 전용 — 별도 청크로 분리해서
+// 모바일은 postprocessing 라이브러리를 아예 다운로드하지 않는다.
+const Effects = lazy(() => import('../three/Effects'))
 
 export default function Experience() {
   const mobile = useIsMobile()

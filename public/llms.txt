@@ -1,0 +1,52 @@
+# 오정록 (Jeongrok Oh) — Technical Director · MMO Server Architect
+
+> 20년차 게임 서버 프로그래머 / 기술 디렉터. MMO 서버 프레임워크를 백지에서 반복 설계·구축. 분산 서버(Orleans) · 대규모 트래픽 최적화 · 난제 해결이 강점. 매니징보다 기술을 직접 주도하고 혁신을 만들어내는 역할을 지향.
+
+- 이력서(웹, 기본·출력·상세 뷰): https://jungrok5.github.io/resume/
+- 3D 인터랙티브 이력서: https://jungrok5.github.io/resume/interactive.html
+- GitHub: https://github.com/jungrok5
+- Email: jungrok5@gmail.com
+
+## 경력 (최신순)
+
+- 2024–현재 · NCSOFT Pantera (블레이드&소울 IP 키우기류 RPG · 분산 서버 백엔드) · Technical Director
+  Orleans Grain 모델 채택 주도·팀 표준 정착, gRPC→TCP 전송 전환, 샤딩 기반 데이터 분산.
+  proto 단일 소스에서 서버·클라 코드·CSV·유효성 검증 자동 생성(팀 표준).
+  부하 테스트 인프라 — gRPC 초당 24만 요청, EntityFramework 5만 TPS 실측. 저장프로시저·dacpac CI/CD.
+  영역전·슬라임대난투(3:3 팀 PvP)·용던 등 대형 컨텐츠 서버 설계·구현.
+  AI 개발 생산성 혁신 주도 — MCP 서버 자체 구현(자연어 서버 테스트 자동화), AI 테스트·코드리뷰 에이전트 팀, 사내 코드 유출 없는 로컬 LLM 코딩 스택(llama.cpp) 구축·배포.
+
+- 2023–2024 · NCSOFT Miniverse UE5 (유저 창작 샌드박스 MMO) · Technical Director (프로그래머 ~20명)
+  단일 공간 5,000만 프랍 풀 틱 + 동시 2,000명 밀집 건축 — 공간당 단일 디스패처 액터 모델(락프리)·zero-copy 브로드캐스트.
+  렌더링·물리 최적화 — ISM 인스턴싱 드로우콜 20,967→503, FPS 16.5→47.4, 플레이어 주변 물리 청킹.
+  서버사이드 다이나믹 복셀 네비메시(DotRecast, 변경 타일만 재계산) + Godot 서버 시각화 뷰어 자체 개발.
+  클라이언트 위임 분산 시뮬레이션 — 로블록스 분산 물리(네트워크 오너십) 개념을 NPC AI에 자체 구현, 오너십 무중단 마이그레이션.
+
+- 2021–2023 · NCSOFT Miniverse Web (Godot 웹 메타버스) · Technical Director
+  브라우저 한 공간 1,000+ 동시 커서 협업 에디터(충돌·병합 없는 동시 편집).
+  유저 창작 스크립트 런타임 R&D — 무패치 로직 실행, 서버 권위 판정(치팅 방지). Node.js→C# 데디 전환 실측.
+  프랍 조합 미니게임(서바이벌·페인트맨) — 한 공간 다중 게임 동시 실행 실증.
+
+- 2016–2021 · NCSOFT AION2 (MMORPG) · Technical Director (전체 ~140명 · 프로그래머 ~40명)
+  MMO 서버 프레임워크 전체를 백지에서 설계·구축.
+  채널 없는 대규모 밀집 전투(NCDP 2019 최우수상) — 한 시야 1,000명 전투 초당 1,300만 패킷을 세션/필드 서버 분산(처리량 3배↑)·셀 기반 관심영역 브로드캐스팅·Packet Shrink 비트 패킹(트래픽 -36%)으로 해결, 이후 2,000 vs 2,000 확장.
+  복셀 기반 3D 비행 네비게이션(서버 처리).
+
+- 2020–2021 · NCSOFT 트릭스터M 서버 최적화 파견(3개월) — 안정 동접 2,000 → 8,000(4배).
+
+- 2007–2015 · 액토즈소프트·KB온라인·자이언트드림·위메이드·코어크리에이티브 — 서버팀장/프로그램팀장/서버파트리더, 국내·일본·중국·태국 상용 서비스·라이브 운영.
+
+## 기술 스택
+
+언어: C++(11–20) · C# · TypeScript/JS · Python · Lua · GDScript
+서버·분산: Orleans · gRPC/TCP · ASP.NET · Node.js · IOCP · WebSocket
+데이터: MSSQL·저장프로시저 · Redis/Garnet · MongoDB · EntityFramework · 샤딩
+엔진·네비·물리: Unreal 3/4/5 · Unity3D · Godot · Gamebryo · Recast/Detour · 복셀 네비메시
+AI·인프라: Claude·Agent SDK · MCP(자체 구현) · 로컬 LLM(llama.cpp) · Perforce · Jenkins · .NET Aspire
+
+## 학력 · 수상
+
+- 홍익대학교 컴퓨터정보통신소프트웨어전공 (2000–2007)
+- NCDP 2019 최우수상 — "1000 vs 1000 대규모 유저를 채널 없이 서비스 하기 위한 고민들"
+- NCSOFT 시니어 전문면접관 · Job Title 운영위원 (Programming, 2019–2021)
+- ETRI 공동 기술 개발 (2010) — 온라인 게임 서버 부하 테스트
