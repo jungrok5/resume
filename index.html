@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>오정록 · Technical Director / MMO Server Architect</title>
 
+<!-- 3D 페이지와 동일한 상단바 폰트 (Noto Sans KR) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+
 <!-- ===== SEO ===== -->
 <meta name="description" content="오정록 (Jeongrok Oh) — 20년차 MMO 서버 아키텍트 · Technical Director. 분산 서버(Orleans), 대규모 트래픽 최적화, 서버 물리·네비게이션, AI 개발 생산성. NCSOFT 판테라·미니버스·AION2." />
 <meta name="author" content="오정록 (Jeongrok Oh)" />
@@ -225,18 +230,18 @@
   .edu .deg { font-weight: 700; }
   .edu .sub { color: var(--muted); font-size: 13px; }
 
-  /* theme toggle — 아이콘 원형 버튼 (스위처와 같은 26px 높이) */
+  /* theme toggle — 다크 바 위 아이콘 원형 버튼 (26px) */
   .toggle {
-    background: var(--bg-soft); border: 1px solid var(--border); color: var(--muted);
+    background: transparent; border: 1px solid rgba(255, 255, 255, 0.18); color: #939eba;
     border-radius: 50%; width: 26px; height: 26px; padding: 0; font-size: 13px;
     line-height: 1; cursor: pointer;
     font-family: inherit; display: inline-flex; align-items: center; justify-content: center; flex: none;
   }
-  .toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .toggle:hover { border-color: #35e6ff; color: #35e6ff; }
 
   @media (max-width: 640px) {
     .page { padding: 68px 22px 48px; }
-    .topbar-inner { padding: 6px 14px; gap: 8px; }
+    .topbar-inner { padding: 6px 12px; gap: 8px; }
     .themes, .cols, .cols.narrow { grid-template-columns: 1fr; }
     .name { font-size: 27px; }
     .job-meta { white-space: normal; }
@@ -263,22 +268,24 @@
     .topbar, .switcher { display: none !important; }
   }
 
-  /* ===== 고정 상단바 — 처음부터 화면 최상단에 풀폭으로 ===== */
+  /* ===== 고정 상단바 — 3D 페이지와 완전히 동일한 다크 바 =====
+     문서 테마(라이트/다크)와 무관하게 항상 같은 모습 → 페이지 전환 시
+     바가 바뀌는 느낌이 없다. 좌우 풀폭, 아래 경계선 없음, 불투명 배경. */
   .topbar {
     position: fixed; top: 0; left: 0; right: 0; z-index: 40;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border-soft);
+    background: #05060a;
   }
   .topbar-inner {
-    max-width: var(--maxw); margin: 0 auto;
-    padding: 7px 48px;
+    padding: 7px 16px;
     display: flex; align-items: center; gap: 12px;
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   }
   /* 지금 읽고 있는 섹션 제목 — 왼쪽, 스크롤에 따라 교체 */
   .topbar-now {
     flex: 1; min-width: 0;
     text-align: left;
-    font-size: 12.5px; font-weight: 600; color: var(--muted);
+    font-size: 12.5px; font-weight: 600; color: #d8deee;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .topbar-now.swap { animation: nowswap 0.35s ease; }
@@ -286,36 +293,37 @@
     from { opacity: 0; transform: translateY(5px); }
     to { opacity: 1; transform: none; }
   }
-  /* 스크롤 진행 게이지 — 예시 사이트처럼 화면 맨 위 가장자리에 */
+  /* 스크롤 진행 게이지 — 화면 맨 위 가장자리 (3D와 같은 시안색) */
   .progress {
     position: absolute; left: 0; right: 0; top: 0; height: 2px;
     pointer-events: none;
   }
   .progress i {
     display: block; height: 100%; width: 0;
-    background: var(--accent);
+    background: #35e6ff;
   }
+  /* 탭 — 3D 페이지의 스위처와 동일한 다크 스타일 */
   .switcher {
     display: flex; align-items: center; gap: 2px; padding: 2px; width: fit-content;
-    height: 26px; /* 슬림 — 테마 버튼과 동일 */
-    background: var(--bg); border: 1px solid var(--border); border-radius: 999px;
+    height: 26px;
+    background: #0b0f18; border: 1px solid rgba(120, 140, 190, 0.16); border-radius: 999px;
     flex: none;
   }
   .switcher button {
-    border: none; background: transparent; color: var(--muted); font-family: inherit;
+    border: none; background: transparent; color: #a9b3cc; font-family: inherit;
     font-size: 12px; font-weight: 600; height: 20px; padding: 0 11px; line-height: 1;
     border-radius: 999px; cursor: pointer;
   }
-  .switcher button:hover { color: var(--text); }
-  .switcher button.on { background: var(--border-soft); color: var(--text); }
-  /* 3D 탭: 뷰 토글이 아니라 별도 인터랙티브 페이지로 이동하는 링크 */
+  .switcher button:hover { color: #fff; }
+  .switcher button.on { background: #232b3d; color: #f4f6fc; }
+  /* 3D 탭: 다른 탭과 같은 색 — 뷰 토글이 아니라 페이지 이동 링크일 뿐 */
   .switcher a.view3d {
     display: inline-flex; align-items: center; text-decoration: none;
-    color: var(--accent); font-family: inherit;
-    font-size: 12px; font-weight: 700; height: 20px; padding: 0 11px; line-height: 1;
+    color: #a9b3cc; font-family: inherit;
+    font-size: 12px; font-weight: 600; height: 20px; padding: 0 11px; line-height: 1;
     border-radius: 999px;
   }
-  .switcher a.view3d:hover { background: var(--accent-soft); text-decoration: none; }
+  .switcher a.view3d:hover { color: #fff; text-decoration: none; }
   .view { display: none; }
   .view.on { display: block; }
 
