@@ -100,6 +100,10 @@
 
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
+  /* 네이티브 스크롤바 숨김 — 3D 페이지(스크롤바 없음)와 유효 폭을 맞춰
+     페이지 전환 시 상단바가 흔들리지 않게. 스크롤 위치는 상단 게이지가 표시. */
+  html { scrollbar-width: none; -ms-overflow-style: none; }
+  html::-webkit-scrollbar { width: 0; height: 0; display: none; }
   body {
     margin: 0;
     background: var(--bg);
