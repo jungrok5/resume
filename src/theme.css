@@ -339,6 +339,37 @@ h2.title {
   text-shadow: 0 0 20px rgba(52, 245, 166, 0.45);
 }
 
+/* 이력서 핵심 요약 불릿 — 씬이 '어떻게'를 보여주고 불릿이 '무엇을'을 말한다 */
+.points {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 11px;
+  text-align: left; /* 우측 정렬 섹션에서도 불릿은 왼쪽 정렬이 읽기 편하다 */
+}
+.points li {
+  position: relative;
+  padding-left: 20px;
+  font-size: clamp(14.5px, 1.4vw, 16.5px);
+  line-height: 1.6;
+  color: var(--ink);
+}
+.points li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.58em;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--cyan);
+  box-shadow: 0 0 10px rgba(53, 230, 255, 0.5);
+}
+.section.right .points {
+  margin-left: auto;
+}
+
 .tags {
   display: flex;
   flex-wrap: wrap;
