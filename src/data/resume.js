@@ -271,7 +271,7 @@ export const sections = [
 
 // 타임라인 씬 + 폴백 문서가 쓰는 경력 요약 (최신 → 과거)
 export const timeline = [
-  ['2024 — 현재', 'NCSOFT · Pantera', '분산 MMO 백엔드 (Orleans / .NET / UE5)'],
+  ['2024 — 현재', 'NCSOFT · Pantera', '블소 IP 키우기류 RPG · 분산 서버 백엔드 (Orleans / .NET / UE5)'],
   ['2023 — 2024', 'NCSOFT · Miniverse (UE5)', 'UGC 샌드박스 MMO — 5,000만 프랍 · 2,000명'],
   ['2021 — 2023', 'NCSOFT · Miniverse (Web)', '유저 창작 웹 메타버스 (Godot) · 1,000+ 커서'],
   ['2016 — 2021', 'NCSOFT · AION2 모바일', '테크니컬 디렉터 · MMO 프레임워크 백지 구축'],
