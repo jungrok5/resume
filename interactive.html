@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#05060a" />
+    <meta
+      name="description"
+      content="오정록 — 테크니컬 디렉터 · MMO 서버 아키텍트. 20년의 분산 게임 시스템을, 눈에 보이게. 스크롤 기반 3D 인터랙티브 이력서."
+    />
+    <link rel="canonical" href="https://jungrok5.github.io/resume/interactive.html" />
+    <title>오정록 · 3D 인터랙티브 이력서 — MMO 서버 아키텍트</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Google Analytics (GA4) — index.html 과 동일한 측정 ID를 넣으세요. 플레이스홀더면 비활성. -->
+    <script>
+      window.__GA_ID__ = 'G-XXXXXXXXXX'; /* ← GA4 측정 ID 입력 */
+      (function () {
+        var id = window.__GA_ID__;
+        if (!id || id.indexOf('XXXX') !== -1) return;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () { dataLayer.push(arguments); };
+        gtag('js', new Date());
+        gtag('config', id);
+      })();
+    </script>
+    <style>
+      /* 3D 체험 화면에서 문서형 이력서로 돌아가는 고정 링크 */
+      .back-to-resume {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        z-index: 1000;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 14px;
+        border-radius: 999px;
+        background: rgba(10, 12, 20, 0.62);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: #e6edf3;
+        font-family: 'Space Grotesk', 'Noto Sans KR', system-ui, sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        letter-spacing: 0.01em;
+      }
+      .back-to-resume:hover {
+        border-color: rgba(120, 200, 255, 0.7);
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="back-to-resume" href="./" aria-label="문서형 이력서로 돌아가기">← 이력서</a>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
