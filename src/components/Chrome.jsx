@@ -27,7 +27,19 @@ export default function Chrome() {
             <span className="on">3D</span>
           </nav>
           <span className="toggle3d" aria-hidden="true" title="3D 뷰는 다크 테마 고정">
-            ◐
+            {/* 문서 페이지 토글과 같은 SVG 달 아이콘 (딤드) */}
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20.2 14.7A8.6 8.6 0 0 1 9.3 3.8a8.6 8.6 0 1 0 10.9 10.9z" />
+            </svg>
           </span>
         </div>
       </header>
