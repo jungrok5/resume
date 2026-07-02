@@ -26,16 +26,15 @@ function Metric({ metric }) {
   )
 }
 
-function Tags({ tags }) {
-  if (!tags?.length) return null
+// 이력서 핵심 요약 불릿 — 씬이 '어떻게'를 보여주고, 여기가 '무엇을'을 말한다.
+function Points({ points }) {
+  if (!points?.length) return null
   return (
-    <div className="tags">
-      {tags.map((t) => (
-        <span className="tag" key={t}>
-          {t}
-        </span>
+    <ul className="points">
+      {points.map((pt) => (
+        <li key={pt}>{pt}</li>
       ))}
-    </div>
+    </ul>
   )
 }
 
@@ -87,10 +86,9 @@ function Panel({ s }) {
       <p className="kicker">
         {s.num && <span className="num">{s.num}</span>} {s.kicker}
       </p>
-      {s.year && <div className="year">{s.year}</div>}
       <h2 className="title">{s.title}</h2>
       <Metric metric={s.metric} />
-      <p className="blurb">{s.blurb}</p>
+      <Points points={s.points} />
 
       {s.isTimeline && (
         <div className="tl">
@@ -105,8 +103,6 @@ function Panel({ s }) {
           ))}
         </div>
       )}
-
-      <Tags tags={s.tags} />
 
       {s.contact && (
         <div className="cta">
