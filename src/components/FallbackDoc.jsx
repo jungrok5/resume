@@ -5,6 +5,9 @@ import { profile, sections, timeline, stack } from '../data/resume'
 export default function FallbackDoc() {
   return (
     <div className="fallback">
+      <a className="backlink" href="./" style={{ display: 'inline-flex', marginBottom: 28 }}>
+        ← 이력서
+      </a>
       <header style={{ marginBottom: 48 }}>
         <p className="kicker">20 Years · Server Systems</p>
         <h1 style={{ fontSize: 'clamp(34px,7vw,64px)', margin: '0 0 10px', letterSpacing: '-0.02em' }}>

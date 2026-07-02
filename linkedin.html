@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 개인용 페이지: 검색 색인 제외 -->
+<meta name="robots" content="noindex, nofollow">
+<title>링크드인 복사용 — 오정록</title>
+<style>
+  :root {
+    --bg: #ffffff; --bg-soft: #f6f8fa; --text: #1f2328; --muted: #59636e;
+    --border: #d1d9e0; --accent: #0969da; --maxw: 860px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0d1117; --bg-soft: #161b22; --text: #e6edf3; --muted: #9198a1;
+            --border: #30363d; --accent: #4493f8; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo",
+                 "Noto Sans KR", "Malgun Gothic", Helvetica, Arial, sans-serif;
+    font-size: 15.5px; line-height: 1.75; word-break: keep-all;
+  }
+  .page { max-width: var(--maxw); margin: 0 auto; padding: 40px 48px 72px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .back { display: inline-block; margin-bottom: 20px; font-size: 13.5px; font-weight: 600; }
+  h1 { font-size: 22px; font-weight: 800; margin: 0 0 14px; }
+  .view { display: block; }
+  /* ===== LinkedIn view ===== */
+  .linkedin .hint { color: var(--muted); font-size: 13.5px; margin: 0 0 12px; line-height: 1.65; }
+  .linkedin .copybtn {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px; font-family: inherit;
+    font-size: 13px; font-weight: 600; padding: 9px 18px; cursor: pointer; margin-bottom: 12px;
+  }
+  .linkedin .copybtn:hover { opacity: .9; }
+  .linkedin textarea {
+    width: 100%; height: 66vh; box-sizing: border-box; resize: vertical;
+    background: var(--bg-soft); color: var(--text); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "D2Coding", monospace;
+    font-size: 12.5px; line-height: 1.7; white-space: pre-wrap; overflow-y: auto; overflow-x: hidden;
+  }
+
+  @media (max-width: 640px) { .page { padding: 28px 20px 48px; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <a class="back" href="./">← 이력서로 돌아가기</a>
+  <h1>링크드인 복사용 텍스트</h1>
+  <!-- ============ 링크드인 (복사용) 뷰 ============ -->
+  <div id="view-linkedin" class="view linkedin">
+    <p class="hint">아래 텍스트를 링크드인 프로필에 붙여넣으세요. <b>[ ]</b> 로 구분된 섹션(헤드라인·소개·경력·기술)을 각 항목에 맞게 복사하면 됩니다. 서식 없는 순수 텍스트라 ATS·링크드인 모두에 안전합니다.</p>
+    <button class="copybtn" id="copyLinkedin">📋 전체 복사</button>
+    <textarea id="linkedinText" readonly spellcheck="false">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 헤드라인 / Headline ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Technical Director · MMO Server Architect | 20년차 게임 서버 | 분산 서버 · 대규모 트래픽 최적화 · AI 개발 생산성
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 소개 / About ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+20년간 MMO 서버 프레임워크를 백지에서 반복 설계·구축해온 Technical Director입니다.
+서버의 네트워크·동시성·네비게이션·서버 물리를 근본부터 다루면서 클라이언트·DB·웹까지 직접 구현하고,
+대규모 트래픽 최적화와 난제 해결이 강점입니다.
+매니징보다 기술을 직접 주도하고 혁신을 만들어내는 역할을 지향해, 전체 약 150명 조직에서
+~40명 프로그래밍 조직의 기술 방향과 표준을 세우고, 최근에는 AI(MCP·로컬 LLM)로 팀 개발 생산성을
+끌어올리는 데 주력합니다.
+새로운 MMO를 처음부터 설계해야 하는 팀에서, 서버의 근간을 끝까지 책임질 수 있는 사람입니다.
+
+[ 핵심 역량 ]
+· MMO 서버 0→1 — 네트워크·동시성(락프리)·네비게이션·서버 물리·분산 서버(Orleans)를 근본부터 반복 설계·구축
+· 폭넓은 장르·아키텍처 — PC MMORPG, 모바일 RPG, 유저 창작 메타버스, 분산 서버 RPG
+· 난제 해결·성능 최적화 — 프로파일링으로 CPU/메모리/네트워크/DB 병목 제거, 동접·처리량 수 배 향상 (한 필드 2,000 vs 2,000 전투, 채널 없는 대규모 서비스, 동접 4배)
+· 풀스택 커버 — 서버/클라이언트/DB/웹/툴/개발 인프라·CI
+· AI 개발 생산성 — MCP 자체 구현, AI 테스트/코드리뷰 에이전트, 로컬 LLM 코딩 스택 도입 주도
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 경력 / Experience ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+● Technical Director — 판테라 (블레이드&소울 IP 키우기류 RPG)
+  NCSOFT | 2024 – 현재
+  기술: C#, C++, Orleans, gRPC/TCP, MSSQL, Redis/Garnet, Unreal Engine 5
+  - 분산 서버 아키텍처 방향 결정·팀 표준 정착(Orleans Grain 채택 주도, gRPC→TCP 전환, 샤딩 데이터 분산)
+  - 데이터·스탯 파이프라인 단일 소스 표준화(proto → 서버·클라 코드·CSV·검증 자동 생성) → 팀 작업 방식으로 채택
+  - 대형 컨텐츠 설계·구현: 영역전, 슬라임대난투(3:3), 용던, 오픈필드 실시간 동기화, 소셜, 성장, 버프
+  - 부하 테스트 인프라·서버/DB 최적화 주도(gRPC 초당 24만 요청급, EntityFramework 5만 TPS, 저장프로시저 전환·dacpac 자동 배포)
+  - AI 개발 생산성 혁신 주도: MCP 자체 구현, AI 테스트/코드리뷰 에이전트 팀, 사내 유출 없는 로컬 LLM 코딩 스택
+
+● Technical Director — 미니버스 (언리얼엔진, 유저 창작 샌드박스 MMO)
+  NCSOFT | 2023 – 2024 | 전체 40~50명, 프로그래머 ~20명 기술 디렉팅
+  기술: C#, C++, MSSQL, Unreal Engine 5
+  - 초대규모 UGC 처리(단일 공간 5,000만 프랍, 동시 2,000명 밀집 건축, 락프리·zero-copy 브로드캐스트)
+  - 대량 공간 데이터·영속화 설계(집터 단위 계층 저장, 3단 공간 분할, 시야 기반 전송)
+  - 렌더링·물리 최적화(드로우콜 20,967→503, FPS 16.5→47.4)
+  - 서버사이드 다이나믹 네비메시(복셀 기반) + Godot 기반 서버 시각화 뷰어 자체 개발
+  - 유저 창작 하우징 컨텐츠(전기 회로 14종, 결정론적 이동체, 프로시저럴 사운드)
+
+● Technical Director — 미니버스 (웹·고도엔진, 유저 창작 메타버스)
+  NCSOFT | 2021 – 2023
+  기술: C#, C++, Node.js, WebSocket, MSSQL, MongoDB, Godot Engine
+  - 유저 창작 스크립트 런타임 R&D(무패치 로직 다운로드, 서버 권위 판정)
+  - 서버 구조 전환(Node.js→C#)·소켓/프로토콜 성능 리서치, 루아 부하 한계 규명 → 다인스턴스 스케일아웃 결정
+  - 웹 실시간 협업 에디터(1,000명 이상 동시 커서 동기화)
+  - 클라이언트 엔진·플랫폼 선정 리서치(Unity/Godot/웹/모바일 연동)
+  - 프랍 조합 미니게임 구현(서바이벌, 페인트맨), 사내 취업 설명회 공개 (youtube.com/shorts/Jqbj27VUMDI)
+
+● Technical Director — AION2 · 아이온 모바일 (MMORPG)
+  NCSOFT | 2016 – 2021 | 전체 ~140명, 프로그래머 ~40명 기술 디렉팅
+  기술: C++, C#, MSSQL, Unreal Engine 4
+  - MMO 서버 프레임워크 전체를 백지에서 설계·구축. NCSOFT AION실 입사 후 초기 '아이온 모바일'
+    (조직명 Tempest)로 시작해 AION2로 발전, 언어(C++→C#)·DB·장르 전환에 대응하며 처음부터 재설계
+  - 채널 없는 대규모 밀집 전투 최적화 (NCDP 2019 최우수상): 한 시야 1,000명 전투의
+    초당 1,300만 패킷을 네트워크 부하 분산(3배)·셀 기반 브로드캐스팅·Packet Shrink(36%↓)로
+    해결 → 2,000 vs 2,000 확장
+  - 3D 공간 비행 네비게이션(복셀 기반)
+  - 서버 충돌·물리 아키텍처, 대규모 NPC 처리, 심리스 필드 R&D, 서버 비주얼 디버깅 툴 개발
+  - 2017 NCSOFT 디렉터스컷에서 최초 공개
+    (youtube.com/watch?v=8rDww2tLRaY, youtube.com/watch?v=nXP8cgOKiHE)
+
+※ 이전 경력(2007–2015): 국내·일본·중국·태국 등에서 다수 타이틀을 정식 상용 서비스·라이브 운영하며
+  서버 안정화·장애 대응·라이브 패치를 직접 경험.
+
+● 프로그램팀장 — ONE for kakao (모바일 액션RPG)
+  코어크리에이티브 | 2014 – 2015 (Unreal Engine 3)
+  - 서버 구조·네트워크 프레임워크 전체 구현, 클라 UI·툴·사내 개발환경, 서버 팀 리드
+
+● 서버파트리더 — 트리니티사가·드리프트러시 (모바일 RPG·레이싱)
+  위메이드엔터테인먼트(오르카) | 2013 – 2014 (Unity3D)
+  - 웹+소켓 통합 C# 서버 프레임워크, 결제·운영툴·부하 테스트
+
+● 프로그램팀장 — 형!·오빠·드래곤 도와줘 (모바일 시뮬레이션RPG)
+  자이언트드림 | 2011 – 2013 (Unity3D)
+  - 국내·일본·중국 서비스, 직접 운영, 자동화 툴·DB 최적화
+
+● 서버팀장 — 슈퍼 다다다 (PC 캐주얼 레이싱)
+  KB온라인(SEED) | 2010 – 2011 (Gamebryo)
+  - 서버 프레임워크 교체, 빌링/보안 연동, 국내·태국 서비스
+
+● 서버팀원 — 와일드 플래닛 (PC MMORPG)
+  액토즈소프트(프롬나인) | 2007 – 2010 (Gamebryo)
+  - 대규모 멀티플레이 시스템, DB 튜닝, 패치·리소스 시스템
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 보유 기술 / Skills ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+C++ · C# · TypeScript · Python · Lua · GDScript · Orleans · gRPC · ASP.NET ·
+Node.js · IOCP · WebSocket · MSSQL · Redis · Garnet · MongoDB · EntityFramework ·
+Unreal Engine · Unity3D · Godot Engine · Recast/Detour · MCP · Local LLM · Perforce · Jenkins
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 수상 · 활동 ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+· NCDP 개발자 컨퍼런스 최우수상 (2019) — 주제: "1000 vs 1000 대규모 유저를 채널 없이 서비스 하기 위한 고민들"
+· 서버 최적화·기술 자문 (타 프로젝트·타 회사) — 트릭스터M 동접 2천→8천(4배)
+· NCSOFT 시니어 전문면접관·Job Title 운영위원 (Programming, 2019–2021)
+· ETRI 공동 기술 개발 (2010) — 온라인 게임 서버 부하 테스트 기술 개발 협력
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ 학력 / Education ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+홍익대학교 컴퓨터정보통신소프트웨어전공 (2000 – 2007)</textarea>
+  </div>
+</div>
+<script>
+  (function () {
+    var btn = document.getElementById('copyLinkedin');
+    var ta = document.getElementById('linkedinText');
+    if (!btn || !ta) return;
+    btn.addEventListener('click', function () {
+      var done = function () { var t = btn.textContent; btn.textContent = '\u2713 \ubcf5\uc0ac\ub428'; setTimeout(function () { btn.textContent = t; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(ta.value).then(done, function () { ta.select(); document.execCommand('copy'); done(); });
+      } else {
+        ta.select(); document.execCommand('copy'); done();
+      }
+    });
+  })();
+</script>
+</body>
+</html>

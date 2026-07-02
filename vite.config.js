@@ -11,11 +11,13 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        // Two static entry points:
-        //   index.html       → document résumé (4 views) = default landing (SEO-first)
+        // Static entry points:
+        //   index.html       → document résumé (기본·ATS·상세) = default landing (SEO-first)
         //   interactive.html → the scroll-driven 3D WebGL experience (lazy, heavy)
+        //   linkedin.html    → private copy-paste helper (noindex, not linked)
         main: resolve(__dirname, 'index.html'),
         interactive: resolve(__dirname, 'interactive.html'),
+        linkedin: resolve(__dirname, 'linkedin.html'),
       },
     },
   },
