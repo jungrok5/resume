@@ -66,8 +66,9 @@ AI-driven dev (MCP) + contact/summary. Order mirrors the document résumé
 (기본 뷰), newest first, grouped by company/period.
 
 All animations are **scroll-driven visual mocks** (choreographed to *look* like
-the real algorithm) — the one exception is the raycast scene, which does real
-ray-vs-sphere tests so hits are genuinely reactive.
+the real algorithm) — the one exception is the flight-nav scene, which runs a
+real steering sim: context steering (cone ray sampling vs obstacle spheres,
+hits are genuine) plus ORCA-style mutual avoidance between 3 agents.
 
 ### Add / edit a scene
 
