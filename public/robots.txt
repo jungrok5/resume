@@ -1,4 +1,23 @@
 User-agent: *
 Allow: /
 
+# AI crawlers welcome — structured summary at /llms.txt
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
 Sitemap: https://jungrok5.github.io/resume/sitemap.xml
