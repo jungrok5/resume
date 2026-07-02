@@ -60,15 +60,16 @@ a {
   pointer-events: none;
 }
 
-/* 문서형 페이지와 같은 형태의 고정 상단바 (다크 톤) */
+/* 문서형 페이지와 픽셀 단위로 동일한 고정 상단바 —
+   페이지를 오가도 바가 바뀌는 느낌이 없어야 한다.
+   (배경 불투명 · 경계선 없음 · 좌우 풀폭 · 같은 폰트/크기/색) */
 .bar3d {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 30;
-  background: rgba(5, 7, 12, 0.85);
-  border-bottom: 1px solid var(--line);
+  background: #05060a;
   pointer-events: auto;
 }
 .bar3d-progress {
@@ -83,24 +84,24 @@ a {
   display: block;
   height: 100%;
   width: 100%;
-  background: var(--cyan);
+  background: #35e6ff;
   transform: scaleX(0);
   transform-origin: left;
 }
 .bar3d-inner {
-  max-width: var(--maxw);
-  margin: 0 auto;
-  padding: 7px 26px;
+  padding: 7px 16px;
   display: flex;
   align-items: center;
   gap: 12px;
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 }
 .bar3d-now {
   flex: 1;
   min-width: 0;
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--ink-dim);
+  color: #d8deee;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -116,9 +117,9 @@ a {
   gap: 2px;
   padding: 2px;
   height: 26px;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(120, 140, 190, 0.16);
   border-radius: 999px;
-  background: rgba(10, 13, 22, 0.6);
+  background: #0b0f18;
   flex: none;
 }
 .switcher3d a,
@@ -131,14 +132,30 @@ a {
   font-size: 12px;
   font-weight: 600;
   line-height: 1;
-  color: var(--ink-dim);
+  color: #a9b3cc;
 }
 .switcher3d a:hover {
-  color: var(--ink);
+  color: #fff;
 }
 .switcher3d .on {
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--ink);
+  background: #232b3d;
+  color: #f4f6fc;
+}
+/* 3D는 다크 고정이라 테마 토글이 무의미 — 문서 페이지와 같은 자리에
+   딤드 처리된 아이콘만 두어 레이아웃 연속성을 유지 */
+.toggle3d {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #939eba;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  opacity: 0.35;
+  cursor: default;
 }
 
 /* FallbackDoc(정적 문서)에서 쓰는 돌아가기 링크 */

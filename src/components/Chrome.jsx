@@ -26,6 +26,9 @@ export default function Chrome() {
             <a href="./?view=detail">상세</a>
             <span className="on">3D</span>
           </nav>
+          <span className="toggle3d" aria-hidden="true" title="3D 뷰는 다크 테마 고정">
+            ◐
+          </span>
         </div>
       </header>
 
