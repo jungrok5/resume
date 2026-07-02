@@ -25,25 +25,12 @@
   box-sizing: border-box;
 }
 
-/* 스크롤바 — 문서형 페이지와 동일한 다크 커스텀 스타일 */
-html {
+/* 스크롤바 — 문서형 페이지와 동일. 표준 속성 하나로만 통일:
+   크롬은 표준 속성이 있으면 ::-webkit-scrollbar를 무시하므로 섞어 쓰면
+   요소(윈도우 vs 스크롤 컨테이너)마다 두께가 달라진다. */
+* {
   scrollbar-width: thin;
   scrollbar-color: #2a3450 #0b0f18;
-}
-::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-::-webkit-scrollbar-track {
-  background: #0b0f18;
-}
-::-webkit-scrollbar-thumb {
-  background: #2a3450;
-  border-radius: 6px;
-  border: 3px solid #0b0f18;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #39466b;
 }
 
 html,
