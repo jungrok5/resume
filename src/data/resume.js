@@ -97,7 +97,7 @@ export const sections = [
     metric: { big: '24만 req/s', cap: 'gRPC 실측 · EntityFramework 5만 TPS' },
     points: [
       '부하 테스트 인프라 구축 — gRPC 초당 24만 요청, EF 5만 TPS 상한 실측',
-      '키 해싱 샤드 라우팅 — 단일 DB 병목 없이 처리량 수평 확장',
+      '샤딩 기반 데이터 분산 구조 확립 — 단일 DB 병목 없이 처리량 수평 확장',
       '저장프로시저 전환·dacpac 형상 관리, Orleans·브로드캐스팅·DB 계층 병목 제거',
     ],
   },
@@ -145,10 +145,10 @@ export const sections = [
     num: '07',
     kicker: 'NCSOFT · Miniverse UE5 · 2023 — 2024',
     title: '서버사이드 다이나믹 네비메시',
-    metric: { big: 'A*', cap: '변경된 복셀 타일만 재생성' },
+    metric: { big: '복셀', cap: '변경 타일만 재생성 · DotRecast' },
     points: [
       '유저가 실시간으로 바꾸는 지형에 대응 — 영향받은 타일만 재계산, 맵 전체를 다시 굽지 않음',
-      '서버 권위 이동 · A* 길찾기 (복셀 기반)',
+      '복셀 기반 서버 길찾기 — DotRecast(Recast/Detour .NET 포팅), 비동기 빌드 후 쓰기는 메인 스레드로',
       '지형·길찾기·충돌을 실시간 시각화하는 Godot 기반 서버 뷰어 자체 개발',
     ],
   },
@@ -244,7 +244,7 @@ export const sections = [
       pairs: [{ label: '안정 동접', from: '2,000', to: '8,000' }],
     },
     points: [
-      '타 프로젝트 요청으로 3개월 파견 — 같은 하드웨어에서 수용량 4배',
+      '타 프로젝트 요청으로 3개월 파견 — 안정 동접 2,000 → 8,000(4배) 개선 후 파견 종료',
       '메모리릭 제거 · 브로드캐스팅 최적화(시야 통합) · DB 처리 분리 · 동적 할당 풀링',
     ],
   },
