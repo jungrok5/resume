@@ -9,20 +9,21 @@ export const profile = {
   years: 20,
   email: 'jungrok5@gmail.com',
   github: 'https://github.com/jungrok5',
-  education: '홍익대학교 컴퓨터공학 (2000 — 2007)',
+  education: '홍익대학교 컴퓨터정보통신소프트웨어전공 (2000 — 2007)',
   legacy: 'http://resume.jungrok5.workers.dev/',
+  // 문서형 이력서(기본 뷰)의 '핵심 역량' 5개와 동일한 내용
   competencies: [
-    'MMO 서버 아키텍처 — 분산 시스템(Orleans), 액터 모델 동시성, 네트워킹/브로드캐스트, 내비게이션, 서버 물리, 클라이언트 위임 분산 시뮬레이션(오너십 마이그레이션)',
-    '성능 최적화 — 프로파일링 기반 병목 제거(CPU·메모리·네트워크·DB), 처리량 스케일링',
-    '풀스택 설계 — 서버·클라이언트·DB·웹·툴링을 아우르는 통합 아키텍처',
-    '차세대 플랫폼 · UGC — 유저 생성 콘텐츠 스크립트 런타임, 대규모 실시간 UGC 처리',
-    'AI 주도 개발 — 커스텀 MCP, AI 테스트/코드리뷰 에이전트, 로컬 LLM 코딩 스택',
+    'MMO 서버를 백지에서 끝까지 반복 설계·구축 — 네트워크·동시성(락프리)·네비게이션·서버 물리·분산 서버(Orleans)',
+    'PC MMORPG · 모바일 RPG · 유저 창작 메타버스 · 분산 서버 RPG — 폭넓은 장르·플랫폼·아키텍처',
+    '난제 해결·성능 최적화 — 프로파일링으로 CPU·메모리·네트워크·DB 병목 제거, 동접·처리량 수 배',
+    '서버 · 클라이언트 · 웹 · DB · 툴 · 개발 인프라 · CI까지 커버하는 풀스택 실무',
+    'AI 개발 도구(MCP·에이전트·로컬 LLM) 도입 주도',
   ],
   recognition: [
-    'NCDP 2019 우수상',
-    'NCSOFT 시니어 면접관 · 직급 위원회 (2019 — 2021)',
-    '성능 컨설팅 — 외부 프로젝트 4배 스케일링 달성',
-    'ETRI 공동 연구 (2010)',
+    'NCDP 2019 최우수상 — "1000 vs 1000 대규모 유저를 채널 없이 서비스 하기 위한 고민들"',
+    '서버 최적화·기술 자문 — 트릭스터M 파견, 안정 동접 2천 → 8천(4배)',
+    'NCSOFT 시니어 전문면접관 · Job Title 운영위원 (Programming, 2019 — 2021)',
+    'ETRI 공동 기술 개발 (2010) — 온라인 게임 서버 부하 테스트',
   ],
 }
 
@@ -37,7 +38,7 @@ export const sections = [
     accent: 'cyan',
     kicker: '20년 · 서버 시스템',
     name: profile.name,
-    sub: '테크니컬 디렉터 · MMO 서버 아키텍트 — 대규모 게임 월드를 떠받치는 ‘보이지 않는 서버 시스템’을 눈에 보이게.',
+    sub: '20년간 MMO 서버 프레임워크를 백지에서 반복 설계·구축해온 테크니컬 디렉터 — 대규모 게임 월드를 떠받치는 ‘보이지 않는 서버 시스템’을 눈에 보이게.',
   },
   {
     id: 'career',
@@ -49,7 +50,7 @@ export const sections = [
     title: '20년의 서버 여정',
     year: '2007 — 현재',
     blurb:
-      '온라인 게임 서버 개발 20년. 서버팀 리드에서 시작해 프레임워크 아키텍트, 프로그램 디렉터, 테크니컬 디렉터를 거쳐 지금은 분산 MMO 백엔드를 설계한다.',
+      '온라인 게임 서버 개발 20년. 서버 팀원에서 시작해 서버팀장·프로그램팀장·서버파트리더를 거쳐, NCSOFT에서 테크니컬 디렉터로 MMO 서버 프레임워크를 백지에서 구축했다 — 지금은 분산 MMO 백엔드를 설계한다.',
     isTimeline: true,
     tags: ['Pantera', 'Miniverse', 'AION2', 'NCSOFT', '위메이드', 'Actozsoft'],
   },
@@ -65,7 +66,7 @@ export const sections = [
     title: '분산 액터 아키텍처',
     year: 'Orleans Grain · 팀 표준 확립',
     blurb:
-      'Orleans 기반 가상 액터 백엔드. 그레인이 필요할 때 활성화되어 자기 상태를 단일 스레드로 처리하고, gRPC→TCP 전송 계층으로 클러스터 전역에 메시지를 주고받는다. 부하에 따라 수평 확장 — 공유 락도, 뜨거워지는 단일 노드도 없다.',
+      '분산 서버 아키텍처의 방향을 정하고 팀 표준으로 정착시켰다 — Orleans Grain 모델 채택을 주도하고, gRPC→TCP 전송 계층 전환과 샤딩 기반 데이터 분산 구조를 확립. 그레인은 필요할 때 활성화되어 자기 상태를 단일 스레드로 처리하며, 부하에 따라 수평 확장된다.',
     metric: { big: 'Orleans', cap: '액터 모델 동시성 · gRPC → TCP' },
     tags: ['C#', '.NET', 'Orleans', 'gRPC/TCP', 'Redis / Garnet', 'UE5'],
   },
@@ -216,9 +217,9 @@ export const sections = [
     title: '3차원 비행 내비게이션',
     year: '지상 평면을 넘어, 하늘의 길찾기',
     blurb:
-      '지상 8방향 격자가 아니라 하늘이다. 비행체가 진행 방향 앞쪽으로 ~24개의 레이를 원뿔로 쏘아 막힌 방향(붉게 표시)을 피하고 열린 방향으로 조향한다 — 복셀 기반 3D 네비게이션과 함께 서버가 3차원 이동·길찾기를 판정한다.',
-    metric: { big: '~24', cap: '원뿔 레이 · 3D 장애물 회피' },
-    tags: ['3D 길찾기', '복셀 네비게이션', '원뿔 레이캐스트', '서버 판정'],
+      '지상 평면을 넘어, 비행체의 3차원 이동·길찾기를 서버에서 처리하는 네비게이션 구조를 설계했다(복셀 기반 3D 네비게이션). 씬의 비행체는 진행 방향 원뿔로 레이를 쏘아 막힌 방향(붉게 표시)을 피해 열린 쪽으로 조향한다 — 이 시각화는 실제로 레이가 반응한다.',
+    metric: { big: '3D', cap: '복셀 기반 비행 네비게이션 · 서버 처리' },
+    tags: ['3D 길찾기', '복셀 네비게이션', '장애물 회피', '서버 처리'],
   },
 
   // ───────── 기술 자문 · 파견 ─────────
@@ -246,13 +247,13 @@ export const sections = [
     align: 'center',
     accent: 'blue',
     num: '14',
-    kicker: '현재 · AI 주도 개발',
-    title: '툴체인 속의 에이전트',
-    year: '현재 R&D',
+    kicker: 'Pantera · AI 개발 생산성 혁신 주도',
+    title: 'AI 개발 생산성 혁신',
+    year: 'MCP · 에이전트 · 로컬 LLM',
     blurb:
-      '커스텀 MCP 서버, AI 코드리뷰·테스트 에이전트, 로컬 LLM 코딩 스택을 일상 개발에 녹였다 — 같은 시스템 감각을 ‘무엇을 만드는가’뿐 아니라 ‘어떻게 만드는가’에도.',
-    metric: { big: 'MCP', cap: '커스텀 에이전트 · 로컬 LLM' },
-    tags: ['MCP', '에이전트 테스팅', '로컬 LLM', 'Claude Agent SDK'],
+      'MCP 서버를 자체 구현해 자연어 기반 서버 테스트를 자동화하고, AI 테스트·코드리뷰 에이전트 팀을 구성했다. 사내 코드 유출 없는 로컬 LLM 코딩 스택을 구축·배포 — 팀의 개발 생산성을 끌어올리는 AI 주도 개발.',
+    metric: { big: 'MCP', cap: '자연어 서버 테스트 · AI 에이전트 · 로컬 LLM' },
+    tags: ['MCP 자체 구현', 'AI 테스트·코드리뷰 에이전트', '로컬 LLM (llama.cpp)', 'Claude Agent SDK'],
     contact: true,
     summary: true, // 마지막 패널: 학력·수상·전체 스택도 함께 노출
   },
@@ -264,13 +265,14 @@ export const timeline = [
   ['2023 — 2024', 'Miniverse (UE5)', 'UGC 샌드박스 MMO — 5,000만 프랍 · 2,000명'],
   ['2021 — 2023', 'Miniverse (Web)', '유저 창작 웹 메타버스 (Godot) · 1,000+ 커서'],
   ['2016 — 2021', 'AION2 Mobile', '테크니컬 디렉터 · MMO 프레임워크 백지 구축'],
-  ['2007 — 2015', 'Actozsoft · 위메이드 · 자이언트드림 · KB온라인 · 코어크리에이티브', '서버팀 리드 / 프로그램 디렉터 / 프레임워크 아키텍트'],
+  ['2007 — 2015', '액토즈소프트 · KB온라인 · 자이언트드림 · 위메이드 · 코어크리에이티브', '서버팀장 / 프로그램팀장 / 서버파트리더 — 국내·일본·중국·태국 상용 서비스'],
 ]
 
+// 문서형 이력서(기본 뷰)의 '기술 스택' 그룹과 동일
 export const stack = {
-  언어: ['C++', 'C#', 'TypeScript', 'Python', 'Lua', 'GDScript'],
-  백엔드: ['.NET', 'Orleans', 'gRPC', 'ASP.NET', 'Node.js', 'WebSocket'],
-  데이터: ['MSSQL', 'Redis', 'Garnet', 'MongoDB', 'EntityFramework', '샤딩'],
-  엔진: ['Unreal 3/4/5', 'Unity', 'Godot', 'Gamebryo'],
-  인프라: ['Perforce', 'Jenkins', '.NET Aspire', 'Claude Agent SDK'],
+  언어: ['C++ (11–20)', 'C#', 'TypeScript / JS', 'Python', 'Lua', 'GDScript'],
+  '서버 · 분산': ['Orleans', 'gRPC / TCP', 'ASP.NET', 'Node.js', 'IOCP', 'WebSocket'],
+  데이터: ['MSSQL · 저장프로시저', 'Redis / Garnet', 'MongoDB', 'EntityFramework', '샤딩'],
+  '엔진 · 네비 · 물리': ['Unreal 3/4/5', 'Unity3D', 'Godot', 'Gamebryo', 'Recast / Detour', '복셀 네비메시'],
+  'AI · 인프라': ['Claude · Agent SDK', 'MCP (자체 구현)', '로컬 LLM (llama.cpp)', 'Perforce', 'Jenkins', '.NET Aspire'],
 }
