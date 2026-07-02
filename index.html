@@ -1500,6 +1500,7 @@
         now.classList.remove('swap');
         void now.offsetWidth; /* 애니메이션 재시작 */
         now.classList.add('swap');
+        if (window.__trackSection) window.__trackSection(cur); /* GA: 섹션 도달/체류 */
       }
     }
     function onScroll() {
@@ -1508,6 +1509,72 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll, { passive: true });
     update();
+  })();
+
+  /* ===== GA4 커스텀 행동 이벤트 =====
+     기본 gtag(page_view·참여시간)에 더해: 뷰 탭 전환, 테마 토글,
+     이메일/깃헙/외부 링크 클릭, 스크롤 깊이(25/50/75/100),
+     섹션 도달·섹션별 체류시간. gtag 미로딩 시 전부 무동작. */
+  (function () {
+    function ev(name, params) { if (window.gtag) window.gtag('event', name, params || {}); }
+
+    /* 뷰 탭 전환 + 3D 이동 */
+    document.querySelectorAll('.switcher button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        ev('view_change', { view: b.getAttribute('data-view') });
+        if (window.__resetDepth) window.__resetDepth();
+      });
+    });
+    var v3 = document.querySelector('.switcher a.view3d');
+    if (v3) v3.addEventListener('click', function () { ev('view_change', { view: '3d' }); });
+
+    /* 테마 토글 */
+    var tg = document.getElementById('themeToggle');
+    if (tg) tg.addEventListener('click', function () { ev('theme_toggle'); });
+
+    /* 이메일 · 깃헙 · 외부 링크 클릭 (위임) */
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest ? e.target.closest('a[href]') : null;
+      if (!a) return;
+      var h = a.getAttribute('href') || '';
+      if (h.indexOf('mailto:') === 0) ev('contact_click', { method: 'email' });
+      else if (h.indexOf('github.com') !== -1) ev('contact_click', { method: 'github' });
+      else if (h.indexOf('http') === 0 && h.indexOf('jungrok5.github.io') === -1)
+        ev('outbound_click', { url: h.slice(0, 100) });
+    });
+
+    /* 스크롤 깊이 (뷰 전환 시 리셋) */
+    var sent = {};
+    window.__resetDepth = function () { sent = {}; };
+    window.addEventListener('scroll', function () {
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - doc.clientHeight;
+      if (max <= 0) return;
+      var pct = ((window.pageYOffset || doc.scrollTop) / max) * 100;
+      [25, 50, 75, 100].forEach(function (m) {
+        if (pct >= m && !sent[m]) { sent[m] = 1; ev('scroll_depth', { percent: m }); }
+      });
+    }, { passive: true });
+
+    /* 섹션 도달 + 직전 섹션 체류시간(초) — nowReading 갱신에서 호출됨 */
+    var lastSec = null, lastT = Date.now();
+    window.__trackSection = function (title) {
+      var now = Date.now();
+      if (lastSec && lastSec !== title) {
+        ev('section_dwell', { section: lastSec.slice(0, 80), seconds: Math.min(Math.round((now - lastT) / 1000), 600) });
+      }
+      if (lastSec !== title) {
+        ev('section_view', { section: title.slice(0, 80) });
+        lastSec = title; lastT = now;
+      }
+    };
+    /* 이탈 시 마지막 섹션 체류 기록 */
+    window.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden' && lastSec) {
+        ev('section_dwell', { section: lastSec.slice(0, 80), seconds: Math.min(Math.round((Date.now() - lastT) / 1000), 600) });
+        lastT = Date.now();
+      }
+    });
   })();
 </script>
 </body>

@@ -249,19 +249,9 @@ a {
 }
 /* hero: no card, let the name float over the scene */
 .panel--hero {
-  /* 카드 박스 대신, 가장자리 없이 사라지는 방사형 스크림 —
-     떠 있는 히어로 느낌은 유지하면서 밝은 씬 위에서도 글자가 읽힌다 */
-  background: radial-gradient(
-    ellipse 68% 64% at 50% 50%,
-    rgba(4, 5, 9, 0.9),
-    rgba(4, 5, 9, 0.62) 52%,
-    rgba(4, 5, 9, 0.28) 70%,
-    transparent 84%
-  );
-  border: none;
-  padding: 56px 64px;
-  box-shadow: none;
+  /* 다른 씬 패널과 같은 카드 배경(.panel 기본 스타일 상속) — 폭만 넓게 */
   max-width: 860px;
+  padding: 40px 44px;
 }
 
 .kicker {
@@ -295,6 +285,7 @@ h1.hero-name .sub {
   font-size: clamp(15px, 2.4vw, 26px);
   font-weight: 500;
   letter-spacing: 0.02em;
+  line-height: 1.6; /* h1의 0.98을 상속받아 줄간격이 좁아지던 것 교정 */
   color: var(--ink-dim);
   margin-top: 22px;
 }
