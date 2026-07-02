@@ -8,7 +8,9 @@ import ActorModelScene from './scenes/ActorModelScene'
 import DataPipelineScene from './scenes/DataPipelineScene'
 import ShardingScene from './scenes/ShardingScene'
 import RenderOptScene from './scenes/RenderOptScene'
+import DenseBuildScene from './scenes/DenseBuildScene'
 import DenseCombatScene from './scenes/DenseCombatScene'
+import TricksterScene from './scenes/TricksterScene'
 import WebCollabScene from './scenes/WebCollabScene'
 import PropGamesScene from './scenes/PropGamesScene'
 import AiDevScene from './scenes/AiDevScene'
@@ -23,7 +25,9 @@ const REGISTRY = {
   dataPipeline: DataPipelineScene,
   sharding: ShardingScene,
   renderOpt: RenderOptScene,
+  denseBuild: DenseBuildScene,
   denseCombat: DenseCombatScene,
+  trickster: TricksterScene,
   webCollab: WebCollabScene,
   propGames: PropGamesScene,
   aiDev: AiDevScene,
