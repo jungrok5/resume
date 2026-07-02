@@ -66,9 +66,10 @@ AI-driven dev (MCP) + contact/summary. Order mirrors the document résumé
 (기본 뷰), newest first, grouped by company/period.
 
 All animations are **scroll-driven visual mocks** (choreographed to *look* like
-the real algorithm) — the one exception is the flight-nav scene, which runs a
-real steering sim: context steering (cone ray sampling vs obstacle spheres,
-hits are genuine) plus ORCA-style mutual avoidance between 3 agents.
+the real algorithm) — the one exception is the flight-nav scene: the flight path is a choreographed
+closed curve that weaves between procedurally placed obstacles (clearance is
+verified), while the forward-cone rays are genuinely tested against the
+obstacle spheres each frame — so red "blocked" rays are real hits.
 
 ### Add / edit a scene
 
