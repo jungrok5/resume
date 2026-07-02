@@ -924,84 +924,47 @@ Unreal Engine · Unity3D · Godot Engine · Recast/Detour · MCP · Local LLM ·
 <h2>3. 상세 경력 기술 (시간순: 현재 → 과거)</h2>
 <h3>3-1. Panthera (블레이드&amp;소울 IP 키우기류 RPG · 분산 서버 백엔드) 〔현재 프로젝트〕</h3>
 <ul>
-<li><strong>기간</strong>: 2024-11 ~ 현재 (2026-06 기준 진행 중)</li>
-<li><strong>회사 / 부서</strong>: ㈜NCSOFT / 판테라개발실 (→ 2025-04 서버팀)</li>
+<li><strong>기간</strong>: 2024-11 ~ 현재</li>
+<li><strong>회사 / 부서</strong>: ㈜NCSOFT / 판테라개발실 (→ 서버팀)</li>
 <li><strong>직무 / 직책</strong>: TD / 팀원 (기반 설계·아키텍처·컨텐츠·최적화·개발 인프라 전반)</li>
-<li><strong>개발환경</strong>: C#, ASP.NET Core, <strong>Orleans(Grain 분산 서버)</strong>, gRPC → TCP, EntityFramework, C++(StatFormula/C++20), UnrealEngine5, MSSQL(저장프로시저·SQL Server DB 프로젝트/dacpac), Redis(Stack) / Garnet, Protobuf, .NET Aspire, Perforce, Jenkins, VSCode/Copilot·Cline, Claude Code · MCP, 로컬 LLM(llama.cpp)</li>
+<li><strong>개발환경</strong>: C#, ASP.NET Core, <strong>Orleans(Grain 분산 서버)</strong>, gRPC → TCP, EntityFramework, C++(StatFormula/C++20), UnrealEngine5, MSSQL(저장프로시저·dacpac), Redis / Garnet, Protobuf, .NET Aspire, Perforce, Jenkins, Claude Code · MCP, 로컬 LLM(llama.cpp)</li>
 </ul>
-<p><strong>핵심 성과 (실측 수치)</strong> <em>(단일 장비 로컬 벤치·병목 규명·상한 측정치, 실서비스 튜닝 전 값)</em></p>
+<p><strong>핵심 성과 (실측 수치)</strong> <em>(단일 장비 로컬 벤치·병목 규명·상한 측정치)</em></p>
 <ul>
-<li><strong>gRPC RPS</strong>: 순수 gRPC 서버 1만 유저/50만 요청 → <strong>초당 약 24만 req</strong> (Panthera LobbyServer 약 16만, 동일 조건 WebAPI 약 12만 → gRPC 우위)</li>
-<li><strong>WebAPI RPS</strong>: 5만 명까지 지연 없음, 부하 클라 병렬화 개선(Task.WhenAll→Parallel)으로 10만 처리 수 초 → 0.7초, 단일 장비 최대 초당 약 20만 건</li>
-<li><strong>EntityFramework TPS</strong>: 100만 호출 단순 SELECT 초당 4.5만 → (Compiled Query) 4.7만 → (AsNoTracking) <strong>5만 건</strong></li>
-<li><strong>TokenTests</strong>: 요청마다 출력되던 Debug 로그 제거로 <strong>10초 → 0.5초</strong> (5천 명 접속 실패 해결), 이후 1만·5만 명 안정</li>
-<li><strong>전 서버 캐릭터명 검색</strong>: 더미 <strong>1억 건</strong> 벤치로 MSSQL Full Text Search 채택 (LikeContains 타임아웃, Redis String JSON 1억 건 32GB로 포화)</li>
-<li><strong>로컬 LLM 코딩 스택</strong>: 16일·83커밋 체계적 검증으로 3모델(Qwen3.6-35B-A3B Q4 21GB 등) 배포, 구형 <strong>RTX 2080 Ti(11GB)에서 3모델×3CL 9/9 완주</strong> 재현성 검증</li>
+<li><strong>gRPC RPS</strong>: 순수 gRPC 서버 1만 유저/50만 요청 → <strong>초당 약 24만 req</strong> (동일 조건 WebAPI 약 12만 → gRPC 우위)</li>
+<li><strong>EntityFramework TPS</strong>: 100만 호출 단순 SELECT 초당 4.5만 → (Compiled Query·AsNoTracking) <strong>5만 건</strong></li>
+<li><strong>TokenTests</strong>: Debug 로그 제거로 <strong>10초 → 0.5초</strong> (5천 명 접속 실패 해결), 이후 1만·5만 명 안정</li>
+<li><strong>전 서버 캐릭터명 검색</strong>: 더미 <strong>1억 건</strong> 벤치로 MSSQL Full Text Search 채택</li>
+<li><strong>로컬 LLM 코딩 스택</strong>: 체계적 검증으로 3모델 배포, 구형 RTX 2080 Ti(11GB)에서 재현성 검증</li>
 </ul>
 <p><strong>주요 역할 및 담당</strong></p>
-<p><em>I. 서버 기반 / 아키텍처</em></p>
 <ul>
-<li><strong>Orleans 분산 서버 기반 구축</strong> (2025/02~06): 클러스터/Grain 기반 연구·환경 구축, Grain 배치·교차호출 차단, 역할별 서버 분리, 대시보드·타이머·옵저버, 세션 관리 분리, StatelessWorker 생명주기, 제어 서버 제거 및 랭킹/커뮤니티 컴포넌트를 커뮤니티 서버로 이전, 랭킹 서비스 Grain 전환, gRPC→Grain 교체 기반, 리포지토리 Grain 도입, 샤드 레거시 제거, silo graceful shutdown·종료 순서 처리</li>
-<li><strong>데이터 파이프라인 / 코드 생성 / StaticData</strong> (2025/01~ 지속): proto/enum 코드 생성 정비, CSV 로더, FDateTime/Timestamp 지원, proto 문서 생성·멀티라인, StaticData 검증 환경, ConstValue 공통 상수 테이블, StringVsHash·가넷 클러스터 벤치마크, 서비스 인터페이스·DispatchProxy 코드 생성, ObjectMapper 도입, 저장프로시저 자동 생성툴, 에러코드 자동 생성, GameClock으로 DateTime.UtcNow 일괄 교체, 엔티티 문서화</li>
-<li>
-<p><strong>StatFormula(스탯포뮬러) &amp; 전투력 / 전투 검증</strong> (2025/01~2026/06, 장기): C++ StatFormula DLL을 WorldServer 연동·디버깅 환경, 컴뱃매니저 테스트 코드, 클라-서버 스탯·랜덤 시드 동기화, Character/Item Base 데이터 적용, 전투용 스탯 구조화·grain 함수화, Stat/State 컴포넌트화, CombatPower 타입 통일·계산 시점·캐시 구조, Final 스탯·Dirty 분리·버프 반영, 벤치마크 및 버퍼풀→TLS 교체, C++ 테이블 핫리로드, zerocopy·SPAN·메모리풀로 마샬링 복제 제거, 마법인형·펫 스탯 일치화, C++20 설정(안드로이드 빌드 대응), 예외 핸들링 서버 적용, C++ 증분빌드</p>
-</li>
-<li>
-<p><strong>아키텍처 세부 (사내 위키 기반)</strong></p>
-</li>
-<li><strong>StaticData 파이프라인 proto 단일 소스화</strong>: "언리얼 DataTable→proto" 흐름을 역전해 <code>.proto</code>를 스키마 단일 진실원으로 사용. C# protoc 플러그인 버그를 피해 <strong>C++ protoc 플러그인 자체 구현</strong>, 커스텀 필드 옵션(uproperty/default_value/localized/csv_only 등)·주석까지 서버·클라 코드 + CSV로 자동 생성(배치 1회로 동시 반영)</li>
-<li><strong>StatFormula 구조 개선(Raw Input + 코드 생성)</strong>: 서버에 <strong>Roslyn Source Generator</strong>(진단 코드 STAT002~010), 클라에 <strong>CRTP + Trait 2-레이어 검증</strong> 도입 → 신규 스탯 카테고리 추가 시 서버 코드 약 15줄로 축소, 11개 중 8개 GetStat() 자동 생성. 서버 프로그래머가 proto 스펙을 몰라도 컴파일러 진단만으로 작업 완결</li>
-<li><strong>StaticData 유효성 검증</strong>: WorldServer 바이너리를 <code>--validate=true</code>로 검증 도구화(정상 부팅=검증 통과, ExitCode로 CI/퍼포스 트리거 연동), 클라 <code>FGameDataValidator</code> 연동</li>
-<li><strong>샤딩 &amp; 샤드키 주입 개선</strong>: <code>ShardDbContext</code>+Factory로 AddDbContextPool 유지한 채 런타임 샤드 주입, <strong>DispatchProxy 기반 GrpcClientProxy</strong>로 모든 gRPC 호출에 샤드키 자동 주입, Aspire ConnectionString 배열 지원</li>
-<li><strong>DB 형상 관리</strong>: SQL Server 데이터베이스 프로젝트로 테이블/SP/뷰 스크립트화, <strong><code>.dacpac</code> + SqlPackage</strong>로 증분 배포·Pre/PostDeployment 마이그레이션·스키마 비교 CI/CD 체계</li>
-<li><strong>통합 캐릭터 데이터 &amp; 서버 범위</strong>: 통합 캐릭터 데이터 중심, <code>DB &gt; 샤드(1 DB) &gt; 서버 그룹 &gt; 서버</code> 인원 규모 계층 정의로 분산 구조 컨텐츠 범위 통일</li>
+<li><strong>Orleans 분산 서버 기반 구축</strong>: 클러스터/Grain 모델 연구·환경 구축, Grain 배치·역할별 서버 분리, 랭킹·커뮤니티 서비스 Grain 전환, graceful shutdown·종료 순서 처리</li>
+<li><strong>데이터 파이프라인 proto 단일 소스화</strong>: <strong>C++ protoc 플러그인 자체 구현</strong>으로 서버·클라 코드 + CSV·유효성 검증 자동 생성, StaticData 검증 도구화(ExitCode로 CI 연동), 저장프로시저·에러코드 자동 생성</li>
+<li><strong>StatFormula(전투 스탯) &amp; 전투 검증</strong>: C++ DLL 서버 연동, <strong>Roslyn Source Generator</strong> + 클라 CRTP 검증으로 신규 스탯 추가 비용 최소화(서버 약 15줄), zero-copy 마샬링, 클라-서버 랜덤 시드·결정론 교차 검증</li>
+<li><strong>샤딩 &amp; DB 형상 관리</strong>: ShardDbContext·<strong>DispatchProxy 기반 샤드키 자동 주입</strong>, SQL Server DB 프로젝트 + <strong>dacpac 증분 배포</strong> CI/CD</li>
+<li><strong>대형 컨텐츠 설계·구현</strong>: PVP·랭킹(ELO·퀵매치), 영역전(대규모 진영전), 슬라임대난투(3:3 팀 PvP), 용던·챕터·방치보상, 소셜(친구·럭키백·알림·닉네임 검색), 버프·칭호, 오픈필드 실시간 이동 동기화</li>
+<li><strong>DB 성능 개선</strong>: 저장프로시저 전면 교체, WRITELOG 감소·배치 처리·데드락 구조 개선 등 대규모 데이터베이스 부하 개선</li>
+<li><strong>부하·통합 테스트 인프라</strong>: 스크립트 FSM 부하 테스터, 분산 실행, 통합 테스트 핫리로드·젠킨스 daily, 몽키 테스트</li>
+<li><strong>네트워크·버전 정합성</strong>: <strong>gRPC→TCP 전송 교체</strong>(토글 어댑터·분산 트레이스·압축), proto 체크섬·버전 미스매치 알림, 클라-서버 결정론성 비교 체계</li>
+<li><strong>AI · Claude 기반 개발 도구</strong> — <em>프로젝트의 핵심 차별점</em>: 부하 테스트 <strong>MCP 서버</strong>(자연어→gRPC 시퀀스, 리플렉션 API 자동 탐색), <strong>AI 테스트 에이전트 팀</strong>(테스터/분석가/DB/서버 매니저 4종 — 자연어로 테스트→로그 분석→DB 검증→보고서 자동화), 멀티에이전트 코드리뷰, <strong>로컬 LLM 코딩 스택</strong>(llama.cpp, 3모델 원클릭 배포, 사내 코드 외부 유출 없음)</li>
+<li><strong>운영툴·개발 인프라</strong>: 웹콘솔·서버 클러스터 시각화, 개발 통합 런처 + 온디바이스 LLM 어시스턴트(자연어→치트 명령·로그/크래시 분석·CL 리뷰), 빌드/CI(.NET 10 전환·리눅스 빌드)</li>
 </ul>
-<p><em>II. 전투 / 성장 컨텐츠</em></p>
+<p><strong>주요 성과 요약</strong></p>
 <ul>
-<li><strong>PVP &amp; 랭킹</strong> (2025/02~07): 랭킹 테이블/DB 설계, PVP 랭킹, ELO 계산, 퀵매치, 랭킹 리셋·동시성, PlayerGrain으로 PVP/랭킹/컴뱃매니저 이전, PVP 티켓 소모·구매, CombatManager→CombatValidator 분리, 닉네임 변경, CharacterEntity Profile/CombatPower, PVP Currency 전환·승리 보상, 데드락 구조 개선</li>
-<li><strong>영역전 (대형 컨텐츠)</strong> (2025/04~2026/01): Static 테이블·프로토콜 설계, 커뮤니티 서버·DB 신설, 입퇴장·공격 시작/종료, 스케줄링·매칭, 시즌 리셋·재화·입장 횟수, 데이터 변경 구독, 통합 캐릭터 동기화, 봇 입장·운영툴 연동</li>
-<li><strong>슬라임대난투 (3:3 PVP, 대형 컨텐츠)</strong> (2026/01~03, 5월 보강): 3:3 PVP 집중 구현, 시즌 변경·랭킹 삭제, 운영툴·로그 보강, 보상 메일·시즌 데이터 관리, 럭키백 대상 제외, 안정화, 참가 보상 지급</li>
-<li><strong>용던 / 챕터 / 방치보상 / 레벨·EXP</strong> (2025/06~12): 레벨/EXP 보상 테이블·세션 종료 시 레벨 업데이트, 챕터 서버, 방치보상(데이터 모델링·광고 티켓·초기화 빌더), 용던 프로토콜·입장/포기/부활·룰렛·웨이브·클리어 보상·난이도, 방치보상 리뉴얼, 초기화 카운터 KST 5시 통일</li>
-<li><strong>소셜 시스템</strong> (2025/08~2026/01): 친구(Follow) 데이터 모델링·API, 럭키백 API·전송/수령/리셋, 도움 요청/응답/목록, 초기화 카운터, 맞팔, 알림 시스템, 브로드캐스팅, Redis Search 닉네임 검색, 추천 친구, 페이징, 세션 중복 버그 수정, UI 프로토타이핑</li>
-<li><strong>캐릭터 정보 / 칭호 / 버프</strong> (2025/03~2026/01): 타 캐릭터 조회 구조·프로토콜, 버프 구현(서버 무틱·클라 트리거·절대시간 방식)·스탯 계산·클라 연동, 칭호 로직·State 로드·획득 조건, 캐릭터 정보창, Stat &amp; State(나/타인 정보 표현 분리)</li>
-<li><strong>오픈필드 멀티플레이어 동기화</strong>: MO 수준 실시간 이동 동기화(동기화 영역당 100명 이하), 입장/퇴장/위치 갱신/구독 + 생성/소멸/<strong>이동 배치</strong>/외형/강제 퇴장 스트림 알림, 비활동 타임아웃 강제 퇴장</li>
-<li><strong>공용 시스템 설계</strong>: 알림(유저/서버/서비스 전체 단위 범용) · 초기화 카운터(기간 경과 시 자동 초기화되는 횟수 제한)를 기반으로 친구·도움·럭키백 상호 의존 시스템 구축 · 랜덤 동기화(서버 발급 시드로 클라 계산 후 종료 시 서버 재계산 교차검증)</li>
-</ul>
-<p><em>III. 데이터베이스 / 성능 / 테스트</em></p>
-<ul>
-<li><strong>데이터베이스 성능 &amp; 저장프로시저</strong> (2025/09~2026/03): SQL 쿼리 캡쳐·로깅, 저장프로시저 호출 구조화·SP 교체, Dapper GUID 타입핸들러, 데드락 재현·개선, <strong>대규모 "데이터베이스 부하 개선"</strong>(SP 전면 교체, WRITELOG 감소, 배치 처리, holdlock 제거, 데드락/에러코드 리턴 수정, DMV Wait 조회·쿼리스토어 초기화 운영툴 연동)</li>
-<li><strong>부하 테스트 &amp; 통합 테스트 인프라</strong> (2025/04~2026/05): 스크립트 동적 컴파일·FSM·파일 로그, gRPC RPS 측정, Winsock 후킹·소켓옵션·압축·분산 실행·EntityFramework TPS 최적화, 통합 테스트 핫리로드·Aspire 연동·병렬, 젠킨스 통합, 몽키 테스트, CSV 캡쳐, 분산 부하 제어, 메모리 폭증 방지</li>
-</ul>
-<p><em>IV. 네트워크 / 버전 / 빌드 / 도구</em></p>
-<ul>
-<li><strong>네트워크 레이어</strong> (2025/11~2026/06): 네트워크 지연 시뮬레이션, 디버그용 프록시 정리, <strong>gRPC→TCP 교체</strong>(토글 가능한 TCP transport 어댑터, 분산 트레이스 복구, 헬스체크 대응), TCP 레이어 데이터 압축</li>
-<li><strong>프로토 버전 관리 / 버전 정합성</strong> (2026/01~06): proto 체크섬·버전 관리, 젠킨스 빌드 시 프로토버전 수정, 버전 미스매치 알림, 버전 정합성 체계(스태틱 데이터·스탯포뮬러·전투 코드 결정론성 클라-서버 비교), 테이블 데이터 해시 캐시</li>
-<li><strong>운영툴 / 웹콘솔 / 시각화</strong> (2025/12~2026/04): 운영툴 신규·개선, gRPC 로그 공유·시각화, 플레이어 조회·시즌 데이터 관리, 서버 클러스터 시각화툴, 사내 웹 콘솔(개인서버 실행·테스트 스크립트 실행), Shipping 빌드 콘솔명령, 웹콘솔 안정화·등급별 봇 생성</li>
-<li><strong>빌드 / CI / 개발 인프라</strong> (2025/02~2026/06): P4 연동, 서버 빌드 알림(팀즈), UnrealProjectTool·언리얼 버전 셀렉터, 클라이언트 공유 코드 증분 빌드, .NET 9→10 전환, 통합테스트 젠킨스 daily, 서버 리눅스 빌드, StatFormula C++ 증분빌드, 빌드 트리거 전용 job·알림</li>
-<li><strong>AI · Claude 기반 개발 도구</strong> (2026/03~05) — <em>프로젝트의 핵심 차별점</em></li>
-<li><strong>부하 테스트 MCP 서버</strong>: 스크립트 방식이던 부하 테스터에 MCP 서버 추가, AI가 자연어 테스트 요청을 gRPC 호출 시퀀스로 변환·실행. gRPC 리플렉션 기반 API 자동 탐색(신규 API도 설정 없이 즉시 테스트), Protobuf↔JSON 변환, 기존 스크립트 재사용 (<code>ModelContextProtocol</code> .NET SDK)</li>
-<li><strong>AI 게임 서버 테스트 에이전트 팀</strong>: 테스터(자연어→MCP 호출) / 분석가(여러 서버 로그 + 부하 테스트 로그 + DB 3중 교차검증 보고서) / DB 매니저(DB 초기화·정합성) / 서버 매니저 4종을 에이전트로 구성, "캐릭터 5개 접속해 친구 맺고 팀PvP 해줘" 수준의 자연어로 테스트→로그 분석→DB 검증→에러 코드 추적→보고서 자동화. 자기 개선 규칙(인프라 교훈 자동 축적) 내장</li>
-<li><strong>AI 멀티에이전트 코드리뷰</strong>: 에이전트 팀 + 리더 2차 검증 구조로 서버·DB 프로젝트 전수 리뷰, 실제 결함 다수 발견·확정</li>
-<li><strong>로컬 LLM 코딩 스택 구축</strong>(사내 코드 외부 유출 없이): 엔진 Ollama→llama.cpp 이관, Context Collapse(128K에서 92% 저하) 등 실측 규명, Mamba-Transformer(Nemotron) chat template 버그 수정, Hermes↔OpenAI tool-call 호환 레이어, 최종 3모델(Qwen3.6-35B-A3B·Gemma-4-26B·Ministral-3-8B) 원클릭 배포. <strong>결론: 코드 리뷰 품질은 브랜드가 아닌 파라미터 스케일이 좌우</strong>(로컬 30B급 ≈ Claude Haiku, human review 1차 스크린 용도로 재정의)</li>
-<li><strong>사내 웹 콘솔 &amp; 개발 통합 런처 AI 어시스턴트</strong>: 온디바이스 LLM(Qwen2.5-1.5B) 자연어→치트/빌더 명령어 변환, 서버 로그·크래시 분석·P4 CL 코드 리뷰 4종(LLM Provider 추상화로 Claude CLI ↔ 사내 로컬 LLM 서버 전환), 데이터 정의 편집 툴을 Uno Platform으로 1일 바이브 코딩</li>
-<li><strong>개발 통합 런처</strong> (2026/04~06): 신규 구축, 위키 파일 업로드, 서버로그 AI 어시스턴트, 트레이/아이콘/노티, TCP 교체 헬스체크 프로브 대응</li>
-<li><strong>데이터 기반 전투 / 리플레이 (전투 시뮬레이터)</strong> (2026/06): 리플레이 데이터 뷰어·목업 데이터, 데이터 기반 전투 서버 사이드, 전투 시뮬레이터 구조 리뷰·테스트 코드</li>
-</ul>
-<p><strong>주요 성과 요약</strong> (성과평가 2025 기준)</p>
-<ul>
-<li>기반 설계·개선: 기획 데이터 관리·유효성 검증(Proto 문서 기반 도입), 서버 성능 측정(Metric 수집·모니터링), gRPC 테스트·API 문서 공유, 동시성 제어 기반(Lock 없는 컨텐츠·모든 코어 사용·Orleans), Object Mapper, 서버간 상태 관리 체계, gRPC→Grain 전환, Stat &amp; State 개선, 월드 통합 캐릭터 관리, 메시지 브로드캐스팅 구조, 저장 프로시저 도입, DB 동시성·데드락 구조 개선</li>
-<li>컨텐츠: PVP·랭킹·영역전·스탯·버프·EXP 보상·방치 보상·챕터·친구·도움·알림·럭키백·전투·칭호·용던</li>
+<li>기반 설계·개선: 동시성 제어 기반(Lock 없는 컨텐츠·Orleans), 데이터 파이프라인·유효성 검증, 월드 통합 캐릭터 관리, 브로드캐스팅 구조, 저장 프로시저·DB 데드락 개선</li>
+<li>컨텐츠: PVP·랭킹·영역전·스탯·버프·방치보상·챕터·소셜·전투·칭호·용던</li>
 <li>최적화: API·gRPC/Orleans 레이어·DB 계층·브로드캐스팅·스탯포뮬러</li>
-<li>개발 환경 개선: 문서/코드 생성 자동화(패킷·기획 테이블·DB 구조·시퀀스 다이어그램), 통합 테스트 환경(스크립트·컨텐츠 단위·데일리 빌드·몽키·네트워크 지연), 다수 툴 개발·유지보수</li>
+<li>개발 환경 개선: 문서/코드 생성 자동화, 통합 테스트 환경, AI 개발 도구·다수 툴 개발</li>
 </ul>
 <hr />
 <h3>3-2. 미니버스 — PC버전 / 언리얼엔진 (유저 창작 MMO → 하우징 MMO)</h3>
 <ul>
-<li><strong>기간</strong>: 2023-02 ~ 2024-11 (약 21개월) — 조직: 미니버스실 → 소셜컨버전스실</li>
+<li><strong>기간</strong>: 2023-02 ~ 2024-11 (약 21개월)</li>
 <li><strong>회사 / 부서</strong>: ㈜NCSOFT / 소셜컨버전스실</li>
-<li><strong>직무 / 직책</strong>: TD / TD (<strong>2023-02-01부터 직책도 TD로 임명</strong>, 2023-02~03-05 EDIT&amp;PLAY팀 팀장 겸직)</li>
-<li><strong>개발환경</strong>: C#(SpaceServer), C++·UnrealEngine5, TypeScript(데디), MSSQL, Windows / Perforce, Visual Studio, Godot(서버 뷰어), Air</li>
-<li><strong>배경</strong>: 모든 디렉터가 나가며 프로젝트 리셋. 조직 재구축·언리얼엔진 교체. 리셋 후에도 유저 창작 유지 → 데디서버에 TypeScript 게임 제작 환경 구축. 이후 방향이 하우징으로 변경되며 유저 스크립트 부분 제거, MMO 서버로 교체. <strong>"수천만 개의 프랍을 단일 공간에 배치해도 견디는" 초대규모 UGC 처리를 서버·클라 양쪽에서 "총량이 아니라 활성량만 처리" 철학으로 설계·구현.</strong></li>
+<li><strong>직무 / 직책</strong>: TD / TD</li>
+<li><strong>개발환경</strong>: C#(SpaceServer), C++·UnrealEngine5, TypeScript(데디), MSSQL, Godot(서버 뷰어), Perforce</li>
+<li><strong>배경</strong>: 프로젝트 리셋 후 언리얼엔진 교체·조직 재구축. 방향이 하우징 MMO로 바뀌며 MMO 서버로 교체. <strong>"수천만 개의 프랍을 단일 공간에 배치해도 견디는" 초대규모 UGC 처리를 서버·클라 양쪽에서 "총량이 아니라 활성량만 처리" 철학으로 설계·구현.</strong></li>
 </ul>
 <p><strong>핵심 성과 (실측 수치)</strong> <em>(단일 장비 로컬 벤치·상한 규명 값)</em></p>
 <ul>
@@ -1013,30 +976,20 @@ Unreal Engine · Unity3D · Godot Engine · Recast/Detour · MCP · Local LLM ·
 </ul>
 <p><strong>주요 역할 및 담당</strong></p>
 <ul>
-<li>리비저닝: 언리얼 개발 환경 구축, 리비저닝 목표에 맞춘 프로그램 중요 목표 수립, 스크립트 기반 로직 제작 방향성 수립</li>
-<li>방향성·기반 설계: 테이블·템플릿, 공간·채널, 공간·프랍 구조 설계, 아이템-프랍 관계 정리</li>
-<li>리서치: 데디케이트 서버, 포트나이트 에디터, 스테이블 디퓨전, 언리얼 인터넷 라디오 플레이, 웹브라우저 게임 실행, 맵/최소 프랍 사이즈 확정, 높은 곳 이슈, 플레이투게더, 데디 서버 심리스</li>
-<li>데디서버 컨텐츠: 빌드 모드 태핑, EyeDropper, Grab, Undo, 머징 프랍, 벽지 프랍, 연속 행위(설치·삭제·색상), 자석, 미세조정, 피아노 프랍, 로그인 플로우 개선</li>
-<li>데디서버 최적화: 클라 기반 봇 테스트, 데디 스폰 성능·RPC·복제·콜리전 최적화, 언리얼 메모리릭 추적·개선</li>
-<li>MMO 서버 전환: 패킷 제너레이터, 네트워크 샘플 언리얼 클라이언트, 서버측 네비메시 Export·Build, 서버 뷰어, PC·NPC 기본 이동, 서버 지형·충돌 처리 기반, 템플릿 테이블 사용 구조 개선, 서버측 물리 엔진 리서치</li>
-<li>MMO 서버 컨텐츠: 발사체, 미니게임 기반, 플랫포머 프랍, 자동문 프랍, 마인크래프트 레드스톤식 로직 조합 기반 프랍, 노드 프랍, 하우징 리플레이</li>
-<li>MMO 서버 성능·최적화: 프랍 ISM 교체, LoadObject 개선, 바디인스턴스 직접 제어 최적화, 클라측 콜리전 청크 단위 ON/OFF, 네비메시 빌드 &amp; ISM 자료구조 리빌딩 배치 처리, 클라측 프랍 데이터 캐시 개념, 데이터 캐시용 가상 파일 시스템, 폭탄을 통한 대량 프랍 삭제 개선</li>
-<li>서버 사이드 다이나믹 네비메시(실시간 유저 지형 생성 대응 NPC 이동): 복셀 기반 비동기 네비메시 빌드, 동적 네비메시 타일 추가, NPC 이동 처리</li>
-<li>MMO 서버 미니게임 프로토타이핑: 프랍 조합으로 유저가 게임을 만드는 환경 구축</li>
-<li>(2024-11~12, 판테라개발실 이동 초기): 클라-서버 코드 공유(DLL 형태 C++·C# 공유, 리눅스 컴파일), 데이터베이스 형상 관리(코드 형태 버전 관리), 데이터베이스 샤딩 분산 처리(분산 트랜잭션·통합 조회), 배틀 시뮬레이터 서버측(리플레이 데이터 저장 방식, DLL 유지보수 최소화 방식)</li>
+<li>리비저닝·기반 설계: 언리얼 개발 환경 구축, 프로그램 목표·스크립트 로직 제작 방향 수립, 공간·채널·프랍·테이블 구조 설계</li>
+<li>데디서버 컨텐츠·최적화: 빌드 모드(Grab·Undo·자석·미세조정·벽지·피아노 프랍 등), 스폰·RPC·복제·콜리전 최적화, 언리얼 메모리릭 추적·개선</li>
+<li>MMO 서버 전환: 패킷 제너레이터, 서버측 네비메시 Export·빌드, 서버 지형·충돌 처리 기반, Godot 기반 서버 시각화 뷰어 자체 개발</li>
+<li>MMO 서버 컨텐츠: 발사체·플랫포머·자동문·마인크래프트 레드스톤식 로직 프랍·하우징 리플레이, 프랍 조합 미니게임 프로토타이핑</li>
+<li>성능·최적화: 프랍 ISM 교체, 바디인스턴스 직접 제어, 콜리전 청크 단위 ON/OFF, 네비메시·ISM 리빌드 배치 처리, 프랍 데이터 캐시·가상 파일 시스템</li>
+<li>서버 사이드 다이나믹 네비메시: 복셀 기반 비동기 빌드, 영향 타일만 재계산, NPC 이동 처리</li>
 </ul>
-<p><strong>기술 심화 (사내 위키 기반)</strong></p>
+<p><strong>기술 심화</strong></p>
 <ul>
-<li><strong>서버 동시성 아키텍처(C#)</strong>: 공간(Space)당 단일 디스패처 스레드(20fps/50ms)가 공유 상태를 독점 변경하는 <strong>액터 모델 락프리</strong> 구조. 한 프레임을 Network→Writable→Space→Broadcast 스테이지로 분리(읽기는 Parallel.ForEach 병렬, 쓰기만 단일 스레드 직렬) → 락 경합 0. IOCP 스레드풀을 P/Invoke로 직접 구현 + 코어 고정(SetThreadIdealProcessor), HangDetector(Job 5초 초과 시 Teams 경보), Snowflake 분산 ID.</li>
-<li><strong>네트워크·대역폭</strong>: Chunk(4800) 공간분할 + 대상별 차등 시야(AOI) 복제, 프랍 전용 복제 모델(PassThroughPcs), Baked Prop 페이징(사전 직렬화 패킷을 틱당 200 전송/300 삭제, 부하 기반 동적 시야 스케일링), <strong>ReferenceBuffer zero-copy 브로드캐스트</strong>(ArrayPool+원자적 참조 카운트로 직렬화 1회·할당 1회, 100명 브로드캐스트에도 GC 최소), SocketAsyncEventArgs 풀링·8KB 배칭.</li>
-<li><strong>클라 렌더/물리 최적화(UE5)</strong>: 논리/표현 이원화(정적=ISM 인스턴스, 상호작용만 액터), 인스턴스 색상=GPU 커스텀 데이터(단일 머티리얼·단일 배치), 공간분할 ISM(128m 격자 컬링), <strong>Prop Chunk</strong>(플레이어 인접 27칸의 충돌 바디만 동적 생성/파괴 → 프랍 1억 개라도 물리 씬 상주 바디는 상수, FBodyInstance 직접 관리), O(1) RemoveAtSwap 삭제, 프랍 병합(비트 플래그 룩업), 오프라인 사전 가공(아틀라스·썸네일·MVExport 커맨드릿), FPS 기반 자동 화질 강등.</li>
-<li><strong>서버사이드 다이나믹 네비메시</strong>: 1,000명이 실시간으로 지형을 만들어 사전 베이크 불가 → 복셀(Recast HeightField, <code>.voxels</code> LZ4) + <strong>DotRecast(Recast/Detour .NET 포팅)</strong>로 프랍 변경 시 영향받은 타일만 재계산(수~수십 ms). 재빌드는 백그라운드 스레드, 결과 교체는 Space 메인 스레드 Job으로(쓰기 단일 스레드 원칙 관철), Interlocked로 중복 빌드 차단.</li>
-<li><strong>서버 물리</strong>: Jitter2로 강체 시뮬 없이 충돌 쿼리만(Raycast·거리 검사), Chunk 브로드페이즈, 빠른 투사체 Capsule-Segment CCD, 대량 쿼리 Parallel.ForEach.</li>
-<li><strong>프랍 영속화(DB)</strong>: 집터(HouseArea) 단위 계층적 더티 플래그 + 1초 배치(같은 타입을 JSON 배열 1건으로 저장해 쿼리 최소화), DbJob 스레드풀 AccountId%N 라우팅, 종료 시 강제 flush, 대량은 LOB+Grid.</li>
-<li><strong>대량 공간 데이터 전략</strong>: 최악 51억 프랍/공간당 422GB 정량 분석, 3단 공간 분할(집터 16m→청크 48m→셀 256m), 프랍을 배경 데이터로 취급하는 SightIn(청크가 '거쳐간 캐릭터' 기록 → 재진입 시 재전송 없음)으로 트래픽 대폭 감소.</li>
-<li><strong>다이나믹 프랍 컨텐츠</strong>: (1) <strong>전기 회로 시스템</strong>(14종, 단방향 링크 그래프+전원 단일성 불변식으로 순환/무한루프 구조적 차단, Space Job 큐로 단계 전파) (2) <strong>MovingPlatform &amp; Node</strong>(클라·서버가 비트 수준 동일한 Hermite 스플라인 공유 → 절대좌표 대신 '구간+거리 4B'만 500ms 전송, dead-reckoning + 1D 오차 보정) (3) <strong>클라이언트-드리븐 NPC</strong>(장식 NPC 이동 시뮬을 근처 클라에 위임, 서버는 200ms 위치 1개만 검증·중계 → 부하가 'NPC 총수'가 아닌 '근처에 사람 있는 NPC 수'로 수렴, 2m 클램프 보안).</li>
-<li><strong>툴링</strong>: Godot(C#) 기반 서버 시각화 뷰어 자체 개발(IServerViewer로 캡슐화, 서비스 빌드 제외), 패킷 제너레이터(C# IDL+리플렉션+T4로 C#/C++ 코드 자동 생성), 기획(Template)·리소스(UE DataTable)·스키마(DB) 3계층 템플릿 구조를 인터페이스(Reader/Writer 주입)로 정리.</li>
-<li><strong>심리스/월드 설계</strong>: 스페이스 그룹 Local/Global 좌표 변환으로 인접 청크 논리 연결, 공간 리스트를 3D 행성 표면에 매핑하는 월드맵 프로토타이핑.</li>
+<li><strong>서버 동시성(C#)</strong>: 공간당 단일 디스패처 스레드가 공유 상태를 독점 변경하는 <strong>액터 모델 락프리</strong> 구조 — Network→Writable→Space→Broadcast 스테이지 분리(읽기 병렬·쓰기 직렬)로 락 경합 0, IOCP 직접 구현·코어 고정, HangDetector</li>
+<li><strong>네트워크·대역폭</strong>: Chunk 공간분할 + AOI 차등 시야 복제, Baked Prop 페이징(부하 기반 동적 시야 스케일링), <strong>ReferenceBuffer zero-copy 브로드캐스트</strong>(직렬화 1회·할당 1회), 8KB 배칭</li>
+<li><strong>클라 렌더/물리(UE5)</strong>: 논리/표현 이원화(정적=ISM 인스턴스), 인스턴스 색상=GPU 커스텀 데이터, <strong>Prop Chunk</strong>(플레이어 인접 27칸만 충돌 바디 생성 → 프랍 1억 개라도 물리 씬 상주 바디 상수), 오프라인 사전 가공, FPS 기반 자동 화질 강등</li>
+<li><strong>다이나믹 네비메시·서버 물리</strong>: 복셀(Recast HeightField) + <strong>DotRecast</strong>로 프랍 변경 시 영향 타일만 재계산(수~수십 ms), Jitter2 충돌 쿼리 전용, 투사체 CCD</li>
+<li><strong>영속화·대량 데이터·프랍 컨텐츠</strong>: 집터 단위 계층 더티 플래그 + 1초 배치 저장, 최악 51억 프랍 정량 분석 → 3단 공간 분할·SightIn 재전송 제거, 전기 회로 시스템(14종, 순환 구조적 차단)·MovingPlatform(스플라인 공유 4B 동기화)·클라이언트-드리븐 NPC(근처 클라에 시뮬 위임)</li>
 </ul>
 <p><strong>업무 성과</strong></p>
 <ul>
@@ -1071,7 +1024,7 @@ Unreal Engine · Unity3D · Godot Engine · Recast/Detour · MCP · Local LLM ·
 <li>소켓 성능 리서치: 순수 소켓 기준 WebSocket이 TCP 대비 약 3배 느림 → 상위 레이어 최적화 시 격차 소멸(구현체보다 처리 레이어가 성능 좌우) 규명</li>
 <li>루아 서버사이드 스크립트 부하 한계 규명(단일 스레드 500개 60ms / 1,000개 130ms) → 다인스턴스 스케일아웃 전환 판단</li>
 </ul>
-<p><strong>기술 심화 (사내 위키 기반)</strong></p>
+<p><strong>기술 심화</strong></p>
 <ul>
 <li><strong>서버 아키텍처·부하 방법론</strong>: 방(room) 목적지 라우팅 특성상 L4 로드밸런싱 불가 → 커스텀 로드밸런서 설계, 정량 논거(동접 100만·서버당 7천 수렴 → SpaceService 142대)로 게이트웨이 직접 연결 채택. PING을 CLIENT/SERVER/NETWORK 계층으로 분해 계측(서버 네트워크 처리 3ms 미만). 봇 클라 자체 병목을 발견해 C#으로 재구현, 외형/데이터 캐릭터 분리로 순수 서버 부하 측정.</li>
 <li><strong>유저 창작 스크립트 런타임(핵심 R&amp;D)</strong>: "런타임 로직 레이어" 개념 정립(Static/Dynamic Layer, 무패치 런타임 코드·애셋 다운로드, Goal 판정은 서버 전용으로 치팅 방지). Godot 런타임 스크립트 주입 3종 기법을 엔진 소스 레벨까지 분석, MiniScriptApp(스페이스 앱)·SmartPropScript(프랍 앱, 프랍 간 메시지 교환)·스키마리스 커스텀 RPC 구현. GDScript↔VisualScript 변환 실험으로 노드 기능 해상도의 범용성-난이도 트레이드오프 도출.</li>
