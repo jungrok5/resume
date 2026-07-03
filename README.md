@@ -5,7 +5,7 @@ One GitHub Pages site, two ways to read the same résumé:
 | Path | What | Notes |
 |------|------|-------|
 | `/` (`index.html`) | **Document résumé** — 3 views (기본 · 출력 · 상세) + dark mode + print | Static HTML, fast, SEO/ATS-friendly. **Default landing.** |
-| `/interactive.html` | **Interactive 3D résumé** — 15 scroll-driven WebGL scenes | Heavy bundles load only here; postprocessing only on desktop. |
+| `/interactive.html` | **Interactive 3D résumé** — 17 scroll-driven WebGL scenes | Heavy bundles load only here; postprocessing only on desktop. |
 
 Both pages share an identical fixed top bar (tabs · current-section label ·
 scroll gauge), so switching feels like one site. See [`SETUP.md`](SETUP.md)
@@ -39,7 +39,7 @@ for GitHub Pages, Search Console, and analytics setup.
   (no material variants), zero textures (procedural geometry + vertex color)
 
 **Visibility**
-- Scroll-range scene culling: all 15 scenes stay mounted but only the active
+- Scroll-range scene culling: all 17 scenes stay mounted but only the active
   1–2 render (`group.visible`), the rest early-return per frame
 - Fog + tight far plane; `frustumCulled=false` on instanced meshes is
   deliberate (moving instances + always-on-screen scenes)
@@ -100,7 +100,7 @@ src/
     SceneRig.jsx          scene registry; each scene culls itself by scroll range
     CameraRig.jsx         per-section camera keyframes (lib/cameras.js)
     ScrollBridge.jsx      scroll → store/gauge/GA bridge (no re-renders)
-    scenes/               one file per section (15)
+    scenes/               one file per section (17)
 ```
 
 See [`DEVELOPMENT.md`](DEVELOPMENT.md) for scene-authoring conventions,

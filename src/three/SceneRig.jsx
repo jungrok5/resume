@@ -9,6 +9,8 @@ import DataPipelineScene from './scenes/DataPipelineScene'
 import ShardingScene from './scenes/ShardingScene'
 import RenderOptScene from './scenes/RenderOptScene'
 import DenseBuildScene from './scenes/DenseBuildScene'
+import SpatialTiersScene from './scenes/SpatialTiersScene'
+import CircuitKitScene from './scenes/CircuitKitScene'
 import DenseCombatScene from './scenes/DenseCombatScene'
 import TricksterScene from './scenes/TricksterScene'
 import WebCollabScene from './scenes/WebCollabScene'
@@ -26,6 +28,8 @@ const REGISTRY = {
   sharding: ShardingScene,
   renderOpt: RenderOptScene,
   denseBuild: DenseBuildScene,
+  spatialTiers: SpatialTiersScene,
+  circuitKit: CircuitKitScene,
   denseCombat: DenseCombatScene,
   trickster: TricksterScene,
   webCollab: WebCollabScene,
