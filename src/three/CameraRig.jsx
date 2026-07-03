@@ -19,12 +19,14 @@ export default function CameraRig() {
     const total = sections.length
     const out = []
     sections.forEach((sec, i) => {
-      const s = i / total
-      const span = 1 / total
+      // 씬 진행도(util.localProgress)와 같은 [i-0.5, i+0.5]/(total-1) 윈도우 —
+      // 패널이 화면 중앙에 올 때 카메라도 그 씬 프레이밍의 한가운데에 있다
+      const s = Math.max(0, i - 0.5) / (total - 1)
+      const e = Math.min(total - 1, i + 0.5) / (total - 1)
       const arr = CAMERAS[sec.id] || [[0.5, [0, 2.4, 10], [0, 0.8, 0]]]
       arr.forEach(([p, pos, tgt]) =>
         out.push({
-          at: s + p * span,
+          at: s + p * (e - s),
           pos: new THREE.Vector3(...pos),
           tgt: new THREE.Vector3(...tgt),
         }),
