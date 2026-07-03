@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { sections } from '../data/resume'
 import { CAMERAS } from './lib/cameras'
 import { clamp, clamp01, easeInOut, sceneWindow } from './lib/util'
+import { offsetToV } from './lib/scrollMap'
 
 // Cinematic camera driven by scroll. Expands per-scene keyframes to global
 // offsets and interpolates position + look-at target with easing + damping.
@@ -20,14 +21,13 @@ export default function CameraRig() {
     const out = []
     sections.forEach((sec, i) => {
       // 씬 진행도(util.sceneWindow)와 같은 리드 적용 윈도우 — 패널이 읽히기
-      // 시작할 때 카메라가 이미 그 씬을 프레이밍하고 있다
+      // 시작할 때 카메라가 이미 그 씬을 프레이밍하고 있다.
+      // 키는 v-공간(패널 좌표) 기준: 프레임마다 offsetToV로 보정된 v와 비교
       const [ws, we] = sceneWindow(i, total)
-      const s = ws / (total - 1)
-      const e = we / (total - 1)
       const arr = CAMERAS[sec.id] || [[0.5, [0, 2.4, 10], [0, 0.8, 0]]]
       arr.forEach(([p, pos, tgt]) =>
         out.push({
-          at: s + p * (e - s),
+          at: ws + p * (we - ws),
           pos: new THREE.Vector3(...pos),
           tgt: new THREE.Vector3(...tgt),
         }),
@@ -39,7 +39,7 @@ export default function CameraRig() {
 
   useFrame((_, dt) => {
     const last = keys.length - 1
-    const o = clamp(scroll.offset, keys[0].at, keys[last].at)
+    const o = clamp(offsetToV(scroll.offset, sections.length), keys[0].at, keys[last].at)
 
     let i = 0
     while (i < last - 1 && o > keys[i + 1].at) i++
