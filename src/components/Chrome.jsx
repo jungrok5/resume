@@ -21,7 +21,8 @@ export default function Chrome() {
             {now}
           </div>
           <nav className="switcher3d" aria-label="이력서 뷰">
-            <a href="./">기본</a>
+            {/* ?view= 명시 — 없으면 문서 페이지가 '마지막에 봤던 뷰'를 복원해버린다 */}
+            <a href="./?view=design">기본</a>
             <a href="./?view=ats">출력</a>
             <a href="./?view=detail">상세</a>
             <span className="on">3D</span>
