@@ -36,5 +36,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # Pages 백엔드가 간헐적으로 "Deployment failed, try again later."를
+      # 반환한다(빌드·아티팩트와 무관한 인프라 플레이크) — 30초 뒤 한 번
+      # 자동 재시도해서 수동 재트리거 없이 복구되게 한다.
       - id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - if: steps.deployment.outcome == 'failure'
+        run: sleep 30
+      - if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
