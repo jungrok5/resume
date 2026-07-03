@@ -1,4 +1,5 @@
 // Small math helpers shared across scenes.
+import { offsetToV } from './scrollMap'
 
 export const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x)
 export const clamp = (x, a, b) => (x < a ? a : x > b ? b : x)
@@ -25,14 +26,14 @@ export function sceneWindow(index, total) {
 }
 
 export function localProgress(offset, index, total) {
-  const v = offset * (total - 1)
+  const v = offsetToV(offset, total) // 실측 패널 위치 보정 (scrollMap)
   const [s, e] = sceneWindow(index, total)
   return clamp01((v - s) / (e - s || 1))
 }
 
 // is a section slot active (with padding so intro/outro can overlap)
 export function isActive(offset, index, total, pad = 0.34) {
-  const v = offset * (total - 1)
+  const v = offsetToV(offset, total)
   const [s, e] = sceneWindow(index, total)
   const span = e - s
   return v >= s - span * pad && v <= e + span * pad

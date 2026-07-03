@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { ScrollControls, Scroll, Preload, AdaptiveDpr } from '@react-three/drei'
 import { sections } from '../data/resume'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { setScrollMap } from '../three/lib/scrollMap'
 import { C } from '../three/lib/palette'
 import CameraRig from '../three/CameraRig'
 import ScrollBridge from '../three/ScrollBridge'
@@ -27,7 +28,21 @@ export default function Experience() {
       const vh = window.innerHeight || 1
       if (!el) return
       const h = el.getBoundingClientRect().height
-      if (h > 0) setPages(Math.max(sections.length, h / vh))
+      if (h <= 0) return
+      const pgs = Math.max(sections.length, h / vh)
+      setPages(pgs)
+
+      // 각 패널이 화면 중앙에 오는 지점을 실측해 씬 타이밍 보정 맵을 갱신.
+      // drei의 html 오버레이는 offset × vh×(pages−1) 만큼 이동하므로(스크롤
+      // 컨테이너 길이와 다르다!) 같은 스케일로 패널 중앙 좌표를 넘긴다 —
+      // 긴 패널이 격자를 밀어내는 레이아웃에서도 '패널 중앙 = v=i'가 성립.
+      const secs = el.querySelectorAll('section.section')
+      if (secs.length === sections.length) {
+        const centers = Array.from(secs).map(
+          (s) => s.offsetTop + s.offsetHeight / 2 - vh / 2,
+        )
+        setScrollMap(centers, vh * (pgs - 1))
+      }
     }
     measure()
     const t1 = setTimeout(measure, 350) // 폰트 로드/레이아웃 안정 후 재측정
