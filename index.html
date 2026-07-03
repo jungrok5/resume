@@ -335,8 +335,10 @@
     pointer-events: none;
   }
   .progress i {
-    display: block; height: 100%; width: 0;
+    display: block; height: 100%; width: 100%;
     background: #35e6ff;
+    transform: scaleX(0);
+    transform-origin: left; /* width 대신 transform — 스크롤마다 레이아웃 없이 컴포지터에서만 */
   }
   /* 탭 — 3D 페이지의 스위처와 동일한 다크 스타일 */
   .switcher {
@@ -1494,7 +1496,7 @@
       var doc = document.documentElement;
       var max = doc.scrollHeight - doc.clientHeight;
       var top = window.pageYOffset || doc.scrollTop || 0;
-      bar.style.width = (max > 0 ? (top / max) * 100 : 0).toFixed(2) + '%';
+      bar.style.transform = 'scaleX(' + (max > 0 ? top / max : 0).toFixed(4) + ')';
 
       /* 활성 뷰의 제목 중, 상단바 아래(110px)를 지난 마지막 것 = 지금 읽는 섹션 */
       var view = document.querySelector('.view.on');
