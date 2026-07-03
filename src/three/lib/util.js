@@ -13,21 +13,27 @@ export const easeOut = (t) => 1 - Math.pow(1 - t, 3)
 
 // map global scroll offset -> local 0..1 progress for a section slot.
 // 패널 i가 화면 중앙에 오는 스크롤 지점은 offset = i/(total-1) 격자다.
-// 씬 윈도우를 그 격자 기준 [i-0.5, i+0.5]로 잡아 '패널이 중앙일 때 p=0.5'가
-// 모든 섹션에서 성립하게 한다 — 텍스트와 씬의 박자가 어긋나지 않는다.
-// (기존 i/total 격자는 섹션이 뒤로 갈수록 씬이 텍스트보다 늦게/이르게 어긋났다)
+// 읽기는 패널이 '진입할 때'(중앙 -0.5 부근) 시작되므로, 씬 윈도우를
+// LEAD만큼 앞당긴 [i-0.5-LEAD, i+0.5-LEAD]로 잡는다 — 패널이 들어오는
+// 순간 씬이 이미 형성돼 있고(p≈0.4), 중앙에서 완성(p≈0.85)된다.
+export const LEAD = 0.35
+
+export function sceneWindow(index, total) {
+  const s = Math.max(0, index - 0.5 - LEAD)
+  const e = Math.min(total - 1, index + 0.5 - LEAD)
+  return [s, e]
+}
+
 export function localProgress(offset, index, total) {
   const v = offset * (total - 1)
-  const s = Math.max(0, index - 0.5)
-  const e = Math.min(total - 1, index + 0.5)
+  const [s, e] = sceneWindow(index, total)
   return clamp01((v - s) / (e - s || 1))
 }
 
 // is a section slot active (with padding so intro/outro can overlap)
 export function isActive(offset, index, total, pad = 0.34) {
   const v = offset * (total - 1)
-  const s = Math.max(0, index - 0.5)
-  const e = Math.min(total - 1, index + 0.5)
+  const [s, e] = sceneWindow(index, total)
   const span = e - s
   return v >= s - span * pad && v <= e + span * pad
 }

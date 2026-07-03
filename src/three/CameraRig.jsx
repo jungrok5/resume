@@ -4,7 +4,7 @@ import { useScroll } from '@react-three/drei'
 import * as THREE from 'three'
 import { sections } from '../data/resume'
 import { CAMERAS } from './lib/cameras'
-import { clamp, clamp01, easeInOut } from './lib/util'
+import { clamp, clamp01, easeInOut, sceneWindow } from './lib/util'
 
 // Cinematic camera driven by scroll. Expands per-scene keyframes to global
 // offsets and interpolates position + look-at target with easing + damping.
@@ -19,10 +19,11 @@ export default function CameraRig() {
     const total = sections.length
     const out = []
     sections.forEach((sec, i) => {
-      // 씬 진행도(util.localProgress)와 같은 [i-0.5, i+0.5]/(total-1) 윈도우 —
-      // 패널이 화면 중앙에 올 때 카메라도 그 씬 프레이밍의 한가운데에 있다
-      const s = Math.max(0, i - 0.5) / (total - 1)
-      const e = Math.min(total - 1, i + 0.5) / (total - 1)
+      // 씬 진행도(util.sceneWindow)와 같은 리드 적용 윈도우 — 패널이 읽히기
+      // 시작할 때 카메라가 이미 그 씬을 프레이밍하고 있다
+      const [ws, we] = sceneWindow(i, total)
+      const s = ws / (total - 1)
+      const e = we / (total - 1)
       const arr = CAMERAS[sec.id] || [[0.5, [0, 2.4, 10], [0, 0.8, 0]]]
       arr.forEach(([p, pos, tgt]) =>
         out.push({
