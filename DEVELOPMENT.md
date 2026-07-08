@@ -57,8 +57,8 @@ whether it's `active`; the scene toggles `group.visible` and animates by `p`.
 
 ## The 17 scenes (résumé order)
 
-hero · career timeline · Orleans actors (Pantera) · proto pipeline (Pantera) ·
-sharding+load-test (Pantera) · dense build 50M props (Miniverse UE5) ·
+hero · career timeline · Orleans actors (Panthera) · proto pipeline (Panthera) ·
+sharding+load-test (Panthera) · dense build 50M props (Miniverse UE5) ·
 3-tier spatial partition + SightIn · render/physics opt · dynamic voxel navmesh ·
 client-delegated distributed sim · circuit logic kit (redstone-like) ·
 web collab 1000+ cursors (Miniverse Web) · prop mini-games · channel-less

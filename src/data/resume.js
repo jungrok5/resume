@@ -10,7 +10,6 @@ export const profile = {
   email: 'jungrok5@gmail.com',
   github: 'https://github.com/jungrok5',
   education: '홍익대학교 컴퓨터정보통신소프트웨어전공 (2000 — 2007)',
-  legacy: 'http://resume.jungrok5.workers.dev/',
   // 문서형 이력서(기본 뷰)의 '핵심 역량' 5개와 동일한 내용
   competencies: [
     'MMO 서버를 백지에서 끝까지 반복 설계·구축 — 네트워크·동시성(락프리)·네비게이션·서버 물리·가상 액터 기반 분산 서버',
@@ -56,14 +55,14 @@ export const sections = [
     isTimeline: true,
   },
 
-  // ───────── NCSOFT · Pantera (2024 — 현재) ─────────
+  // ───────── NCSOFT · Panthera (2024 — 현재) ─────────
   {
     id: 'pantera',
     scene: 'actorModel',
     align: 'right',
     accent: 'violet',
     num: '02',
-    kicker: 'NCSOFT · Pantera · 2024 — 현재',
+    kicker: 'NCSOFT · Panthera · 2024 — 현재',
     title: '분산 액터 아키텍처',
     metric: { big: '가상 액터', cap: 'Orleans Grain 분산 · gRPC → TCP' },
     points: [
@@ -79,7 +78,7 @@ export const sections = [
     align: 'left',
     accent: 'blue',
     num: '03',
-    kicker: 'NCSOFT · Pantera · 2024 — 현재',
+    kicker: 'NCSOFT · Panthera · 2024 — 현재',
     title: '데이터 파이프라인 단일 소스 표준화',
     metric: { big: 'proto', cap: '단일 소스 → 서버·클라 코드 · CSV · 검증' },
     points: [
@@ -95,7 +94,7 @@ export const sections = [
     align: 'right',
     accent: 'green',
     num: '04',
-    kicker: 'NCSOFT · Pantera · 2024 — 현재',
+    kicker: 'NCSOFT · Panthera · 2024 — 현재',
     title: '부하 테스트 · 서버/DB 최적화',
     metric: { big: '24만 req/s', cap: 'gRPC 실측 · EntityFramework 5만 TPS' },
     points: [
@@ -294,7 +293,7 @@ export const sections = [
     align: 'center',
     accent: 'blue',
     num: '16',
-    kicker: 'NCSOFT · Pantera · AI 개발 생산성 혁신 주도',
+    kicker: 'NCSOFT · Panthera · AI 개발 생산성 혁신 주도',
     title: 'AI 개발 생산성 혁신',
     metric: { big: 'MCP', cap: '자연어 서버 테스트 · AI 에이전트 · 로컬 LLM' },
     points: [
@@ -310,7 +309,7 @@ export const sections = [
 
 // 타임라인 씬 + 폴백 문서가 쓰는 경력 요약 (최신 → 과거)
 export const timeline = [
-  ['2024 — 현재', 'NCSOFT · Pantera', '블소 IP 키우기류 RPG · 분산 서버 백엔드 (Orleans / .NET / UE5)'],
+  ['2024 — 현재', 'NCSOFT · Panthera', '블소 IP 키우기류 RPG · 분산 서버 백엔드 (Orleans / .NET / UE5)'],
   ['2023 — 2024', 'NCSOFT · Miniverse (UE5)', 'UGC 샌드박스 MMO — 5,000만 프랍 · 2,000명'],
   ['2021 — 2023', 'NCSOFT · Miniverse (Web)', '유저 창작 웹 메타버스 (Godot) · 1,000+ 커서'],
   ['2016 — 2021', 'NCSOFT · AION2 모바일', '테크니컬 디렉터 · MMO 프레임워크 백지 구축'],
