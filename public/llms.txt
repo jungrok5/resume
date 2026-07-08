@@ -9,7 +9,7 @@
 
 ## 경력 (최신순)
 
-- 2024–현재 · NCSOFT Pantera (블레이드&소울 IP 키우기류 RPG · 분산 서버 백엔드) · Technical Director
+- 2024–현재 · NCSOFT Panthera (블레이드&소울 IP 키우기류 RPG · 분산 서버 백엔드) · Technical Director
   Orleans Grain 모델 채택 주도·팀 표준 정착, gRPC→TCP 전송 전환, 샤딩 기반 데이터 분산.
   proto 단일 소스에서 서버·클라 코드·CSV·유효성 검증 자동 생성(팀 표준).
   부하 테스트 인프라 — gRPC 초당 24만 요청, EntityFramework 5만 TPS 실측. 저장프로시저·dacpac CI/CD.
