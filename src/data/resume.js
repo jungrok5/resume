@@ -13,7 +13,7 @@ export const profile = {
   legacy: 'http://resume.jungrok5.workers.dev/',
   // 문서형 이력서(기본 뷰)의 '핵심 역량' 5개와 동일한 내용
   competencies: [
-    'MMO 서버를 백지에서 끝까지 반복 설계·구축 — 네트워크·동시성(락프리)·네비게이션·서버 물리·분산 서버(Orleans)',
+    'MMO 서버를 백지에서 끝까지 반복 설계·구축 — 네트워크·동시성(락프리)·네비게이션·서버 물리·가상 액터 기반 분산 서버',
     'PC MMORPG · 모바일 RPG · 유저 창작 메타버스 · 분산 서버 RPG — 폭넓은 장르·플랫폼·아키텍처',
     '난제 해결·성능 최적화 — 프로파일링으로 CPU·메모리·네트워크·DB 병목 제거, 동접·처리량 수 배',
     '서버 · 클라이언트 · 웹 · DB · 툴 · 개발 인프라 · CI까지 커버하는 풀스택 실무',
@@ -65,7 +65,7 @@ export const sections = [
     num: '02',
     kicker: 'NCSOFT · Pantera · 2024 — 현재',
     title: '분산 액터 아키텍처',
-    metric: { big: 'Orleans', cap: '액터 모델 동시성 · gRPC → TCP' },
+    metric: { big: '가상 액터', cap: 'Orleans Grain 분산 · gRPC → TCP' },
     points: [
       'Orleans Grain 모델 채택 주도 — 분산 서버 아키텍처 방향 결정, 팀 표준 정착',
       'gRPC→TCP 전송 계층 전환, 샤딩 기반 데이터 분산 구조를 팀 표준으로 확립',

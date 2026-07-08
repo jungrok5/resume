@@ -1,6 +1,6 @@
 # 오정록 (Jeongrok Oh) — Technical Director · MMO Server Architect
 
-> 20년차 게임 서버 프로그래머 / 기술 디렉터. MMO 서버 프레임워크를 백지에서 반복 설계·구축. 분산 서버(Orleans) · 서버·클라이언트·데이터베이스 전 영역의 최적화 · 난제 해결이 강점. 매니징보다 기술을 직접 주도하고 혁신을 만들어내는 역할을 지향.
+> 20년차 게임 서버 프로그래머 / 기술 디렉터. MMO 서버 프레임워크를 백지에서 반복 설계·구축. 가상 액터 기반 분산 서버 · 서버·클라이언트·데이터베이스 전 영역의 최적화 · 난제 해결이 강점. 매니징보다 기술을 직접 주도하고 혁신을 만들어내는 역할을 지향.
 
 - 이력서(웹, 기본·출력·상세 뷰): https://jungrok5.github.io/resume/
 - 3D 인터랙티브 이력서: https://jungrok5.github.io/resume/interactive.html
