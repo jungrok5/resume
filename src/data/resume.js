@@ -5,7 +5,7 @@
 export const profile = {
   name: '오정록',
   nameEn: 'Jeongrok Oh',
-  title: '테크니컬 디렉터 · MMO 서버 아키텍트',
+  title: 'Technical Director · MMO Server Architect',
   years: 20,
   email: 'jungrok5@gmail.com',
   github: 'https://github.com/jungrok5',
@@ -36,7 +36,7 @@ export const sections = [
     scene: 'hero',
     align: 'center',
     accent: 'cyan',
-    kicker: '테크니컬 디렉터 · MMO 서버 아키텍트 · 경력 20년',
+    kicker: 'Technical Director · MMO Server Architect · 경력 20년',
     name: profile.name,
     sub: '20년간 MMO 서버 프레임워크를 백지에서 반복 설계·구축해왔습니다. 네트워크·동시성·네비게이션·서버 물리를 근본부터 다루며, 서버·클라이언트·데이터베이스 전 영역의 최적화와 난제 해결이 강점입니다.',
   },
@@ -312,7 +312,7 @@ export const timeline = [
   ['2024 — 현재', 'NCSOFT · Panthera', '블소 IP 키우기류 RPG · 분산 서버 백엔드 (Orleans / .NET / UE5)'],
   ['2023 — 2024', 'NCSOFT · Miniverse (UE5)', 'UGC 샌드박스 MMO — 5,000만 프랍 · 2,000명'],
   ['2021 — 2023', 'NCSOFT · Miniverse (Web)', '유저 창작 웹 메타버스 (Godot) · 1,000+ 커서'],
-  ['2016 — 2021', 'NCSOFT · AION2 모바일', '테크니컬 디렉터 · MMO 프레임워크 백지 구축'],
+  ['2016 — 2021', 'NCSOFT · AION2 모바일', 'Technical Director · MMO 프레임워크 백지 구축'],
   ['2007 — 2015', '액토즈소프트 · KB온라인 · 자이언트드림 · 위메이드 · 코어크리에이티브', '서버팀장 / 프로그램팀장 / 서버파트리더 — 국내·일본·중국·태국 상용 서비스'],
 ]
 
