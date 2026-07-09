@@ -36,7 +36,7 @@ export const sections = [
     scene: 'hero',
     align: 'center',
     accent: 'cyan',
-    kicker: 'Technical Director · MMO Server Architect · 경력 20년',
+    kicker: 'Technical Director · MMO Server Architect',
     name: profile.name,
     sub: '20년간 MMO 서버 프레임워크를 백지에서 반복 설계·구축해왔습니다. 네트워크·동시성·네비게이션·서버 물리를 근본부터 다루며, 서버·클라이언트·데이터베이스 전 영역의 최적화와 난제 해결이 강점입니다.',
   },
@@ -47,7 +47,7 @@ export const sections = [
     accent: 'cyan',
     num: '01',
     kicker: '커리어 개요 · 2007 — 현재',
-    title: '20년의 서버 여정',
+    title: '서버 여정',
     points: [
       '매니징보다 기술을 직접 주도하는 역할을 지향',
       '2007–2015 국내·일본·중국·태국 다수 타이틀 상용 서비스·라이브 운영',
