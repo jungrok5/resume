@@ -59,9 +59,15 @@ export default function FallbackDoc() {
         {projects.map((p) => (
           <div key={p.name} style={{ margin: '0 0 20px' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
-              <a href={p.href} target="_blank" rel="noreferrer" style={{ fontWeight: 700, fontSize: 18 }}>
-                {p.name}
-              </a>
+              {p.private ? (
+                <span style={{ fontWeight: 700, fontSize: 18 }}>
+                  {p.name} <span title="비공개 저장소" style={{ fontSize: 13 }}>🔒</span>
+                </span>
+              ) : (
+                <a href={p.href} target="_blank" rel="noreferrer" style={{ fontWeight: 700, fontSize: 18 }}>
+                  {p.name}
+                </a>
+              )}
               <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-faint)' }}>{p.tech}</span>
               {p.note && (
                 <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-faint)' }}>〔{p.note}〕</span>

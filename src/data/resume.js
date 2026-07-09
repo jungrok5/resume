@@ -317,40 +317,55 @@ export const timeline = [
 ]
 
 // 개인 프로젝트 (GitHub). 각 항목: tag(무엇), points(무엇을 만들었나). note는 상태.
+// private: true 인 저장소는 비공개(자물쇠 표시, 링크 없음).
 export const projects = [
   {
     name: 'ZeroLlama',
     tag: '소비자용 GPU에서 로컬 LLM으로 코딩하는 AI 코딩 도구 (VS Code 확장)',
     href: 'https://github.com/jungrok5/zerollama',
+    private: true,
     tech: 'TypeScript · llama.cpp',
     note: 'Cline 하드포크 · pre-alpha',
-    metric: '27k LOC 자작 서브시스템',
+    metric: '27k LOC 서브시스템',
     points: [
       'GPU별 튜닝 — VRAM·KV캐시를 계산해 ngl/ctx를 산출하고 llama-bench 스윕으로 최적 설정 선택, 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙 적용',
-      '하드웨어 감지(NVIDIA/Vulkan/Metal)·MoE CPU 오프로드·양자화 모델용 편집 매처·폰 원격제어 서버(pairing·web-push·tunnel) 등 35개 모듈 27,515 LOC 직접 구현',
+      '하드웨어 감지(NVIDIA/Vulkan/Metal)·MoE CPU 오프로드·양자화 모델용 편집 매처·폰 원격제어 서버(pairing·web-push·tunnel) 등 35개 모듈 27,515 LOC 구성',
     ],
   },
   {
     name: 'ondevice-imagen',
-    tag: '기록(날씨·장소·시간)을 그림엽서로 그려주는 온디바이스 일기 앱 — 서버 없이 폰에서 직접 AI 이미지 생성',
+    tag: '기록(날씨·장소·시간)을 그림엽서로 그려주는 온디바이스 일기 앱 — 서버 없이 폰에서 AI 이미지 생성',
     href: 'https://github.com/jungrok5/ondevice-imagen',
     tech: 'Kotlin · ONNX Runtime · Python',
     note: '실기기 검증 · 연구 R&D',
     metric: '실기기 512² 생성',
     points: [
-      'Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현 — CLIP BPE 토크나이저·Karras/Euler 스케줄러·CFG·IEEE754 fp16 코덱까지 직접 구현',
+      'Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현 — CLIP BPE 토크나이저·Karras/Euler 스케줄러·CFG·IEEE754 fp16 코덱까지 구현',
       'PC diffusers 대비 각 단계를 golden reference로 bit-match 검증(1e-4 이내), Android 메모리 제약(LMK)에 맞춰 peak RSS를 낮춰 실기기 512² 생성 (Galaxy S25 Ultra 5분 37초)',
+    ],
+  },
+  {
+    name: 'one-scroll-bible',
+    tag: '성경 전체의 구속사를 한 화면 스크롤로 풀어낸 다국어 모바일 웹 (200+개 언어)',
+    href: 'https://github.com/jungrok5/one-scroll-bible',
+    tech: 'Vanilla JS · Node · Vercel',
+    note: '라이브 · one-scroll-bible.com',
+    metric: '200+개 언어',
+    points: [
+      '단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)·PWA·GA4',
+      '200+개 언어 i18n — 언어별 구절 verbatim 대조·역번역 의미 검증·링크 감사를 자동화한 번역 품질 게이트',
     ],
   },
   {
     name: 'Hellfarm',
     tag: '디아블로식 파밍 + 뱀서라이크를 합친 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android)',
     href: 'https://github.com/jungrok5/super-vs',
-    tech: 'Godot · C# · 1인 개발',
+    private: true,
+    tech: 'Godot · C#',
     metric: '1만+ 엔티티 60fps',
     points: [
-      '노드/GC 없는 데이터지향 엔진 자작 — 엔티티 SoA 배열·단일 드로우콜 MultiMesh 배칭·물리엔진 대신 자작 공간해시로 화면 내 1만+ 엔티티를 60fps로 렌더링',
-      '5막 캠페인·엔드게임 균열·보석/장비 성장 등 게임 전체를 혼자 설계·구현',
+      '노드/GC 없는 데이터지향 엔진 — 엔티티 SoA 배열·단일 드로우콜 MultiMesh 배칭·물리엔진 대신 자작 공간해시로 화면 내 1만+ 엔티티를 60fps로 렌더링',
+      '5막 캠페인·엔드게임 균열·보석/장비 성장 등 게임 전체 구성',
     ],
   },
   {
@@ -361,8 +376,8 @@ export const projects = [
     note: '라이브 운영 중',
     metric: '프로덕션 운영',
     points: [
-      '시세·재무·거시 데이터 수집 → 추세·패턴·거래량 분석 → 백테스트 → 텔레그램/PWA 알림까지 혼자 설계·프로덕션 운영 (Vercel · Supabase · 크론 8개 · CI)',
-      '백테스트 엔진 자체 구현 — 상장폐지 반영 시뮬레이터·walk-forward 검증·look-ahead/PIT 편향 감사',
+      '시세·재무·거시 데이터 수집 → 추세·패턴·거래량 분석 → 백테스트 → 텔레그램/PWA 알림까지 프로덕션 운영 (Vercel · Supabase · 크론 8개 · CI)',
+      '백테스트 엔진 — 상장폐지 반영 시뮬레이터·walk-forward 검증·look-ahead/PIT 편향 감사',
     ],
   },
 ]
