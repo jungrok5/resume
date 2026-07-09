@@ -54,17 +54,6 @@ function Summary() {
         </ul>
       </div>
       <div>
-        <h3>기술 스택</h3>
-        <div style={{ display: 'grid', gap: 6 }}>
-          {Object.entries(stack).map(([group, items]) => (
-            <div className="stackrow" key={group}>
-              <b>{group}</b>
-              <span>{items.join(' · ')}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div>
         <h3>개인 프로젝트 · GitHub</h3>
         <ul>
           {projects.map((p) => (
@@ -83,6 +72,17 @@ function Summary() {
             </li>
           ))}
         </ul>
+      </div>
+      <div>
+        <h3>기술 스택</h3>
+        <div style={{ display: 'grid', gap: 6 }}>
+          {Object.entries(stack).map(([group, items]) => (
+            <div className="stackrow" key={group}>
+              <b>{group}</b>
+              <span>{items.join(' · ')}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
