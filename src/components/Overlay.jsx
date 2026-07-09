@@ -42,18 +42,6 @@ function Summary() {
   return (
     <div className="summary">
       <div>
-        <h3>학력</h3>
-        <p>{profile.education}</p>
-      </div>
-      <div>
-        <h3>수상 · 활동</h3>
-        <ul>
-          {profile.recognition.map((r) => (
-            <li key={r}>· {r}</li>
-          ))}
-        </ul>
-      </div>
-      <div>
         <h3>개인 프로젝트 · GitHub</h3>
         <ul>
           {projects.map((p) => (
@@ -83,6 +71,18 @@ function Summary() {
             </div>
           ))}
         </div>
+      </div>
+      <div>
+        <h3>수상 · 활동</h3>
+        <ul>
+          {profile.recognition.map((r) => (
+            <li key={r}>· {r}</li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <h3>학력</h3>
+        <p>{profile.education}</p>
       </div>
     </div>
   )
