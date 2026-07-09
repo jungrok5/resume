@@ -1,4 +1,4 @@
-import { profile, sections, timeline, stack } from '../data/resume'
+import { profile, sections, timeline, stack, projects } from '../data/resume'
 
 // Static, fully-readable document shown when the user prefers reduced motion.
 // No WebGL, no scroll-jacking — same content, plain markup.
@@ -52,6 +52,33 @@ export default function FallbackDoc() {
               ))}
           </article>
         ))}
+
+      <article style={{ padding: '26px 0', borderTop: '1px solid var(--line)' }}>
+        <p className="kicker" style={{ marginBottom: 10 }}>개인 프로젝트 · GitHub</p>
+        <h2 style={{ fontSize: 'clamp(22px,3.4vw,32px)', margin: '0 0 6px' }}>공개 코드로 검증 가능한 실무</h2>
+        <p style={{ color: 'var(--ink-dim)', margin: '0 0 18px', fontSize: 15 }}>
+          사내 코드는 비공개라, 같은 엔지니어링 규율을 다른 도메인에서 혼자 증명한 결과물.
+        </p>
+        {projects.map((p) => (
+          <div key={p.name} style={{ margin: '0 0 20px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
+              <a href={p.href} target="_blank" rel="noreferrer" style={{ fontWeight: 700, fontSize: 18 }}>
+                {p.name}
+              </a>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-faint)' }}>{p.tech}</span>
+              {p.note && (
+                <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-faint)' }}>〔{p.note}〕</span>
+              )}
+            </div>
+            <p style={{ color: 'var(--ink-dim)', margin: '0 0 6px', fontSize: 15 }}>{p.tag}</p>
+            <ul className="points" style={{ margin: 0 }}>
+              {p.points.map((pt) => (
+                <li key={pt}>{pt}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </article>
 
       <article style={{ padding: '26px 0 80px', borderTop: '1px solid var(--line)' }}>
         <h2 style={{ fontSize: 24, margin: '0 0 16px' }}>학력 · 수상 · 스택</h2>

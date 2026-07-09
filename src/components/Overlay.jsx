@@ -1,4 +1,4 @@
-import { sections, profile, timeline, stack } from '../data/resume'
+import { sections, profile, timeline, stack, projects } from '../data/resume'
 
 function Metric({ metric }) {
   if (!metric) return null
@@ -63,6 +63,20 @@ function Summary() {
             </div>
           ))}
         </div>
+      </div>
+      <div>
+        <h3>개인 프로젝트 · GitHub</h3>
+        <ul>
+          {projects.map((p) => (
+            <li key={p.name}>
+              ·{' '}
+              <a href={p.href} target="_blank" rel="noreferrer">
+                <b>{p.name}</b>
+              </a>{' '}
+              — {p.tag} <span style={{ color: 'var(--ink-faint)' }}>({p.metric})</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   )
