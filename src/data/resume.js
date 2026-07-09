@@ -36,7 +36,7 @@ export const sections = [
     scene: 'hero',
     align: 'center',
     accent: 'cyan',
-    kicker: '게임 서버 프로그래머 · 경력 20년',
+    kicker: '테크니컬 디렉터 · MMO 서버 아키텍트 · 경력 20년',
     name: profile.name,
     sub: '20년간 MMO 서버 프레임워크를 백지에서 반복 설계·구축해왔습니다. 네트워크·동시성·네비게이션·서버 물리를 근본부터 다루며, 서버·클라이언트·데이터베이스 전 영역의 최적화와 난제 해결이 강점입니다.',
   },
