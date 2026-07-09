@@ -70,9 +70,15 @@ function Summary() {
           {projects.map((p) => (
             <li key={p.name}>
               ·{' '}
-              <a href={p.href} target="_blank" rel="noreferrer">
-                <b>{p.name}</b>
-              </a>{' '}
+              {p.private ? (
+                <b>
+                  {p.name} <span title="비공개 저장소">🔒</span>
+                </b>
+              ) : (
+                <a href={p.href} target="_blank" rel="noreferrer">
+                  <b>{p.name}</b>
+                </a>
+              )}{' '}
               — {p.tag} <span style={{ color: 'var(--ink-faint)' }}>({p.metric})</span>
             </li>
           ))}
