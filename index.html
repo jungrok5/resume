@@ -636,54 +636,53 @@
   </section>
 
   <section>
-    <h2>개인 프로젝트 <span class="genre">— GitHub · 공개 코드로 검증 가능한 실무</span></h2>
-    <p class="sub" style="margin:-4px 0 18px">사내 코드는 비공개라, 같은 엔지니어링 규율(성능 최적화 · 결정론/검증 · 리소스 천장 · 로컬 LLM)을 다른 도메인에서 혼자 증명한 결과물.</p>
+    <h2>개인 프로젝트 <span class="genre">— GitHub</span></h2>
 
     <div class="job">
       <div class="job-head">
-        <div class="job-title"><a href="https://github.com/jungrok5/super-vs" target="_blank" rel="noopener">Hellfarm</a> <span class="genre">— 디아블로식 아이템 파밍 + 뱀서라이크 한 손 조작 액션 게임 (Windows·Android)</span></div>
-        <div class="job-meta">1인 개발 · 릴리즈 완성도</div>
+        <div class="job-title"><a href="https://github.com/jungrok5/zerollama" target="_blank" rel="noopener">ZeroLlama</a> <span class="genre">— 소비자용 GPU에서 로컬 LLM으로 코딩하는 AI 코딩 도구 (VS Code 확장)</span></div>
+        <div class="job-meta">Cline 하드포크 · pre-alpha</div>
       </div>
-      <div class="job-sub"><span class="stack">Godot · C#</span></div>
+      <div class="job-sub"><span class="stack">TypeScript · llama.cpp</span></div>
       <ul class="bul">
-        <li><b>노드/GC 없는 데이터지향 엔진 자작</b> — SoA 배열 · 단일 드로우콜 MultiMesh 배칭 · 물리엔진 대신 자작 공간해시로 화면 내 <span class="metric">1만+ 엔티티 60fps</span> 유지 (서버 성능 최적화를 클라 렌더링에서 재현)</li>
-        <li>5막 캠페인·엔드게임 균열·보석/장비 성장까지 게임 전체를 혼자 설계·구현</li>
+        <li><b>GPU별 튜닝</b> — VRAM·KV캐시를 계산해 ngl/ctx를 산출하고 llama-bench 스윕으로 최적 설정 선택, 한계 근처에선 처리량 5%를 <span class="metric">OOM 안정성</span>과 맞바꾸는 안전 마진 규칙 적용</li>
+        <li>하드웨어 감지(NVIDIA/Vulkan/Metal)·MoE CPU 오프로드·양자화 모델용 편집 매처·폰 원격제어 서버(pairing·web-push·tunnel) 등 35개 모듈 <span class="metric">27,515 LOC</span> 직접 구현</li>
       </ul>
     </div>
 
     <div class="job">
       <div class="job-head">
-        <div class="job-title"><a href="https://github.com/jungrok5/thesauros" target="_blank" rel="noopener">thesauros</a> <span class="genre">— "지금 어떤 종목이 좋은 매수 자리인지" 알려주는 한국·미국 주식 분석·알림 서비스</span></div>
+        <div class="job-title"><a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">ondevice-imagen</a> <span class="genre">— 기록(날씨·장소·시간)을 그림엽서로 그려주는 온디바이스 일기 앱 (서버 없이 폰에서 직접 AI 생성)</span></div>
+        <div class="job-meta">실기기 검증 · 연구 R&amp;D</div>
+      </div>
+      <div class="job-sub"><span class="stack">Kotlin · ONNX Runtime · Python</span></div>
+      <ul class="bul">
+        <li><b>Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현</b> — CLIP BPE 토크나이저·Karras/Euler 스케줄러·CFG·IEEE754 fp16 코덱까지 직접 구현</li>
+        <li>PC diffusers 대비 각 단계를 golden reference로 <span class="metric">bit-match 검증</span>(1e-4 이내), Android 메모리 제약(LMK)에 맞춰 peak RSS를 낮춰 실기기 512² 생성 (Galaxy S25 Ultra 5분 37초)</li>
+      </ul>
+    </div>
+
+    <div class="job">
+      <div class="job-head">
+        <div class="job-title"><a href="https://github.com/jungrok5/super-vs" target="_blank" rel="noopener">Hellfarm</a> <span class="genre">— 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android)</span></div>
+        <div class="job-meta">1인 개발</div>
+      </div>
+      <div class="job-sub"><span class="stack">Godot · C#</span></div>
+      <ul class="bul">
+        <li><b>노드/GC 없는 데이터지향 엔진 자작</b> — 엔티티 SoA 배열·단일 드로우콜 MultiMesh 배칭·물리엔진 대신 자작 공간해시로 화면 내 <span class="metric">1만+ 엔티티 60fps</span> 렌더링</li>
+        <li>5막 캠페인·엔드게임 균열·보석/장비 성장 등 게임 전체를 혼자 설계·구현</li>
+      </ul>
+    </div>
+
+    <div class="job">
+      <div class="job-head">
+        <div class="job-title"><a href="https://github.com/jungrok5/thesauros" target="_blank" rel="noopener">thesauros</a> <span class="genre">— 한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스</span></div>
         <div class="job-meta">라이브 운영 중</div>
       </div>
       <div class="job-sub"><span class="stack">Python · Next.js · Supabase</span></div>
       <ul class="bul">
         <li><b>수집 → 분석 → 백테스트 → 알림까지 혼자 설계·프로덕션 운영</b> — 시세·재무·거시 데이터를 추세·패턴·거래량으로 분석하고 텔레그램/PWA로 알림 (Vercel · Supabase · 크론 8개 · CI)</li>
-        <li><b>백테스트 엔진 자체 구현</b> — 상장폐지 반영 시뮬레이터·walk-forward 검증, <span class="metric">look-ahead/PIT 편향 감사</span>로 검증 실패한 전략을 스스로 기각</li>
-      </ul>
-    </div>
-
-    <div class="job">
-      <div class="job-head">
-        <div class="job-title"><a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">ondevice-imagen</a> <span class="genre">— 하루의 기록(날씨·장소·시간)을 그림엽서로 그려주는 프라이버시 일기 앱</span></div>
-        <div class="job-meta">실기기 검증 · 연구 R&amp;D</div>
-      </div>
-      <div class="job-sub"><span class="stack">Kotlin · ONNX Runtime · Python</span></div>
-      <ul class="bul">
-        <li><b>Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현</b> — CLIP BPE 토크나이저·Karras/Euler 스케줄러·CFG·IEEE754 fp16 코덱까지 직접 구현 (서버 없이 폰 안에서 직접 생성)</li>
-        <li><b>PC diffusers 대비 각 단계를 golden reference로 bit-match 검증</b>(1e-4 이내), 메모리 제약(Android LMK) 넘겨 <span class="metric">실기기 512² 생성 성공</span> (S25 Ultra 5분 37초) — 결정론·레퍼런스 검증 규율의 타 도메인 증명</li>
-      </ul>
-    </div>
-
-    <div class="job">
-      <div class="job-head">
-        <div class="job-title"><a href="https://github.com/jungrok5/zerollama" target="_blank" rel="noopener">ZeroLlama</a> <span class="genre">— 내 PC 그래픽카드로 로컬 LLM을 돌려 코딩하게 해주는 AI 코딩 도구 (VS Code 확장)</span></div>
-        <div class="job-meta">Cline 하드포크 · pre-alpha</div>
-      </div>
-      <div class="job-sub"><span class="stack">TypeScript · llama.cpp</span></div>
-      <ul class="bul">
-        <li><b>소비자용 GPU별 튜닝</b> — VRAM·KV캐시를 계산해 설정을 잡고, 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 <span class="metric">안전 마진 규칙</span> (부하 테스트 후 마진 두고 확정하는 서버 방식과 동형)</li>
-        <li>하드웨어 감지(NVIDIA/Vulkan/Metal)·MoE CPU 오프로드·양자화 모델용 편집 매처·폰 원격제어 서버 등 <span class="metric">27k LOC 서브시스템</span> 자작 — 경력의 '사내 로컬 LLM 코딩 스택 구축'의 개인 확장</li>
+        <li><b>백테스트 엔진 자체 구현</b> — 상장폐지 반영 시뮬레이터·walk-forward 검증·<span class="metric">look-ahead/PIT 편향 감사</span></li>
       </ul>
     </div>
   </section>
@@ -768,34 +767,33 @@
     <ul><li>파티·클랜전·점령전·전장 등 대규모 멀티플레이 시스템을 서버·클라 양쪽 구현, DB 튜닝, 자동 패치·리소스 관리·서버 컨트롤 시스템, GM 툴</li></ul>
 
     <h2>Personal Projects (GitHub)</h2>
-    <p class="pre-note">사내(비공개) 경력을 공개 코드로 보강 — 같은 엔지니어링 규율을 다른 도메인에서 혼자 증명.</p>
-
-    <div class="exp">Hellfarm — 디아블로식 파밍 + 뱀서라이크 한 손 조작 액션 게임 (Windows·Android) <span class="m">· 1인 개발 · <a href="https://github.com/jungrok5/super-vs" target="_blank" rel="noopener">github.com/jungrok5/super-vs</a></span></div>
-    <div class="tech">기술: Godot, C#</div>
-    <ul>
-      <li>노드/GC 없는 데이터지향 엔진 자작 — SoA 배열·단일 드로우콜 MultiMesh 배칭·자작 공간해시로 화면 내 1만+ 엔티티 60fps 유지 (서버 성능 최적화를 클라 렌더링에서 재현)</li>
-      <li>5막 캠페인·엔드게임 균열·성장 시스템까지 게임 전체를 혼자 설계·구현 (릴리즈 완성도)</li>
-    </ul>
-
-    <div class="exp">thesauros — 한국·미국 주식 분석·알림 서비스 (좋은 매수 자리 탐지) <span class="m">· 라이브 운영 · <a href="https://github.com/jungrok5/thesauros" target="_blank" rel="noopener">github.com/jungrok5/thesauros</a></span></div>
-    <div class="tech">기술: Python, Next.js, Supabase</div>
-    <ul>
-      <li>시세·재무·거시 데이터 수집 → 추세·패턴·거래량 분석 → 백테스트 → 텔레그램/PWA 알림까지 혼자 설계·프로덕션 운영 (Vercel·Supabase·크론 8개·CI)</li>
-      <li>백테스트 엔진 자체 구현 — 상장폐지 반영 시뮬레이터·walk-forward 검증, look-ahead/PIT 편향 감사로 검증 실패 전략을 스스로 기각</li>
-    </ul>
-
-    <div class="exp">ondevice-imagen — 기록(날씨·장소·시간)을 그림엽서로 그려주는 온디바이스 프라이버시 일기 앱 <span class="m">· 연구 R&amp;D · <a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">github.com/jungrok5/ondevice-imagen</a></span></div>
-    <div class="tech">기술: Kotlin, ONNX Runtime, Python</div>
-    <ul>
-      <li>Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현 — CLIP BPE 토크나이저·Karras/Euler 스케줄러·CFG·IEEE754 fp16 코덱 직접 구현</li>
-      <li>PC diffusers 대비 단계별 golden reference bit-match 검증(1e-4 이내), 메모리 제약(Android LMK) 넘겨 실기기 512² 생성 성공 (S25 Ultra 5분 37초)</li>
-    </ul>
 
     <div class="exp">ZeroLlama — 소비자용 GPU에서 로컬 LLM으로 코딩하는 AI 코딩 도구 (VS Code 확장) <span class="m">· Cline 하드포크·pre-alpha · <a href="https://github.com/jungrok5/zerollama" target="_blank" rel="noopener">github.com/jungrok5/zerollama</a></span></div>
     <div class="tech">기술: TypeScript, llama.cpp</div>
     <ul>
-      <li>GPU별 튜닝 — VRAM·KV캐시 계산으로 설정을 잡고, 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙 (부하 테스트 후 마진 확정하는 서버 방식과 동형)</li>
-      <li>하드웨어 감지(NVIDIA/Vulkan/Metal)·MoE CPU 오프로드·양자화 편집 매처·폰 원격제어 서버 등 27k LOC 서브시스템 자작 (사내 로컬 LLM 스택 구축의 개인 확장)</li>
+      <li>GPU별 튜닝 — VRAM·KV캐시 계산으로 ngl/ctx를 산출하고 llama-bench 스윕으로 최적 설정 선택, 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙 적용</li>
+      <li>하드웨어 감지(NVIDIA/Vulkan/Metal)·MoE CPU 오프로드·양자화 편집 매처·폰 원격제어 서버(pairing·web-push·tunnel) 등 35개 모듈 27,515 LOC 직접 구현</li>
+    </ul>
+
+    <div class="exp">ondevice-imagen — 기록(날씨·장소·시간)을 그림엽서로 그려주는 온디바이스 일기 앱 <span class="m">· 연구 R&amp;D · <a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">github.com/jungrok5/ondevice-imagen</a></span></div>
+    <div class="tech">기술: Kotlin, ONNX Runtime, Python</div>
+    <ul>
+      <li>Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현 — CLIP BPE 토크나이저·Karras/Euler 스케줄러·CFG·IEEE754 fp16 코덱 직접 구현</li>
+      <li>PC diffusers 대비 단계별 golden reference bit-match 검증(1e-4 이내), Android 메모리 제약(LMK)에 맞춰 peak RSS를 낮춰 실기기 512² 생성 (Galaxy S25 Ultra 5분 37초)</li>
+    </ul>
+
+    <div class="exp">Hellfarm — 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android) <span class="m">· 1인 개발 · <a href="https://github.com/jungrok5/super-vs" target="_blank" rel="noopener">github.com/jungrok5/super-vs</a></span></div>
+    <div class="tech">기술: Godot, C#</div>
+    <ul>
+      <li>노드/GC 없는 데이터지향 엔진 자작 — 엔티티 SoA 배열·단일 드로우콜 MultiMesh 배칭·자작 공간해시로 화면 내 1만+ 엔티티 60fps 렌더링</li>
+      <li>5막 캠페인·엔드게임 균열·성장 시스템 등 게임 전체를 혼자 설계·구현</li>
+    </ul>
+
+    <div class="exp">thesauros — 한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스 <span class="m">· 라이브 운영 · <a href="https://github.com/jungrok5/thesauros" target="_blank" rel="noopener">github.com/jungrok5/thesauros</a></span></div>
+    <div class="tech">기술: Python, Next.js, Supabase</div>
+    <ul>
+      <li>시세·재무·거시 데이터 수집 → 추세·패턴·거래량 분석 → 백테스트 → 텔레그램/PWA 알림까지 혼자 설계·프로덕션 운영 (Vercel·Supabase·크론 8개·CI)</li>
+      <li>백테스트 엔진 자체 구현 — 상장폐지 반영 시뮬레이터·walk-forward 검증·look-ahead/PIT 편향 감사</li>
     </ul>
 
     <h2>Technical Skills</h2>
@@ -1501,34 +1499,34 @@
 </table>
 <hr />
 <h2>6. 개인 프로젝트 (GitHub)</h2>
-<p>사내 코드는 비공개라 검증이 어려운 만큼, 경력에서 쌓은 엔지니어링 규율(성능 최적화 · 결정론/레퍼런스 검증 · 리소스 천장 관리 · 로컬 LLM)을 다른 도메인에서 혼자 처음부터 끝까지 증명한 공개 결과물. 모두 본인 단독 작업.</p>
+<p>단독으로 개발한 공개 저장소.</p>
 
-<h3>6-1. Hellfarm — 핵앤슬래시 액션 게임 (Windows·Android)</h3>
+<h3>6-1. ZeroLlama — 로컬 LLM 코딩 도구 (VS Code 확장)</h3>
+<ul>
+<li><strong>무엇</strong>: 소비자용 GPU에서 로컬 LLM을 돌려 코딩하는 AI 코딩 도구. Claude/GPT 구독 없이 로컬 모델로 코딩하되, 소비자용 GPU(4~24GB VRAM, 양자화 모델)에서도 실제로 쓸 만하게 만드는 것이 목표.</li>
+<li><strong>기술</strong>: TypeScript · llama.cpp · <a href="https://github.com/jungrok5/zerollama" target="_blank" rel="noopener">github.com/jungrok5/zerollama</a> (Cline 하드포크 · pre-alpha)</li>
+<li><strong>구현</strong>: <code>src/zerollama/</code> 아래 35개 모듈, <strong>27,515 LOC(테스트 제외)의 자작 서브시스템</strong>. GPU별 튜닝(VRAM·KV캐시까지 포함해 ngl/ctx를 산출하고 llama-bench 스윕으로 최적 설정 선택 — 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙), 하드웨어 감지(NVIDIA/Vulkan/Metal), MoE CPU 오프로드, 양자화 모델용 편집 매처, 비-모델 구동 메모리 레이어, 폰 원격제어 서버(pairing·web-push·tunnel). 실제 import를 grep해 미연결 모듈을 표시하는 자가 감사 리포트 포함.</li>
+</ul>
+<hr />
+<h3>6-2. ondevice-imagen — 온디바이스 일기 앱</h3>
+<ul>
+<li><strong>무엇</strong>: 하루의 기록(날씨·장소·시간)을 입력하면 그날을 그림엽서로 그려주는 일기 앱. 데이터를 서버로 보내지 않고 <strong>폰 안에서 직접</strong> AI 이미지를 생성.</li>
+<li><strong>기술</strong>: Kotlin · ONNX Runtime · Python · <a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">github.com/jungrok5/ondevice-imagen</a> (실기기 검증, 연구 R&amp;D)</li>
+<li><strong>구현</strong>: Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현 — CLIP byte-level BPE 토크나이저·Karras 시그마 스케줄·Euler step·CFG 배치·<strong>IEEE754 fp32↔fp16 코덱(round-to-nearest-even·subnormal 처리)까지 직접 구현</strong>. PC diffusers 대비 각 단계를 golden reference 스크립트로 <strong>bit-match 검증(1e-4 이내)</strong>, Android low-memory-killer 대응으로 ORT memory pattern/arena를 끄고 peak RSS를 낮춰 <strong>실기기 512² 생성</strong>(Galaxy S25 Ultra 5분 37초). NNAPI USE_FP16이 2배 느리고 LoRA 효과를 wash-out시키는 결과까지 실측·기록.</li>
+</ul>
+<hr />
+<h3>6-3. Hellfarm — 핵앤슬래시 액션 게임 (Windows·Android)</h3>
 <ul>
 <li><strong>무엇</strong>: 디아블로식 아이템 파밍과 뱀서라이크(대규모 몹 처치)를 합친 한 손 조작 액션 게임. 5막 캠페인 + 엔드게임 균열 + 보석/장비 성장.</li>
 <li><strong>기술</strong>: Godot · C# · 1인 개발 · <a href="https://github.com/jungrok5/super-vs" target="_blank" rel="noopener">github.com/jungrok5/super-vs</a></li>
-<li><strong>엔지니어링</strong>: 노드/GC 없는 데이터지향 엔진을 자작 — 엔티티를 SoA(struct-of-arrays) 배열로 관리, 단일 드로우콜 MultiMesh 배칭(프레임당 인스턴스 버퍼 1회 업로드), 물리엔진 대신 배열 기반 zero-allocation 공간해시로 충돌 처리. GL Compatibility 드라이버 특성(INSTANCE_CUSTOM 신뢰성·고정 InstanceCount)을 역이용해 화면 내 <strong>1만+ 엔티티를 60fps로 렌더링</strong>. 서버에서 하던 데이터지향·할당 최소화·배치 최적화를 클라 렌더링에서 재현.</li>
+<li><strong>구현</strong>: 노드/GC 없는 데이터지향 엔진을 자작 — 엔티티를 SoA(struct-of-arrays) 배열로 관리, 단일 드로우콜 MultiMesh 배칭(프레임당 인스턴스 버퍼 1회 업로드), 물리엔진 대신 배열 기반 zero-allocation 공간해시로 충돌 처리. GL Compatibility 드라이버 특성(INSTANCE_CUSTOM 신뢰성·고정 InstanceCount)을 반영해 화면 내 <strong>1만+ 엔티티를 60fps로 렌더링</strong>.</li>
 </ul>
 <hr />
-<h3>6-2. thesauros — 주식 분석·알림 서비스 (한국·미국)</h3>
+<h3>6-4. thesauros — 주식 분석·알림 서비스 (한국·미국)</h3>
 <ul>
-<li><strong>무엇</strong>: "지금 어떤 종목이 좋은 매수 자리인지"를 알려주는 추세추종 기반 분석·알림 서비스. 좋은 자리가 뜨면 텔레그램/PWA로 통지.</li>
+<li><strong>무엇</strong>: 한국·미국 주식의 매수 타이밍을 알려주는 추세추종 기반 분석·알림 서비스. 조건에 맞는 자리가 뜨면 텔레그램/PWA로 통지.</li>
 <li><strong>기술</strong>: Python · Next.js · Supabase · <a href="https://github.com/jungrok5/thesauros" target="_blank" rel="noopener">github.com/jungrok5/thesauros</a> (라이브 운영 중)</li>
-<li><strong>엔지니어링</strong>: 시세·재무·거시 데이터(10여 개 외부 API)를 수집 → 추세·패턴·거래량 분석 엔진 → 백테스트 → 알림까지 전체를 혼자 설계·프로덕션 운영(Vercel·Supabase·GitHub Actions 크론 8개·CI·OAuth). 백테스트 엔진 자체 구현 — 상장폐지 반영 시뮬레이터·walk-forward 검증·부트스트랩 p값, 그리고 <strong>look-ahead/PIT(point-in-time) 편향 감사</strong>로 로버스트니스 검증에 실패한 전략을 스스로 기각하는 규율(백엔드·데이터 파이프라인·분산 크론 오케스트레이션·정량 검증).</li>
-</ul>
-<hr />
-<h3>6-3. ondevice-imagen — 온디바이스 프라이버시 일기 앱</h3>
-<ul>
-<li><strong>무엇</strong>: 하루의 기록(날씨·장소·시간)을 입력하면 그날을 그림엽서로 그려주는 일기 앱. 데이터를 서버로 보내지 않고 <strong>폰 안에서 직접</strong> AI 이미지를 생성(프라이버시).</li>
-<li><strong>기술</strong>: Kotlin · ONNX Runtime · Python · <a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">github.com/jungrok5/ondevice-imagen</a> (실기기 검증, 연구 R&amp;D)</li>
-<li><strong>엔지니어링</strong>: Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현 — 라이브러리 접착이 아니라 CLIP byte-level BPE 토크나이저·Karras 시그마 스케줄·Euler step·CFG 배치·<strong>IEEE754 fp32↔fp16 코덱(round-to-nearest-even·subnormal 처리)까지 직접 구현</strong>. PC diffusers 대비 각 단계를 golden reference 스크립트로 <strong>bit-match 검증(1e-4 이내)</strong>, Android low-memory-killer를 넘기려 ORT memory pattern/arena를 끄고 peak RSS를 낮춰 <strong>실기기 512² 생성 성공</strong>(Galaxy S25 Ultra 5분 37초). NNAPI USE_FP16이 2배 느리고 LoRA 효과를 wash-out시키는 음의 결과까지 실측·기록. 결정론·레퍼런스 검증·리소스 천장 관리라는 서버 규율을 ML/모바일 스택에서 그대로 증명.</li>
-</ul>
-<hr />
-<h3>6-4. ZeroLlama — 로컬 LLM 코딩 도구 (VS Code 확장)</h3>
-<ul>
-<li><strong>무엇</strong>: 내 PC의 그래픽카드로 로컬 LLM을 돌려 코딩하게 해주는 AI 코딩 도구. Claude/GPT 구독 없이 소비자용 GPU에서 로컬 모델로 코딩 — "로컬은 안 된다"는 경험을 실제로 되게 만드는 게 목표.</li>
-<li><strong>기술</strong>: TypeScript · llama.cpp · <a href="https://github.com/jungrok5/zerollama" target="_blank" rel="noopener">github.com/jungrok5/zerollama</a> (Cline 하드포크 · pre-alpha)</li>
-<li><strong>엔지니어링</strong>: <code>src/zerollama/</code> 아래 35개 모듈, <strong>27,515 LOC(테스트 제외)의 자작 서브시스템</strong>. GPU별 튜닝(VRAM·KV캐시까지 포함한 계산으로 ngl/ctx 설정을 잡고, 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙 — 부하 테스트 후 마진 두고 설정을 확정하는 서버 방식과 동형), 하드웨어 감지(NVIDIA/Vulkan/Metal), MoE CPU 오프로드, 양자화 모델용 편집 매처, 비-모델 구동 메모리 레이어, 폰 원격제어 서버(pairing·web-push·tunnel). 실제 import를 grep해 orphan 모듈을 스스로 폭로하는 자가 감사 리포트까지 갖춤. 경력의 '사내 유출 없는 로컬 LLM 코딩 스택 구축'(판테라 AI 개발 생산성)의 개인 확장.</li>
+<li><strong>구현</strong>: 시세·재무·거시 데이터(10여 개 외부 API)를 수집 → 추세·패턴·거래량 분석 엔진 → 백테스트 → 알림까지 전체를 혼자 설계·프로덕션 운영(Vercel·Supabase·GitHub Actions 크론 8개·CI·OAuth). 백테스트 엔진 자체 구현 — 상장폐지 반영 시뮬레이터·walk-forward 검증·부트스트랩 p값, <strong>look-ahead/PIT(point-in-time) 편향 감사</strong>로 로버스트니스 미달 전략 배제.</li>
 </ul>
 <!-- DETAIL:END -->
   </div>
