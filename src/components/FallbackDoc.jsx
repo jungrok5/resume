@@ -54,11 +54,8 @@ export default function FallbackDoc() {
         ))}
 
       <article style={{ padding: '26px 0', borderTop: '1px solid var(--line)' }}>
-        <p className="kicker" style={{ marginBottom: 10 }}>개인 프로젝트 · GitHub</p>
-        <h2 style={{ fontSize: 'clamp(22px,3.4vw,32px)', margin: '0 0 6px' }}>공개 코드로 검증 가능한 실무</h2>
-        <p style={{ color: 'var(--ink-dim)', margin: '0 0 18px', fontSize: 15 }}>
-          사내 코드는 비공개라, 같은 엔지니어링 규율을 다른 도메인에서 혼자 증명한 결과물.
-        </p>
+        <p className="kicker" style={{ marginBottom: 10 }}>GitHub</p>
+        <h2 style={{ fontSize: 'clamp(22px,3.4vw,32px)', margin: '0 0 18px' }}>개인 프로젝트</h2>
         {projects.map((p) => (
           <div key={p.name} style={{ margin: '0 0 20px' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>

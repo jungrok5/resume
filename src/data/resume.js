@@ -316,55 +316,53 @@ export const timeline = [
   ['2007 — 2015', '액토즈소프트 · KB온라인 · 자이언트드림 · 위메이드 · 코어크리에이티브', '서버팀장 / 프로그램팀장 / 서버파트리더 — 국내·일본·중국·태국 상용 서비스'],
 ]
 
-// 개인 프로젝트 (GitHub) — 사내(비공개) 경력을 공개 코드로 보강하는 증거.
-// 각 항목: tag(무엇을 하는 것) → points(엔지니어링/경력 연결). note는 과장 방지 캐비엇.
+// 개인 프로젝트 (GitHub). 각 항목: tag(무엇), points(무엇을 만들었나). note는 상태.
 export const projects = [
   {
-    name: 'Hellfarm',
-    tag: '디아블로식 아이템 파밍 + 뱀서라이크를 합친 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android)',
-    href: 'https://github.com/jungrok5/super-vs',
-    tech: 'Godot · C# · 1인 개발',
-    note: '릴리즈 완성도',
-    metric: '1만+ 엔티티 60fps',
-    points: [
-      '노드/GC 없는 데이터지향 엔진 자작 — SoA 배열 · 단일 드로우콜 MultiMesh 배칭 · 물리엔진 대신 자작 공간해시로 화면 내 1만+ 엔티티를 60fps 유지 (서버 성능 최적화를 클라 렌더링에서 재현)',
-      '5막 캠페인·엔드게임 균열·보석/장비 성장까지 게임 전체를 혼자 설계·구현',
-    ],
-  },
-  {
-    name: 'thesauros',
-    tag: '"지금 어떤 종목이 좋은 매수 자리인지" 알려주는 한국·미국 주식 분석·알림 서비스',
-    href: 'https://github.com/jungrok5/thesauros',
-    tech: 'Python · Next.js · Supabase',
-    note: '라이브 운영 중',
-    metric: '프로덕션 운영',
-    points: [
-      '시세·재무·거시 데이터를 수집 → 추세·패턴·거래량 분석 → 백테스트 → 텔레그램/PWA 알림까지 혼자 설계·프로덕션 운영 (Vercel · Supabase · 크론 8개 · CI)',
-      '백테스트 엔진 자체 구현 — 상장폐지 반영 시뮬레이터·walk-forward 검증, look-ahead/PIT 편향 감사로 검증 실패한 전략을 스스로 기각',
-    ],
-  },
-  {
-    name: 'ondevice-imagen',
-    tag: '하루의 기록(날씨·장소·시간)을 그림엽서로 그려주는 프라이버시 일기 앱 — 서버 없이 폰 안에서 직접 AI 이미지 생성',
-    href: 'https://github.com/jungrok5/ondevice-imagen',
-    tech: 'Kotlin · ONNX Runtime · Python',
-    note: '실기기 검증 (연구 R&D)',
-    metric: '온디바이스 생성',
-    points: [
-      'Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현 — CLIP BPE 토크나이저·Karras/Euler 스케줄러·CFG·IEEE754 fp16 코덱까지 직접 구현',
-      'PC diffusers 대비 각 단계를 golden reference로 bit-match 검증(1e-4 이내), 메모리 제약(Android LMK) 넘겨 실기기 512² 생성 성공 (S25 Ultra 5분 37초) — 결정론·레퍼런스 검증 규율의 타 도메인 증명',
-    ],
-  },
-  {
     name: 'ZeroLlama',
-    tag: '내 PC 그래픽카드로 로컬 LLM을 돌려 코딩하게 해주는 AI 코딩 도구 (VS Code 확장)',
+    tag: '소비자용 GPU에서 로컬 LLM으로 코딩하는 AI 코딩 도구 (VS Code 확장)',
     href: 'https://github.com/jungrok5/zerollama',
     tech: 'TypeScript · llama.cpp',
     note: 'Cline 하드포크 · pre-alpha',
     metric: '27k LOC 자작 서브시스템',
     points: [
-      '소비자용 GPU별 튜닝 — VRAM·KV캐시를 계산해 설정을 잡고, 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙 (부하 테스트 후 마진 두고 확정하는 서버 방식과 동형)',
-      '하드웨어 감지(NVIDIA/Vulkan/Metal)·MoE CPU 오프로드·양자화 모델용 편집 매처·폰 원격제어 서버 등 27k LOC 서브시스템 자작 (경력의 사내 로컬 LLM 코딩 스택 구축의 개인 확장)',
+      'GPU별 튜닝 — VRAM·KV캐시를 계산해 ngl/ctx를 산출하고 llama-bench 스윕으로 최적 설정 선택, 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙 적용',
+      '하드웨어 감지(NVIDIA/Vulkan/Metal)·MoE CPU 오프로드·양자화 모델용 편집 매처·폰 원격제어 서버(pairing·web-push·tunnel) 등 35개 모듈 27,515 LOC 직접 구현',
+    ],
+  },
+  {
+    name: 'ondevice-imagen',
+    tag: '기록(날씨·장소·시간)을 그림엽서로 그려주는 온디바이스 일기 앱 — 서버 없이 폰에서 직접 AI 이미지 생성',
+    href: 'https://github.com/jungrok5/ondevice-imagen',
+    tech: 'Kotlin · ONNX Runtime · Python',
+    note: '실기기 검증 · 연구 R&D',
+    metric: '실기기 512² 생성',
+    points: [
+      'Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현 — CLIP BPE 토크나이저·Karras/Euler 스케줄러·CFG·IEEE754 fp16 코덱까지 직접 구현',
+      'PC diffusers 대비 각 단계를 golden reference로 bit-match 검증(1e-4 이내), Android 메모리 제약(LMK)에 맞춰 peak RSS를 낮춰 실기기 512² 생성 (Galaxy S25 Ultra 5분 37초)',
+    ],
+  },
+  {
+    name: 'Hellfarm',
+    tag: '디아블로식 파밍 + 뱀서라이크를 합친 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android)',
+    href: 'https://github.com/jungrok5/super-vs',
+    tech: 'Godot · C# · 1인 개발',
+    metric: '1만+ 엔티티 60fps',
+    points: [
+      '노드/GC 없는 데이터지향 엔진 자작 — 엔티티 SoA 배열·단일 드로우콜 MultiMesh 배칭·물리엔진 대신 자작 공간해시로 화면 내 1만+ 엔티티를 60fps로 렌더링',
+      '5막 캠페인·엔드게임 균열·보석/장비 성장 등 게임 전체를 혼자 설계·구현',
+    ],
+  },
+  {
+    name: 'thesauros',
+    tag: '한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스',
+    href: 'https://github.com/jungrok5/thesauros',
+    tech: 'Python · Next.js · Supabase',
+    note: '라이브 운영 중',
+    metric: '프로덕션 운영',
+    points: [
+      '시세·재무·거시 데이터 수집 → 추세·패턴·거래량 분석 → 백테스트 → 텔레그램/PWA 알림까지 혼자 설계·프로덕션 운영 (Vercel · Supabase · 크론 8개 · CI)',
+      '백테스트 엔진 자체 구현 — 상장폐지 반영 시뮬레이터·walk-forward 검증·look-ahead/PIT 편향 감사',
     ],
   },
 ]
