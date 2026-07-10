@@ -2,7 +2,7 @@ import { sections } from '../data/resume'
 import { useScrollState } from '../lib/scrollStore'
 
 // 문서형 페이지와 같은 형태의 고정 상단바:
-// [현재 섹션(좌)] … [기본·출력·상세·3D 탭(우)] + 화면 최상단 진행 게이지.
+// [현재 섹션(좌)] … [기본·상세·3D 탭(우)] + 화면 최상단 진행 게이지.
 // 게이지(#gauge3d)는 ScrollBridge가 매 프레임 scaleX로 직접 갱신한다(리렌더 없음).
 export default function Chrome() {
   const { index, atTop } = useScrollState()
@@ -23,7 +23,6 @@ export default function Chrome() {
           <nav className="switcher3d" aria-label="이력서 뷰">
             {/* ?view= 명시 — 없으면 문서 페이지가 '마지막에 봤던 뷰'를 복원해버린다 */}
             <a href="./?view=design">기본</a>
-            <a href="./?view=ats">출력</a>
             <a href="./?view=detail">상세</a>
             <span className="on">3D</span>
           </nav>
