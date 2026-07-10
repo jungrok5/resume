@@ -983,7 +983,7 @@
 <li><strong>직무 / 직책</strong>: TD / 팀원 (기반 설계·아키텍처·컨텐츠·최적화·개발 인프라 전반)</li>
 <li><strong>개발환경</strong>: C#, ASP.NET Core, <strong>Orleans(Grain 분산 서버)</strong>, gRPC → TCP, EntityFramework, C++(StatFormula/C++20), UnrealEngine5, MSSQL(저장프로시저·dacpac), Redis / Garnet, Protobuf, .NET Aspire, Perforce, Jenkins, Claude Code · MCP, 로컬 LLM(llama.cpp)</li>
 </ul>
-<p><strong>핵심 성과 (실측 수치)</strong> <em>(단일 장비 로컬 벤치·병목 규명·상한 측정치)</em></p>
+<p><strong>핵심 성과</strong></p>
 <ul>
 <li><strong>gRPC RPS</strong>: 순수 gRPC 서버 1만 유저/50만 요청 → <strong>초당 약 24만 req</strong> (동일 조건 WebAPI 약 12만 → gRPC 우위)</li>
 <li><strong>EntityFramework TPS</strong>: 100만 호출 단순 SELECT 초당 4.5만 → (Compiled Query·AsNoTracking) <strong>5만 건</strong></li>
@@ -1001,7 +1001,7 @@
 <li><strong>DB 성능 개선</strong>: 저장프로시저 전면 교체, WRITELOG 감소·배치 처리·데드락 구조 개선 등 대규모 데이터베이스 부하 개선</li>
 <li><strong>부하·통합 테스트 인프라</strong>: 스크립트 FSM 부하 테스터, 분산 실행, 통합 테스트 핫리로드·젠킨스 daily, 몽키 테스트</li>
 <li><strong>네트워크·버전 정합성</strong>: <strong>gRPC→TCP 전송 교체</strong>(토글 어댑터·분산 트레이스·압축), proto 체크섬·버전 미스매치 알림, 클라-서버 결정론성 비교 체계</li>
-<li><strong>AI · Claude 기반 개발 도구</strong> — <em>프로젝트의 핵심 차별점</em>: 부하 테스트 <strong>MCP 서버</strong>(자연어→gRPC 시퀀스, 리플렉션 API 자동 탐색), <strong>AI 테스트 에이전트 팀</strong>(테스터/분석가/DB/서버 매니저 4종 — 자연어로 테스트→로그 분석→DB 검증→보고서 자동화), 멀티에이전트 코드리뷰, <strong>로컬 LLM 코딩 스택</strong>(llama.cpp, 3모델 배포, 사내 코드 외부 유출 없음)</li>
+<li><strong>AI · Claude 기반 개발 도구</strong> — 부하 테스트 <strong>MCP 서버</strong>(자연어→gRPC 시퀀스, 리플렉션 API 자동 탐색), <strong>AI 테스트 에이전트 팀</strong>(테스터/분석가/DB/서버 매니저 4종 — 자연어로 테스트→로그 분석→DB 검증→보고서 자동화), 멀티에이전트 코드리뷰, <strong>로컬 LLM 코딩 스택</strong>(llama.cpp, 3모델 배포, 사내 코드 외부 유출 없음)</li>
 <li><strong>운영툴·개발 인프라</strong>: 웹콘솔·서버 클러스터 시각화, 개발 통합 런처 + 온디바이스 LLM 어시스턴트(자연어→치트 명령·로그/크래시 분석·CL 리뷰), 빌드/CI(.NET 10 전환·리눅스 빌드)</li>
 </ul>
 <p><strong>주요 성과 요약</strong></p>
@@ -1020,7 +1020,7 @@
 <li><strong>개발환경</strong>: C#(SpaceServer), C++·UnrealEngine5, TypeScript(데디), MSSQL, Godot(서버 뷰어), Perforce</li>
 <li><strong>배경</strong>: 프로젝트 리셋 후 언리얼엔진 교체·조직 재구축. 방향이 하우징 MMO로 바뀌며 MMO 서버로 교체. <strong>"수천만 개의 프랍을 단일 공간에 배치해도 견디는" 초대규모 UGC 처리를 서버·클라 양쪽에서 "총량이 아니라 활성량만 처리" 철학으로 설계·구현.</strong></li>
 </ul>
-<p><strong>핵심 성과 (실측 수치)</strong> <em>(단일 장비 로컬 벤치·상한 규명 값)</em></p>
+<p><strong>핵심 성과</strong></p>
 <ul>
 <li><strong>단일 공간 5,000만 개 이산 메시 프랍</strong>을 풀 틱(타임딜레이션 없음) 처리 — 서버 스테이지 Network/Space/Broadcast 0ms대, Job 7~31ms</li>
 <li><strong>한 시야(viewport) 내 128만 개 프랍(콜리전 ON)</strong> 렌더링 유지 (밀집 11fps / 원경 26.6fps)</li>
@@ -1071,7 +1071,7 @@
 <li>백엔드·프로파일링: 웹소켓 기반 대규모 유저 처리, 유저 창작 기반 동기화 정보 설계, 애셋 스트리밍·캐시, 공간/채널 설계, 루아 스크립트·스토리지 시스템, 공간 분산 처리, 서버 분산 구조, 데디 기반 서버 런처, TcpSocket/WebSocket/보안 웹소켓 성능 리서치, node.js·고도·C# 봇 클라이언트, 백엔드 최적화·부하분산 계획</li>
 <li>개발 프로세스: C#·GDScript 패킷 제너레이터, 소스·리소스 암호화, 윈도우 앱 빌드, NC 알림 시스템 연동, 웹 기반 클라이언트 로그 시스템, 엔진 로그 파일 분리</li>
 </ul>
-<p><strong>핵심 성과 (실측 수치)</strong> <em>(단일 장비 로컬 벤치·상한 규명 값)</em></p>
+<p><strong>핵심 성과</strong></p>
 <ul>
 <li>프로토타입(Node.js) → C# 데디 서버 전환, 1차 구조 개선 후 동접 2,000 / 3,000 / 5,000 시나리오 부하 검증</li>
 <li><strong>C# vs Node.js 서버 수용력 벤치</strong>: 동일 조건에서 C#이 약 1.5배 (C# 2,500 안정 / Node.js 1,500 안정)</li>
