@@ -46,8 +46,8 @@ export const sections = [
     align: 'left',
     accent: 'cyan',
     num: '01',
-    kicker: '커리어 개요 · 2007 — 현재',
-    title: '경력 타임라인',
+    kicker: '2007 — 현재',
+    title: '경력',
     points: [
       '매니징보다 기술을 직접 주도하는 역할을 지향',
       '2007–2015 국내·일본·중국·태국 다수 타이틀 상용 서비스·라이브 운영',
