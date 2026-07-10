@@ -575,7 +575,7 @@
     <div class="job">
       <div class="job-head">
         <div class="job-title">ZeroLlama <span class="lock" title="비공개 저장소">🔒</span> <span class="genre">— 소비자용 GPU에서 로컬 LLM으로 코딩하는 AI 코딩 도구 (VS Code 확장)</span></div>
-        <div class="job-meta">Cline 하드포크 · pre-alpha</div>
+        <div class="job-meta">pre-alpha</div>
       </div>
       <div class="job-sub"><span class="stack">TypeScript · llama.cpp</span></div>
       <ul class="bul">
@@ -586,7 +586,7 @@
 
     <div class="job">
       <div class="job-head">
-        <div class="job-title"><a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">ondevice-imagen</a> <span class="genre">— 기록(날씨·장소·시간)을 그림엽서로 그려주는 온디바이스 일기 앱 (서버 없이 폰에서 AI 생성)</span></div>
+        <div class="job-title"><a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">ondevice-imagen</a> <span class="genre">— 기록(날씨·장소·시간)을 그림엽서로 그려주는 온디바이스 일기 앱 (서버 없이 폰에서 AI 이미지 생성)</span></div>
         <div class="job-meta">실기기 검증 · 연구 R&amp;D</div>
       </div>
       <div class="job-sub"><span class="stack">Kotlin · ONNX Runtime · Python</span></div>
@@ -775,7 +775,7 @@
 
     <h2>개인 프로젝트 (GitHub)</h2>
 
-    <div class="exp">ZeroLlama <span title="비공개 저장소">🔒</span> — 소비자용 GPU에서 로컬 LLM으로 코딩하는 AI 코딩 도구 (VS Code 확장) <span class="m">· Cline 하드포크·pre-alpha · 🔒 비공개</span></div>
+    <div class="exp">ZeroLlama <span title="비공개 저장소">🔒</span> — 소비자용 GPU에서 로컬 LLM으로 코딩하는 AI 코딩 도구 (VS Code 확장) <span class="m">· pre-alpha · 🔒 비공개</span></div>
     <div class="tech">기술: TypeScript, llama.cpp</div>
     <ul>
       <li>GPU별 튜닝 — VRAM·KV캐시 계산으로 ngl/ctx를 산출하고 llama-bench 스윕으로 최적 설정 선택, 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙 적용</li>
@@ -1421,12 +1421,11 @@
 </ul>
 <hr />
 <h2>4. 개인 프로젝트 (GitHub)</h2>
-<p>🔒 = 비공개 저장소.</p>
 
 <h3>4-1. ZeroLlama 🔒 — 로컬 LLM 코딩 도구 (VS Code 확장)</h3>
 <ul>
 <li><strong>무엇</strong>: 소비자용 GPU에서 로컬 LLM을 돌려 코딩하는 AI 코딩 도구. Claude/GPT 구독 없이 로컬 모델로 코딩하되, 소비자용 GPU(4~24GB VRAM, 양자화 모델)에서도 실제로 쓸 만하게 만드는 것이 목표.</li>
-<li><strong>기술</strong>: TypeScript · llama.cpp · 🔒 비공개 (Cline 하드포크 · pre-alpha)</li>
+<li><strong>기술</strong>: TypeScript · llama.cpp · 🔒 비공개 (pre-alpha)</li>
 <li><strong>구현</strong>: <code>src/zerollama/</code> 아래 35개 모듈, <strong>27,515 LOC(테스트 제외)의 서브시스템</strong>. GPU별 튜닝(VRAM·KV캐시까지 포함해 ngl/ctx를 산출하고 llama-bench 스윕으로 최적 설정 선택 — 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙), 하드웨어 감지(NVIDIA/Vulkan/Metal), MoE CPU 오프로드, 양자화 모델용 편집 매처, 비-모델 구동 메모리 레이어, 폰 원격제어 서버(pairing·web-push·tunnel). 실제 import를 grep해 미연결 모듈을 표시하는 자가 감사 리포트 포함.</li>
 </ul>
 <hr />

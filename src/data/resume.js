@@ -325,7 +325,7 @@ export const projects = [
     href: 'https://github.com/jungrok5/zerollama',
     private: true,
     tech: 'TypeScript · llama.cpp',
-    note: 'Cline 하드포크 · pre-alpha',
+    note: 'pre-alpha',
     metric: '27k LOC 서브시스템',
     points: [
       'GPU별 튜닝 — VRAM·KV캐시를 계산해 ngl/ctx를 산출하고 llama-bench 스윕으로 최적 설정 선택, 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙 적용',
