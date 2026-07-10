@@ -42,7 +42,7 @@ function Summary() {
   return (
     <div className="summary">
       <div>
-        <h3>개인 프로젝트 · GitHub</h3>
+        <h3>개인 프로젝트 (GitHub)</h3>
         <ul>
           {projects.map((p) => (
             <li key={p.name}>
