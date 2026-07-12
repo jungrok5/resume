@@ -579,8 +579,10 @@
       </div>
       <div class="job-sub"><span class="stack">TypeScript · llama.cpp</span></div>
       <ul class="bul">
-        <li><b>GPU별 튜닝</b> — VRAM·KV캐시를 계산해 ngl/ctx를 산출하고 llama-bench 스윕으로 최적 설정 선택, 한계 근처에선 처리량 5%를 <span class="metric">OOM 안정성</span>과 맞바꾸는 안전 마진 규칙 적용</li>
-        <li>하드웨어 감지(NVIDIA/Vulkan/Metal)·MoE CPU 오프로드·양자화 모델용 편집 매처·폰 원격제어 서버(pairing·web-push·tunnel) 등 35개 모듈 <span class="metric">27,515 LOC</span> 구성</li>
+        <li><b>GPU별 자동 튜닝</b> — GPU·VRAM을 실측하고 KV캐시까지 계산해 ngl·ctx·flash-attn 등을 산출(근거를 "ctx 2× → VRAM ~1.8×"로 노출), llama-bench 스윕 검증·안전 마진 규칙. MoE OOM 시 <code>--n-cpu-moe</code> 자동 적용으로 <span class="metric">35B-A3B를 8GB VRAM에서 구동</span></li>
+        <li><b>양자화 모델용 툴 재설계</b> — 시스템 프롬프트 <span class="metric">1.6K 토큰(통상의 1/8)</span>으로 축소, 편집 블록 매처 9전략(통상 3+6), <code>&lt;think&gt;</code> 제거, read_file 6모드, 편집 후 ESLint·TS·ruff·cargo·go 자동 검사·피드백</li>
+        <li><b>비-모델 구동 메모리 + 컨텍스트 예산 엔진</b> — 저장/회수 판단을 모델 밖으로(양자화 모델의 tool 미호출 회피), 노이즈 필터로 회수 토큰 <span class="metric">−92%</span>·top-1 92% 유지. 로그 5,000줄→100줄 요약·tree-sitter+PageRank 리포맵으로 컨텍스트 오버헤드 <span class="metric">100%→30~40%</span></li>
+        <li><b>무계정 폰 원격제어</b> — 6자리 PIN+QR 페어링·cloudflared 터널·Ed25519 서명으로 폰 브라우저에서 작업 감시·승인·모델 전환 (외부 계정 불필요). 하드웨어 감지(NVIDIA/Vulkan/Metal) 포함 <span class="metric">35개 모듈 27,515 LOC</span></li>
       </ul>
     </div>
 
@@ -778,8 +780,10 @@
     <div class="exp">ZeroLlama <span title="비공개 저장소">🔒</span> — 소비자용 GPU에서 로컬 LLM으로 코딩하는 AI 코딩 도구 (VS Code 확장) <span class="m">· pre-alpha · 🔒 비공개</span></div>
     <div class="tech">기술: TypeScript, llama.cpp</div>
     <ul>
-      <li>GPU별 튜닝 — VRAM·KV캐시 계산으로 ngl/ctx를 산출하고 llama-bench 스윕으로 최적 설정 선택, 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙 적용</li>
-      <li>하드웨어 감지(NVIDIA/Vulkan/Metal)·MoE CPU 오프로드·양자화 편집 매처·폰 원격제어 서버(pairing·web-push·tunnel) 등 35개 모듈 27,515 LOC 구성</li>
+      <li>GPU별 자동 튜닝 — GPU·VRAM·KV캐시를 실측·계산해 ngl·ctx·flash-attn 등을 산출·근거 노출, llama-bench 스윕 검증·안전 마진 규칙, MoE OOM 시 --n-cpu-moe 자동 적용으로 35B-A3B를 8GB VRAM에서 구동</li>
+      <li>양자화 모델용 툴 재설계 — 시스템 프롬프트 1.6K 토큰(통상의 1/8), 편집 블록 매처 9전략, &lt;think&gt; 제거, read_file 6모드, 편집 후 린트(ESLint/TS/ruff/cargo/go) 자동 피드백</li>
+      <li>비-모델 구동 메모리(회수 토큰 −92%·top-1 92% 유지) + 컨텍스트 예산 엔진(로그 5,000줄→100줄, 오버헤드 100%→30~40%)</li>
+      <li>무계정 폰 원격제어(PIN+QR·cloudflared·Ed25519) + 하드웨어 감지(NVIDIA/Vulkan/Metal) 등 35개 모듈 27,515 LOC</li>
     </ul>
 
     <div class="exp">ondevice-imagen — 기록(날씨·장소·시간)을 그림엽서로 그려주는 온디바이스 일기 앱 <span class="m">· 연구 R&amp;D · <a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">github.com/jungrok5/ondevice-imagen</a></span></div>
@@ -1424,9 +1428,17 @@
 
 <h3>4-1. ZeroLlama 🔒 — 로컬 LLM 코딩 도구 (VS Code 확장)</h3>
 <ul>
-<li><strong>무엇</strong>: 소비자용 GPU에서 로컬 LLM을 돌려 코딩하는 AI 코딩 도구. Claude/GPT 구독 없이 로컬 모델로 코딩하되, 소비자용 GPU(4~24GB VRAM, 양자화 모델)에서도 실제로 쓸 만하게 만드는 것이 목표.</li>
-<li><strong>기술</strong>: TypeScript · llama.cpp · 🔒 비공개 (pre-alpha)</li>
-<li><strong>구현</strong>: <code>src/zerollama/</code> 아래 35개 모듈, <strong>27,515 LOC(테스트 제외)의 서브시스템</strong>. GPU별 튜닝(VRAM·KV캐시까지 포함해 ngl/ctx를 산출하고 llama-bench 스윕으로 최적 설정 선택 — 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙), 하드웨어 감지(NVIDIA/Vulkan/Metal), MoE CPU 오프로드, 양자화 모델용 편집 매처, 비-모델 구동 메모리 레이어, 폰 원격제어 서버(pairing·web-push·tunnel). 실제 import를 grep해 미연결 모듈을 표시하는 자가 감사 리포트 포함.</li>
+<li><strong>무엇</strong>: 소비자용 GPU(4~24GB VRAM)에서 양자화 로컬 LLM으로 코딩하는 AI 코딩 도구. 기존 에이전트/런타임은 클라우드 대형 모델(200K 컨텍스트·거의 100% 지시 준수)을 전제로 만들어져 소비자용 GPU + 양자화 모델에서는 제대로 동작하지 않는다(14K 시스템 프롬프트가 8K 창의 절반을 먹고, 편집 블록 매칭 실패, 메모리 tool 미호출, 카드가 달라도 같은 설정). <strong>바로 그 시나리오를 정면으로 해결</strong>하는 것이 목표.</li>
+<li><strong>기술</strong>: TypeScript · llama.cpp · 🔒 비공개 (pre-alpha) · <code>src/zerollama/</code> 아래 35개 모듈 <strong>27,515 LOC(테스트 제외)</strong> 서브시스템</li>
+<li><strong>핵심 차별점 — 소비자용 GPU 전용 레이어</strong>:
+<ul>
+<li><strong>GPU별 자동 튜닝</strong>: GPU·VRAM을 실측하고 <strong>KV캐시 크기까지 계산</strong>해 ngl·ctx·batch·flash-attn·KV 양자화를 산출, llama-bench 경험적 스윕으로 검증. 각 값의 근거를 UI로 노출("ctx 2× → VRAM ~1.8×")하고, 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙 적용. MoE 모델이 OOM 나면 <code>--n-cpu-moe</code>로 자동 재시도 → <strong>Qwen3.6-35B-A3B를 8GB VRAM에서 구동</strong>. (Ollama 등 "원커맨드" 런타임이 카드와 무관하게 같은 설정을 주고 KV캐시를 추정에서 빠뜨리는 지점을 겨냥)</li>
+<li><strong>양자화 모델용 툴 재설계</strong>: 시스템 프롬프트를 <strong>1.6K 토큰(통상 14K의 1/8)</strong>으로 축소해 8~32K 창에 사고 여유 확보, 편집 블록 매처를 <strong>9개 전략</strong>(들여쓰기 드리프트·유일 부분문자열·인접 앵커 등, 통상 3개+6개)으로 확장, 추론 모델의 <code>&lt;think&gt;</code> 블록을 다음 턴 입력 전 제거, <code>read_file</code>을 6모드(전체/함수/아웃라인/범위/로그요약/마크다운 골격)로 분리, 편집 후 ESLint·TypeScript·ruff·cargo·go를 자동 실행해 에러를 모델에 피드백(최대 3회).</li>
+<li><strong>비-모델 구동 메모리</strong>: 양자화 모델이 저장/회수 tool을 안 부르는 실패를 회피하려 <strong>판단을 모델 밖으로</strong> 뺌 — 4개 라이프사이클 시점 자동 저장(추가 LLM 호출 0), 매턴 관련 메모리를 <code>&lt;recall&gt;</code>로 프리펜드. 노이즈 필터 실측(43 메모리 × 30 쿼리): 회수량 <strong>−82%</strong>·토큰 <strong>−92%</strong>, top-1 관련 메모리는 <strong>92%</strong> 유지. 임베딩 모델 다운로드 없이 SQLite FTS5(BM25)로 구현.</li>
+<li><strong>컨텍스트 예산 엔진</strong>: 로그 파일을 중요도(ERROR/Exception/5xx/스택)로 스코어링해 <strong>5,000줄 → ≤100줄</strong> 요약(모델 호출 없음), 전체 레포를 tree-sitter로 파싱해 PageRank로 랭킹한 리포맵을 고정 토큰 예산 내 포함, 75% 도달 시 "정리 모드" 자동 주입, 임계치에서 7섹션 요약으로 압축. 컨텍스트 오버헤드 <strong>100% → 30~40%</strong>(추론용 ~60% 확보).</li>
+<li><strong>무계정 폰 원격제어</strong>: 6자리 PIN + QR로 PC·폰 1회 페어링 → cloudflared 터널 URL → 폰 브라우저로 작업 감시·메시지·tool 승인·모델 전환. MS/GitHub/Google/Tailscale 계정 불필요, 프레임마다 Ed25519 서명, 토글 해제 시 즉시 터널 철거.</li>
+</ul></li>
+<li><strong>엔지니어링</strong>: 하드웨어 감지 NVIDIA(nvidia-smi)/AMD·Vulkan/Apple Metal, JIT 프로비저너(모델 선택→llama.cpp 다운로드→인자 튜닝→채팅 배선 자동화), 실제 import를 grep해 미연결 모듈을 표시하는 자가 감사 리포트. 대부분 모듈이 자체 단위 테스트 포함.</li>
 </ul>
 <hr />
 <h3>4-2. ondevice-imagen — 온디바이스 일기 앱</h3>

@@ -321,15 +321,17 @@ export const timeline = [
 export const projects = [
   {
     name: 'ZeroLlama',
-    tag: '소비자용 GPU에서 로컬 LLM으로 코딩하는 AI 코딩 도구 (VS Code 확장)',
+    tag: '소비자용 GPU에서 양자화 로컬 LLM으로 코딩하는 AI 코딩 도구 (VS Code 확장) — 클라우드 대형 모델을 전제로 만들어진 기존 도구가 소비자용 GPU에서 무너지는 지점을 겨냥',
     href: 'https://github.com/jungrok5/zerollama',
     private: true,
     tech: 'TypeScript · llama.cpp',
     note: 'pre-alpha',
     metric: '27k LOC 서브시스템',
     points: [
-      'GPU별 튜닝 — VRAM·KV캐시를 계산해 ngl/ctx를 산출하고 llama-bench 스윕으로 최적 설정 선택, 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙 적용',
-      '하드웨어 감지(NVIDIA/Vulkan/Metal)·MoE CPU 오프로드·양자화 모델용 편집 매처·폰 원격제어 서버(pairing·web-push·tunnel) 등 35개 모듈 27,515 LOC 구성',
+      'GPU별 자동 튜닝 — GPU·VRAM·KV캐시를 실측·계산해 ngl·ctx·flash-attn 등을 산출하고 근거를 UI로 노출("ctx 2× → VRAM ~1.8×"), llama-bench 스윕 검증·안전 마진 규칙. MoE OOM 시 --n-cpu-moe 자동 적용으로 35B-A3B를 8GB VRAM에서 구동',
+      '양자화 모델용 툴 재설계 — 시스템 프롬프트 1.6K 토큰(통상의 1/8)·편집 블록 매처 9전략·<think> 제거·read_file 6모드·편집 후 린트(ESLint/TS/ruff/cargo/go) 자동 피드백',
+      '비-모델 구동 메모리 + 컨텍스트 예산 엔진 — 저장/회수 판단을 모델 밖으로(양자화 모델 tool 미호출 회피, 회수 토큰 −92%·top-1 92% 유지), 로그 5,000줄→100줄 요약·PageRank 리포맵으로 컨텍스트 오버헤드 100%→30~40%',
+      '무계정 폰 원격제어(PIN+QR·cloudflared·Ed25519) + 하드웨어 감지(NVIDIA/Vulkan/Metal) 등 35개 모듈 27,515 LOC',
     ],
   },
   {
