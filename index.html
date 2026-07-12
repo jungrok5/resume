@@ -574,15 +574,16 @@
 
     <div class="job">
       <div class="job-head">
-        <div class="job-title">ZeroLlama <span class="lock" title="비공개 저장소">🔒</span> <span class="genre">— 소비자용 GPU에서 로컬 LLM으로 코딩하는 AI 코딩 도구 (VS Code 확장)</span></div>
+        <div class="job-title">ZeroLlama <span class="lock" title="비공개 저장소">🔒</span> <span class="genre">— 소비자용 GPU에서 로컬 LLM으로 "실제 쓸 만하게" 코딩하는 도구 (VS Code 확장)</span></div>
         <div class="job-meta">pre-alpha</div>
       </div>
       <div class="job-sub"><span class="stack">TypeScript · llama.cpp</span></div>
       <ul class="bul">
-        <li><b>GPU별 자동 튜닝</b> — GPU·VRAM을 실측하고 KV캐시까지 계산해 ngl·ctx·flash-attn 등을 산출(근거를 "ctx 2× → VRAM ~1.8×"로 노출), llama-bench 스윕 검증·안전 마진 규칙. MoE OOM 시 <code>--n-cpu-moe</code> 자동 적용으로 <span class="metric">35B-A3B를 8GB VRAM에서 구동</span></li>
-        <li><b>양자화 모델용 툴 재설계</b> — 시스템 프롬프트 <span class="metric">1.6K 토큰(통상의 1/8)</span>으로 축소, 편집 블록 매처 9전략(통상 3+6), <code>&lt;think&gt;</code> 제거, read_file 6모드, 편집 후 ESLint·TS·ruff·cargo·go 자동 검사·피드백</li>
-        <li><b>비-모델 구동 메모리 + 컨텍스트 예산 엔진</b> — 저장/회수 판단을 모델 밖으로(양자화 모델의 tool 미호출 회피), 노이즈 필터로 회수 토큰 <span class="metric">−92%</span>·top-1 92% 유지. 로그 5,000줄→100줄 요약·tree-sitter+PageRank 리포맵으로 컨텍스트 오버헤드 <span class="metric">100%→30~40%</span></li>
-        <li><b>무계정 폰 원격제어</b> — 6자리 PIN+QR 페어링·cloudflared 터널·Ed25519 서명으로 폰 브라우저에서 작업 감시·승인·모델 전환 (외부 계정 불필요). 하드웨어 감지(NVIDIA/Vulkan/Metal) 포함 <span class="metric">35개 모듈 27,515 LOC</span></li>
+        <li><span class="note">로컬 모델로 코딩하면 다들 겪는 실패 — 편집이 안 먹히고, <code>&lt;think&gt;</code>가 컨텍스트를 채우고, 메모리는 모델이 tool을 안 불러 작동 안 하고, 좋은 카드를 사도 똑같고, "8GB에 35B" 글대로 하면 OOM — 을 하나씩 없앤 로컬 전용 코딩 도구</span></li>
+        <li><b>카드에 맞게 자동 튜닝</b> — 4090엔 큰 모델·큰 컨텍스트, 3060엔 그 카드에 맞는 설정. GPU·VRAM·KV캐시 실측→ngl·ctx·flash-attn 산출·근거 노출, MoE OOM 시 자동 오프로드로 <span class="metric">35B를 8GB에서 실제 구동</span>(원래는 OOM)</li>
+        <li><b>작은 모델도 쓸 만하게</b> — 편집 블록 9전략으로 <b>실패 대신 적용</b>, 시스템 프롬프트 <span class="metric">1.6K(통상 1/8)</span>로 축소, <code>&lt;think&gt;</code> 제거, 편집 후 린트(ESLint/TS/ruff/cargo/go) 자동 피드백</li>
+        <li><b>모델이 tool 안 불러도 되는 메모리 + 컨텍스트 예산</b> — 저장/회수 판단을 모델 밖으로, 회수 토큰 <span class="metric">−92%</span>인데 관련 메모리 92% 유지. 로그 5,000줄→100줄·PageRank 리포맵으로 컨텍스트 오버헤드 <span class="metric">100%→30~40%</span>(추론용 60% 확보)</li>
+        <li><b>폰으로 원격 조종(계정 0개)</b> — PIN+QR로 한 번 페어링하면 폰 브라우저에서 작업 감시·승인·모델 전환 (MS/구글/Tailscale 계정 불필요, Ed25519 서명). 하드웨어 감지(NVIDIA/Vulkan/Metal) 포함 <span class="metric">35개 모듈 27,515 LOC</span></li>
       </ul>
     </div>
 
@@ -777,13 +778,14 @@
 
     <h2>개인 프로젝트 (GitHub)</h2>
 
-    <div class="exp">ZeroLlama <span title="비공개 저장소">🔒</span> — 소비자용 GPU에서 로컬 LLM으로 코딩하는 AI 코딩 도구 (VS Code 확장) <span class="m">· pre-alpha · 🔒 비공개</span></div>
+    <div class="exp">ZeroLlama <span title="비공개 저장소">🔒</span> — 소비자용 GPU에서 로컬 LLM으로 "실제 쓸 만하게" 코딩하는 도구 (VS Code 확장) <span class="m">· pre-alpha · 🔒 비공개</span></div>
     <div class="tech">기술: TypeScript, llama.cpp</div>
     <ul>
-      <li>GPU별 자동 튜닝 — GPU·VRAM·KV캐시를 실측·계산해 ngl·ctx·flash-attn 등을 산출·근거 노출, llama-bench 스윕 검증·안전 마진 규칙, MoE OOM 시 --n-cpu-moe 자동 적용으로 35B-A3B를 8GB VRAM에서 구동</li>
-      <li>양자화 모델용 툴 재설계 — 시스템 프롬프트 1.6K 토큰(통상의 1/8), 편집 블록 매처 9전략, &lt;think&gt; 제거, read_file 6모드, 편집 후 린트(ESLint/TS/ruff/cargo/go) 자동 피드백</li>
-      <li>비-모델 구동 메모리(회수 토큰 −92%·top-1 92% 유지) + 컨텍스트 예산 엔진(로그 5,000줄→100줄, 오버헤드 100%→30~40%)</li>
-      <li>무계정 폰 원격제어(PIN+QR·cloudflared·Ed25519) + 하드웨어 감지(NVIDIA/Vulkan/Metal) 등 35개 모듈 27,515 LOC</li>
+      <li>로컬 모델로 코딩하면 다들 겪는 실패(편집 안 먹힘·컨텍스트 폭발·메모리 미작동·좋은 카드도 그대로·8GB에 35B OOM)를 하나씩 없앤 로컬 전용 코딩 도구</li>
+      <li>카드에 맞게 자동 튜닝 — 4090엔 큰 모델·큰 컨텍스트, 3060엔 그 카드에 맞는 설정. GPU·VRAM·KV캐시 실측→설정 산출·근거 노출, MoE OOM 시 자동 오프로드로 35B를 8GB에서 실제 구동(원래는 OOM)</li>
+      <li>작은 모델도 쓸 만하게 — 편집 블록 9전략으로 실패 대신 적용, 시스템 프롬프트 1.6K(통상 1/8)로 축소, &lt;think&gt; 제거, 편집 후 린트 자동 피드백</li>
+      <li>모델이 tool 안 불러도 되는 메모리(회수 토큰 −92%·관련 92% 유지) + 로그 5,000줄→100줄·PageRank 리포맵으로 컨텍스트 오버헤드 100%→30~40%(추론용 60% 확보)</li>
+      <li>폰으로 원격 조종(계정 0개, PIN+QR·Ed25519) + 하드웨어 감지(NVIDIA/Vulkan/Metal) 등 35개 모듈 27,515 LOC</li>
     </ul>
 
     <div class="exp">ondevice-imagen — 기록(날씨·장소·시간)을 그림엽서로 그려주는 온디바이스 일기 앱 <span class="m">· 연구 R&amp;D · <a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">github.com/jungrok5/ondevice-imagen</a></span></div>
@@ -1428,15 +1430,15 @@
 
 <h3>4-1. ZeroLlama 🔒 — 로컬 LLM 코딩 도구 (VS Code 확장)</h3>
 <ul>
-<li><strong>무엇</strong>: 소비자용 GPU(4~24GB VRAM)에서 양자화 로컬 LLM으로 코딩하는 AI 코딩 도구. 기존 에이전트/런타임은 클라우드 대형 모델(200K 컨텍스트·거의 100% 지시 준수)을 전제로 만들어져 소비자용 GPU + 양자화 모델에서는 제대로 동작하지 않는다(14K 시스템 프롬프트가 8K 창의 절반을 먹고, 편집 블록 매칭 실패, 메모리 tool 미호출, 카드가 달라도 같은 설정). <strong>바로 그 시나리오를 정면으로 해결</strong>하는 것이 목표.</li>
+<li><strong>무엇 (왜 만들었나)</strong>: 로컬 LLM으로 코딩을 시도한 사람 대부분은 "역시 로컬은 안 되네" 하고 클라우드로 돌아간다 — 편집 블록이 매번 안 맞아 아무것도 안 붙고, 추론 모델의 <code>&lt;think&gt;</code>가 컨텍스트를 금세 채우고, 메모리 기능은 모델이 tool을 안 불러 작동 안 하고, 비싼 카드를 사도 체감이 그대로고, "8GB에 35B 올라간다"는 글대로 하면 OOM. 이 문제들은 기존 도구가 <strong>클라우드 대형 모델(200K 컨텍스트·거의 100% 지시 준수)을 전제로 설계</strong>됐기 때문이다. ZeroLlama는 소비자용 GPU(4~24GB·양자화 모델)에서 그 실패들을 하나씩 없앤 <strong>로컬 전용 코딩 도구</strong>다.</li>
 <li><strong>기술</strong>: TypeScript · llama.cpp · 🔒 비공개 (pre-alpha) · <code>src/zerollama/</code> 아래 35개 모듈 <strong>27,515 LOC(테스트 제외)</strong> 서브시스템</li>
-<li><strong>핵심 차별점 — 소비자용 GPU 전용 레이어</strong>:
+<li><strong>차별점 — 로컬로 코딩할 때의 실패를 하나씩 없앰</strong>:
 <ul>
-<li><strong>GPU별 자동 튜닝</strong>: GPU·VRAM을 실측하고 <strong>KV캐시 크기까지 계산</strong>해 ngl·ctx·batch·flash-attn·KV 양자화를 산출, llama-bench 경험적 스윕으로 검증. 각 값의 근거를 UI로 노출("ctx 2× → VRAM ~1.8×")하고, 한계 근처에선 처리량 5%를 OOM 안정성과 맞바꾸는 안전 마진 규칙 적용. MoE 모델이 OOM 나면 <code>--n-cpu-moe</code>로 자동 재시도 → <strong>Qwen3.6-35B-A3B를 8GB VRAM에서 구동</strong>. (Ollama 등 "원커맨드" 런타임이 카드와 무관하게 같은 설정을 주고 KV캐시를 추정에서 빠뜨리는 지점을 겨냥)</li>
-<li><strong>양자화 모델용 툴 재설계</strong>: 시스템 프롬프트를 <strong>1.6K 토큰(통상 14K의 1/8)</strong>으로 축소해 8~32K 창에 사고 여유 확보, 편집 블록 매처를 <strong>9개 전략</strong>(들여쓰기 드리프트·유일 부분문자열·인접 앵커 등, 통상 3개+6개)으로 확장, 추론 모델의 <code>&lt;think&gt;</code> 블록을 다음 턴 입력 전 제거, <code>read_file</code>을 6모드(전체/함수/아웃라인/범위/로그요약/마크다운 골격)로 분리, 편집 후 ESLint·TypeScript·ruff·cargo·go를 자동 실행해 에러를 모델에 피드백(최대 3회).</li>
-<li><strong>비-모델 구동 메모리</strong>: 양자화 모델이 저장/회수 tool을 안 부르는 실패를 회피하려 <strong>판단을 모델 밖으로</strong> 뺌 — 4개 라이프사이클 시점 자동 저장(추가 LLM 호출 0), 매턴 관련 메모리를 <code>&lt;recall&gt;</code>로 프리펜드. 노이즈 필터 실측(43 메모리 × 30 쿼리): 회수량 <strong>−82%</strong>·토큰 <strong>−92%</strong>, top-1 관련 메모리는 <strong>92%</strong> 유지. 임베딩 모델 다운로드 없이 SQLite FTS5(BM25)로 구현.</li>
-<li><strong>컨텍스트 예산 엔진</strong>: 로그 파일을 중요도(ERROR/Exception/5xx/스택)로 스코어링해 <strong>5,000줄 → ≤100줄</strong> 요약(모델 호출 없음), 전체 레포를 tree-sitter로 파싱해 PageRank로 랭킹한 리포맵을 고정 토큰 예산 내 포함, 75% 도달 시 "정리 모드" 자동 주입, 임계치에서 7섹션 요약으로 압축. 컨텍스트 오버헤드 <strong>100% → 30~40%</strong>(추론용 ~60% 확보).</li>
-<li><strong>무계정 폰 원격제어</strong>: 6자리 PIN + QR로 PC·폰 1회 페어링 → cloudflared 터널 URL → 폰 브라우저로 작업 감시·메시지·tool 승인·모델 전환. MS/GitHub/Google/Tailscale 계정 불필요, 프레임마다 Ed25519 서명, 토글 해제 시 즉시 터널 철거.</li>
+<li><strong>카드에 맞게 자동 튜닝</strong> — 같은 모델이라도 RTX 4090엔 큰 모델·큰 컨텍스트를, RTX 3060엔 그 카드에 맞는 설정을 준다("좋은 카드를 사도 똑같다"를 해결). GPU·VRAM·KV캐시를 실측·계산해 ngl·ctx·flash-attn·KV 양자화를 산출하고 각 값의 근거를 UI로 노출("ctx 2× → VRAM ~1.8×"), llama-bench 스윕으로 검증. MoE가 OOM 나면 <code>--n-cpu-moe</code>로 자동 오프로드 → <strong>Qwen3.6-35B를 8GB VRAM에서 실제로 구동</strong>(원래는 크래시).</li>
+<li><strong>작은 모델도 실제로 쓸 만하게</strong> — 편집 블록을 9개 전략으로 매칭해 <strong>실패 대신 적용</strong>되게 하고(양자화 모델이 흔히 틀리는 들여쓰기·앵커 드리프트를 흡수), 시스템 프롬프트를 <strong>1.6K 토큰(통상 14K의 1/8)</strong>으로 줄여 8~32K 창에 사고 여유를 주고, <code>&lt;think&gt;</code>를 다음 턴 전에 제거, 편집 후 ESLint·TS·ruff·cargo·go 에러를 모델에 자동 피드백.</li>
+<li><strong>모델이 tool을 안 불러도 되는 메모리</strong> — 양자화 모델이 저장/회수 tool을 빼먹는 실패를 피하려 <strong>판단을 모델 밖으로</strong> 뺐다(자동 저장·매턴 자동 로드, 추가 LLM 호출 0). 노이즈 필터 실측: 회수 토큰 <strong>−92%</strong>인데도 top-1 관련 메모리는 <strong>92%</strong> 그대로. 임베딩 다운로드 없이 SQLite FTS5.</li>
+<li><strong>다 작은 컨텍스트에 들어가게</strong> — 로그 <strong>5,000줄을 100줄</strong>로 요약(모델 호출 없이 ERROR/스택만 추림), 레포 전체를 tree-sitter+PageRank로 압축, 75%에서 "정리 모드" 자동 주입. 컨텍스트 오버헤드를 <strong>100% → 30~40%</strong>로 낮춰 추론용 ~60%를 확보.</li>
+<li><strong>폰으로 원격 조종(계정 0개)</strong> — 6자리 PIN + QR로 한 번 페어링하면 폰 브라우저에서 작업 감시·tool 승인·모델 전환. MS/GitHub/Google/Tailscale 계정 불필요, 프레임마다 Ed25519 서명.</li>
 </ul></li>
 <li><strong>엔지니어링</strong>: 하드웨어 감지 NVIDIA(nvidia-smi)/AMD·Vulkan/Apple Metal, JIT 프로비저너(모델 선택→llama.cpp 다운로드→인자 튜닝→채팅 배선 자동화), 실제 import를 grep해 미연결 모듈을 표시하는 자가 감사 리포트. 대부분 모듈이 자체 단위 테스트 포함.</li>
 </ul>
