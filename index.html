@@ -589,13 +589,13 @@
 
     <div class="job">
       <div class="job-head">
-        <div class="job-title"><a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">ondevice-imagen</a> <span class="genre">— 기록(날씨·장소·시간)을 그림엽서로 그려주는 온디바이스 일기 앱 (서버 없이 폰에서 AI 이미지 생성)</span></div>
+        <div class="job-title"><a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">ondevice-imagen</a> <span class="genre">— 날씨·장소·시간 같은 메타정보를 토대로 그림엽서 이미지를 온디바이스에서 생성하는 앱</span></div>
         <div class="job-meta">실기기 검증 · 연구 R&amp;D</div>
       </div>
       <div class="job-sub"><span class="stack">Kotlin · ONNX Runtime · Python</span></div>
       <ul class="bul">
-        <li><b>Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현</b> — CLIP BPE 토크나이저·Karras/Euler 스케줄러·CFG·IEEE754 fp16 코덱까지 구현</li>
-        <li>PC diffusers 대비 각 단계를 golden reference로 <span class="metric">bit-match 검증</span>(1e-4 이내), Android 메모리 제약(LMK)에 맞춰 peak RSS를 낮춰 실기기 512² 생성 (Galaxy S25 Ultra 5분 37초)</li>
+        <li>Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 구현</li>
+        <li>모바일 기기에서 로컬 모델을 이용한 이미지 생성이 어느 수준까지 되는지 리서치</li>
       </ul>
     </div>
 
@@ -606,8 +606,8 @@
       </div>
       <div class="job-sub"><span class="stack">Vanilla JS · Node · Vercel</span></div>
       <ul class="bul">
-        <li>단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)·PWA·GA4</li>
-        <li><b>200+개 언어 i18n</b> — 언어별 구절 verbatim 대조·역번역 의미 검증·링크 감사를 자동화한 <span class="metric">번역 품질 게이트</span></li>
+        <li>단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)</li>
+        <li>현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치</li>
       </ul>
     </div>
 
@@ -619,7 +619,7 @@
       <div class="job-sub"><span class="stack">Godot · C#</span></div>
       <ul class="bul">
         <li><b>노드/GC 없는 데이터지향 엔진</b> — 엔티티 SoA 배열·단일 드로우콜 MultiMesh 배칭·물리엔진 대신 자작 공간해시로 화면 내 <span class="metric">1만+ 엔티티 60fps</span> 렌더링</li>
-        <li>5막 캠페인·엔드게임 균열·보석/장비 성장 등 게임 전체 구성</li>
+        <li>최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치</li>
       </ul>
     </div>
 
@@ -630,8 +630,8 @@
       </div>
       <div class="job-sub"><span class="stack">Python · Next.js · Supabase</span></div>
       <ul class="bul">
-        <li><b>수집 → 분석 → 백테스트 → 알림까지 프로덕션 운영</b> — 시세·재무·거시 데이터를 추세·패턴·거래량으로 분석하고 텔레그램/PWA로 알림 (Vercel · Supabase · 크론 8개 · CI)</li>
-        <li><b>백테스트 엔진</b> — 상장폐지 반영 시뮬레이터·walk-forward 검증·<span class="metric">look-ahead/PIT 편향 감사</span></li>
+        <li>데이터 수집 → 분석 → 백테스트 → 알림까지 프로덕션으로 직접 운영 (Vercel · Supabase · 크론 8개 · CI)</li>
+        <li>규칙 기반 추세추종 전략이 편향(look-ahead·생존자·상장폐지)을 배제한 백테스트에서 실제로 유효한지 리서치</li>
       </ul>
     </div>
   </section>
@@ -788,32 +788,32 @@
       <li>폰 원격(계정 불필요) — PIN·QR로 연결해 폰 브라우저에서 진행 확인·도구 승인·모델 전환. 하드웨어 감지(NVIDIA/Vulkan/Metal) 등 35개 모듈 27,515 LOC</li>
     </ul>
 
-    <div class="exp">ondevice-imagen — 기록(날씨·장소·시간)을 그림엽서로 그려주는 온디바이스 일기 앱 <span class="m">· 연구 R&amp;D · <a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">github.com/jungrok5/ondevice-imagen</a></span></div>
+    <div class="exp">ondevice-imagen — 날씨·장소·시간 같은 메타정보를 토대로 그림엽서 이미지를 온디바이스에서 생성하는 앱 <span class="m">· 연구 R&amp;D · <a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">github.com/jungrok5/ondevice-imagen</a></span></div>
     <div class="tech">기술: Kotlin, ONNX Runtime, Python</div>
     <ul>
-      <li>Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현 — CLIP BPE 토크나이저·Karras/Euler 스케줄러·CFG·IEEE754 fp16 코덱까지 구현</li>
-      <li>PC diffusers 대비 단계별 golden reference bit-match 검증(1e-4 이내), Android 메모리 제약(LMK)에 맞춰 peak RSS를 낮춰 실기기 512² 생성 (Galaxy S25 Ultra 5분 37초)</li>
+      <li>Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 구현</li>
+      <li>모바일 기기에서 로컬 모델을 이용한 이미지 생성이 어느 수준까지 되는지 리서치</li>
     </ul>
 
     <div class="exp">one-scroll-bible — 성경 전체의 구속사를 한 화면 스크롤로 풀어낸 다국어 모바일 웹 (200+개 언어) <span class="m">· 라이브 · <a href="https://github.com/jungrok5/one-scroll-bible" target="_blank" rel="noopener">github.com/jungrok5/one-scroll-bible</a></span></div>
     <div class="tech">기술: Vanilla JS, Node, Vercel</div>
     <ul>
-      <li>단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)·PWA·GA4</li>
-      <li>200+개 언어 i18n — 언어별 구절 verbatim 대조·역번역 의미 검증·링크 감사를 자동화한 번역 품질 게이트</li>
+      <li>단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)</li>
+      <li>현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치</li>
     </ul>
 
     <div class="exp">Hellfarm <span title="비공개 저장소">🔒</span> — 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android) <span class="m">· 1인 개발 · 🔒 비공개</span></div>
     <div class="tech">기술: Godot, C#</div>
     <ul>
       <li>노드/GC 없는 데이터지향 엔진 — 엔티티 SoA 배열·단일 드로우콜 MultiMesh 배칭·자작 공간해시로 화면 내 1만+ 엔티티 60fps 렌더링</li>
-      <li>5막 캠페인·엔드게임 균열·성장 시스템 등 게임 전체 구성</li>
+      <li>최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치</li>
     </ul>
 
     <div class="exp">thesauros — 한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스 <span class="m">· 라이브 운영 · <a href="https://github.com/jungrok5/thesauros" target="_blank" rel="noopener">github.com/jungrok5/thesauros</a></span></div>
     <div class="tech">기술: Python, Next.js, Supabase</div>
     <ul>
-      <li>시세·재무·거시 데이터 수집 → 추세·패턴·거래량 분석 → 백테스트 → 텔레그램/PWA 알림까지 프로덕션 운영 (Vercel·Supabase·크론 8개·CI)</li>
-      <li>백테스트 엔진 — 상장폐지 반영 시뮬레이터·walk-forward 검증·look-ahead/PIT 편향 감사</li>
+      <li>데이터 수집 → 분석 → 백테스트 → 알림까지 프로덕션으로 직접 운영 (Vercel·Supabase·크론 8개·CI)</li>
+      <li>규칙 기반 추세추종 전략이 편향(look-ahead·생존자·상장폐지)을 배제한 백테스트에서 실제로 유효한지 리서치</li>
     </ul>
 
     <h2>기술 스택</h2>
@@ -1443,32 +1443,36 @@
 <li><strong>엔지니어링</strong>: 하드웨어 감지 NVIDIA(nvidia-smi)/AMD·Vulkan/Apple Metal, JIT 프로비저너(모델 선택→llama.cpp 다운로드→인자 튜닝→채팅 배선 자동화), 실제 import를 grep해 미연결 모듈을 표시하는 자가 감사 리포트. 대부분 모듈이 자체 단위 테스트 포함.</li>
 </ul>
 <hr />
-<h3>4-2. ondevice-imagen — 온디바이스 일기 앱</h3>
+<h3>4-2. ondevice-imagen — 온디바이스 이미지 생성 앱</h3>
 <ul>
-<li><strong>무엇</strong>: 하루의 기록(날씨·장소·시간)을 입력하면 그날을 그림엽서로 그려주는 일기 앱. 데이터를 서버로 보내지 않고 <strong>폰 안에서</strong> AI 이미지를 생성.</li>
+<li><strong>무엇</strong>: 날씨·장소·시간 같은 메타정보를 토대로 그림엽서 이미지를 온디바이스에서 생성하는 앱.</li>
 <li><strong>기술</strong>: Kotlin · ONNX Runtime · Python · <a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">github.com/jungrok5/ondevice-imagen</a> (실기기 검증, 연구 R&amp;D)</li>
-<li><strong>구현</strong>: Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현 — CLIP byte-level BPE 토크나이저·Karras 시그마 스케줄·Euler step·CFG 배치·<strong>IEEE754 fp32↔fp16 코덱(round-to-nearest-even·subnormal 처리)까지 구현</strong>. PC diffusers 대비 각 단계를 golden reference 스크립트로 <strong>bit-match 검증(1e-4 이내)</strong>, Android low-memory-killer 대응으로 ORT memory pattern/arena를 끄고 peak RSS를 낮춰 <strong>실기기 512² 생성</strong>(Galaxy S25 Ultra 5분 37초). NNAPI USE_FP16이 2배 느리고 LoRA 효과를 wash-out시키는 결과까지 실측·기록.</li>
+<li><strong>구현</strong>: Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 구현.</li>
+<li><strong>리서치</strong>: 모바일 기기에서 로컬 모델을 이용한 이미지 생성이 어느 수준까지 되는지 리서치.</li>
 </ul>
 <hr />
 <h3>4-3. one-scroll-bible — 다국어 성경 스크롤 웹 (200+개 언어)</h3>
 <ul>
-<li><strong>무엇</strong>: 성경 전체의 구속사(창조→타락→…→회복)를 한 화면 세로 스크롤로 풀어낸 모바일 웹. 200+개 언어 지원.</li>
+<li><strong>무엇</strong>: 성경 전체의 구속사를 한 화면 스크롤로 풀어낸 다국어 모바일 웹 (200+개 언어).</li>
 <li><strong>기술</strong>: Vanilla JS · Node · Vercel · <a href="https://github.com/jungrok5/one-scroll-bible" target="_blank" rel="noopener">github.com/jungrok5/one-scroll-bible</a> (라이브 · <a href="https://one-scroll-bible.com/" target="_blank" rel="noopener">one-scroll-bible.com</a>)</li>
-<li><strong>구현</strong>: 단일 HTML 앱 + 언어별 정적 페이지를 프리렌더하는 빌드 파이프라인(SEO용 JSON-LD·hreflang·sitemap·llms.txt 자동 생성), PWA(서비스 워커)·GA4. 200+개 언어 i18n을 언어별 구절 verbatim 대조·역번역 의미 검증·링크 감사로 자동 게이팅하는 번역 품질 파이프라인 구축.</li>
+<li><strong>구현</strong>: 단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap).</li>
+<li><strong>리서치</strong>: 현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치.</li>
 </ul>
 <hr />
 <h3>4-4. Hellfarm 🔒 — 핵앤슬래시 액션 게임 (Windows·Android)</h3>
 <ul>
-<li><strong>무엇</strong>: 디아블로식 아이템 파밍과 뱀서라이크(대규모 몹 처치)를 합친 한 손 조작 액션 게임. 5막 캠페인 + 엔드게임 균열 + 보석/장비 성장.</li>
+<li><strong>무엇</strong>: 디아블로식 아이템 파밍과 뱀서라이크(대규모 몹 처치)를 합친 한 손 조작 액션 게임.</li>
 <li><strong>기술</strong>: Godot · C# · 🔒 비공개</li>
-<li><strong>구현</strong>: 노드/GC 없는 데이터지향 엔진 — 엔티티를 SoA(struct-of-arrays) 배열로 관리, 단일 드로우콜 MultiMesh 배칭(프레임당 인스턴스 버퍼 1회 업로드), 물리엔진 대신 배열 기반 zero-allocation 공간해시로 충돌 처리. GL Compatibility 드라이버 특성(INSTANCE_CUSTOM 신뢰성·고정 InstanceCount)을 반영해 화면 내 <strong>1만+ 엔티티를 60fps로 렌더링</strong>.</li>
+<li><strong>구현</strong>: 노드/GC 없는 데이터지향 엔진(엔티티 SoA 배열·단일 드로우콜 MultiMesh 배칭·물리엔진 대신 자작 공간해시)으로 화면 내 <strong>1만+ 엔티티를 60fps로 렌더링</strong>.</li>
+<li><strong>리서치</strong>: 최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치.</li>
 </ul>
 <hr />
 <h3>4-5. thesauros — 주식 분석·알림 서비스 (한국·미국)</h3>
 <ul>
-<li><strong>무엇</strong>: 한국·미국 주식의 매수 타이밍을 알려주는 추세추종 기반 분석·알림 서비스. 조건에 맞는 자리가 뜨면 텔레그램/PWA로 통지.</li>
+<li><strong>무엇</strong>: 한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스.</li>
 <li><strong>기술</strong>: Python · Next.js · Supabase · <a href="https://github.com/jungrok5/thesauros" target="_blank" rel="noopener">github.com/jungrok5/thesauros</a> (라이브 운영 중)</li>
-<li><strong>구현</strong>: 시세·재무·거시 데이터(10여 개 외부 API)를 수집 → 추세·패턴·거래량 분석 엔진 → 백테스트 → 알림까지 전체를 프로덕션 운영(Vercel·Supabase·GitHub Actions 크론 8개·CI·OAuth). 백테스트 엔진 — 상장폐지 반영 시뮬레이터·walk-forward 검증·부트스트랩 p값, <strong>look-ahead/PIT(point-in-time) 편향 감사</strong>로 로버스트니스 미달 전략 배제.</li>
+<li><strong>구현</strong>: 데이터 수집 → 분석 → 백테스트 → 알림까지 프로덕션으로 직접 운영 (Vercel·Supabase·크론 8개·CI).</li>
+<li><strong>리서치</strong>: 규칙 기반 추세추종 전략이 편향(look-ahead·생존자·상장폐지)을 배제한 백테스트에서 실제로 유효한지 리서치.</li>
 </ul>
 <hr />
 <h2>5. 기술 스택</h2>

@@ -156,25 +156,25 @@ GitHub: https://github.com/jungrok5
   - 양자화 모델용 도구 재설계(프롬프트 1/8·편집 9방식), 도구 호출에 의존하지 않는 메모리,
     작은 컨텍스트에 모든 입력을 담는 설계, 계정 없는 폰 원격 — 35개 모듈 27,515 LOC
 
-● ondevice-imagen — 기록(날씨·장소·시간)을 그림엽서로 그려주는 온디바이스 일기 앱
+● ondevice-imagen — 날씨·장소·시간 같은 메타정보를 토대로 그림엽서 이미지를 온디바이스에서 생성하는 앱
   Kotlin · ONNX Runtime · Python | 실기기 검증, 연구 R&D | github.com/jungrok5/ondevice-imagen
-  - Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현
-    (CLIP BPE 토크나이저·Karras/Euler 스케줄러·CFG·IEEE754 fp16 코덱)
-  - PC diffusers 대비 단계별 bit-match 검증(1e-4), 메모리 제약(LMK) 넘겨 실기기 512² 생성(S25 Ultra 5분 37초)
+  - Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 구현
+  - 모바일 기기에서 로컬 모델을 이용한 이미지 생성이 어느 수준까지 되는지 리서치
 
-● one-scroll-bible — 성경 전체 구속사를 한 화면 스크롤로 풀어낸 다국어 모바일 웹 (200+개 언어)
+● one-scroll-bible — 성경 전체의 구속사를 한 화면 스크롤로 풀어낸 다국어 모바일 웹 (200+개 언어)
   Vanilla JS · Node · Vercel | 라이브 · one-scroll-bible.com | github.com/jungrok5/one-scroll-bible
-  - 단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인(SEO·PWA)
-  - 200+개 언어 i18n을 구절 verbatim 대조·역번역 의미 검증·링크 감사로 자동 게이팅하는 번역 품질 파이프라인
+  - 단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)
+  - 현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치
 
 ● Hellfarm 🔒 — 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android)
   Godot · C# | 1인 개발 · 비공개
   - 노드/GC 없는 데이터지향 엔진(SoA 배열·단일 드로우콜 MultiMesh·자작 공간해시)으로 1만+ 엔티티 60fps 렌더링
+  - 최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치
 
 ● thesauros — 한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스
   Python · Next.js · Supabase | 라이브 운영 중 | github.com/jungrok5/thesauros
-  - 수집→분석→백테스트→알림까지 프로덕션 운영(Vercel·Supabase·크론 8개·CI)
-  - 백테스트 엔진: 상장폐지 반영 시뮬레이터·walk-forward 검증·look-ahead/PIT 편향 감사
+  - 데이터 수집 → 분석 → 백테스트 → 알림까지 프로덕션으로 직접 운영 (Vercel·Supabase·크론 8개·CI)
+  - 규칙 기반 추세추종 전략이 편향(look-ahead·생존자·상장폐지)을 배제한 백테스트에서 실제로 유효한지 리서치
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [ 보유 기술 / Skills ]
