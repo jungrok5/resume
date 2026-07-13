@@ -43,6 +43,9 @@ function Summary() {
     <div className="summary">
       <div>
         <h3>개인 프로젝트 (GitHub)</h3>
+        <p style={{ color: 'var(--ink-faint)', margin: '0 0 8px', fontSize: '.86em' }}>
+          AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 실험해 본 프로젝트들.
+        </p>
         <ul>
           {projects.map((p) => (
             <li key={p.name}>
