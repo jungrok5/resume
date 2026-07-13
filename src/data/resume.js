@@ -321,7 +321,7 @@ export const timeline = [
 export const projects = [
   {
     name: 'ZeroLlama',
-    tag: '소비자용 GPU에서 로컬 LLM으로 코딩할 때 다들 겪는 실패(편집 안 먹힘·컨텍스트 폭발·메모리 미작동·좋은 카드도 그대로·OOM)를 하나씩 없앤 로컬 전용 코딩 도구 (VS Code 확장)',
+    tag: '소비자용 GPU의 로컬 모델 시나리오를 위해 만든 에이전틱 코딩 클라이언트 (VS Code 확장)',
     href: 'https://github.com/jungrok5/zerollama',
     private: true,
     tech: 'TypeScript · llama.cpp',
