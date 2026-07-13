@@ -154,7 +154,8 @@ GitHub: https://github.com/jungrok5
   - 자동 튜닝: 복잡한 옵션 없이 GPU·VRAM에 맞춰 적합한 모델·양자화 제안 + ngl·컨텍스트 최적 설정.
     MoE 전문가를 CPU RAM으로 오프로드해 8GB VRAM으로도 35B급(활성 ~3B) 구동
   - 양자화 모델용 도구 재설계(프롬프트 1/8·편집 9방식), 도구 호출에 의존하지 않는 메모리,
-    작은 컨텍스트에 모든 입력을 담는 설계, 계정 없는 폰 원격 — 35개 모듈 27,515 LOC
+    작은 컨텍스트에 모든 입력을 담는 설계 — 35개 모듈 27,515 LOC
+  - 소비자용 GPU에서 로컬 모델 코딩이 어느 수준까지 되는지 리서치
 
 ● ondevice-imagen — 날씨·장소·시간 같은 메타정보를 토대로 그림엽서 이미지를 온디바이스에서 생성하는 앱
   Kotlin · ONNX Runtime · Python | 실기기 검증, 연구 R&D | github.com/jungrok5/ondevice-imagen
@@ -174,7 +175,7 @@ GitHub: https://github.com/jungrok5
 ● thesauros — 한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스
   Python · Next.js · Supabase | 라이브 운영 중 | github.com/jungrok5/thesauros
   - 데이터 수집 → 분석 → 백테스트 → 알림까지 프로덕션으로 직접 운영 (Vercel·Supabase·크론 8개·CI)
-  - 규칙 기반 추세추종 전략이 편향(look-ahead·생존자·상장폐지)을 배제한 백테스트에서 실제로 유효한지 리서치
+  - AI를 통한 주식 매매의 효용성 리서치
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [ 보유 기술 / Skills ]
