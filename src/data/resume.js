@@ -337,14 +337,14 @@ export const projects = [
   },
   {
     name: 'ondevice-imagen',
-    tag: '기록(날씨·장소·시간)을 그림엽서로 그려주는 온디바이스 일기 앱 — 서버 없이 폰에서 AI 이미지 생성',
+    tag: '날씨·장소·시간 같은 메타정보를 토대로 그림엽서 이미지를 온디바이스에서 생성하는 앱',
     href: 'https://github.com/jungrok5/ondevice-imagen',
     tech: 'Kotlin · ONNX Runtime · Python',
     note: '실기기 검증 · 연구 R&D',
-    metric: '실기기 512² 생성',
+    metric: '온디바이스 생성',
     points: [
-      'Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 바닥부터 재구현 — CLIP BPE 토크나이저·Karras/Euler 스케줄러·CFG·IEEE754 fp16 코덱까지 구현',
-      'PC diffusers 대비 각 단계를 golden reference로 bit-match 검증(1e-4 이내), Android 메모리 제약(LMK)에 맞춰 peak RSS를 낮춰 실기기 512² 생성 (Galaxy S25 Ultra 5분 37초)',
+      'Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 구현',
+      '모바일 기기에서 로컬 모델을 이용한 이미지 생성이 어느 수준까지 되는지 리서치',
     ],
   },
   {
@@ -355,8 +355,8 @@ export const projects = [
     note: '라이브 · one-scroll-bible.com',
     metric: '200+개 언어',
     points: [
-      '단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)·PWA·GA4',
-      '200+개 언어 i18n — 언어별 구절 verbatim 대조·역번역 의미 검증·링크 감사를 자동화한 번역 품질 게이트',
+      '단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)',
+      '현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치',
     ],
   },
   {
@@ -368,7 +368,7 @@ export const projects = [
     metric: '1만+ 엔티티 60fps',
     points: [
       '노드/GC 없는 데이터지향 엔진 — 엔티티 SoA 배열·단일 드로우콜 MultiMesh 배칭·물리엔진 대신 자작 공간해시로 화면 내 1만+ 엔티티를 60fps로 렌더링',
-      '5막 캠페인·엔드게임 균열·보석/장비 성장 등 게임 전체 구성',
+      '최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치',
     ],
   },
   {
@@ -379,8 +379,8 @@ export const projects = [
     note: '라이브 운영 중',
     metric: '프로덕션 운영',
     points: [
-      '시세·재무·거시 데이터 수집 → 추세·패턴·거래량 분석 → 백테스트 → 텔레그램/PWA 알림까지 프로덕션 운영 (Vercel · Supabase · 크론 8개 · CI)',
-      '백테스트 엔진 — 상장폐지 반영 시뮬레이터·walk-forward 검증·look-ahead/PIT 편향 감사',
+      '데이터 수집 → 분석 → 백테스트 → 알림까지 프로덕션으로 직접 운영 (Vercel · Supabase · 크론 8개 · CI)',
+      '규칙 기반 추세추종 전략이 편향(look-ahead·생존자·상장폐지)을 배제한 백테스트에서 실제로 유효한지 리서치',
     ],
   },
 ]
