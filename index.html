@@ -574,7 +574,7 @@
 
     <div class="job">
       <div class="job-head">
-        <div class="job-title">ZeroLlama <span class="lock" title="비공개 저장소">🔒</span> <span class="genre">— 소비자용 GPU에서 로컬 LLM으로 "실제 쓸 만하게" 코딩하는 도구 (VS Code 확장)</span></div>
+        <div class="job-title">ZeroLlama <span class="lock" title="비공개 저장소">🔒</span> <span class="genre">— 소비자용 GPU의 로컬 모델 시나리오를 위해 만든 에이전틱 코딩 클라이언트 (VS Code 확장)</span></div>
         <div class="job-meta">pre-alpha</div>
       </div>
       <div class="job-sub"><span class="stack">TypeScript · llama.cpp</span></div>
@@ -778,7 +778,7 @@
 
     <h2>개인 프로젝트 (GitHub)</h2>
 
-    <div class="exp">ZeroLlama <span title="비공개 저장소">🔒</span> — 소비자용 GPU에서 로컬 LLM으로 "실제 쓸 만하게" 코딩하는 도구 (VS Code 확장) <span class="m">· pre-alpha · 🔒 비공개</span></div>
+    <div class="exp">ZeroLlama <span title="비공개 저장소">🔒</span> — 소비자용 GPU의 로컬 모델 시나리오를 위해 만든 에이전틱 코딩 클라이언트 (VS Code 확장) <span class="m">· pre-alpha · 🔒 비공개</span></div>
     <div class="tech">기술: TypeScript, llama.cpp</div>
     <ul>
       <li>로컬 모델로 코딩하면 다들 겪는 실패(편집 안 먹힘·컨텍스트 폭발·메모리 미작동·좋은 카드도 그대로·8GB에 35B OOM)를 하나씩 없앤 로컬 전용 코딩 도구</li>
@@ -1428,7 +1428,7 @@
 <hr />
 <h2>4. 개인 프로젝트 (GitHub)</h2>
 
-<h3>4-1. ZeroLlama 🔒 — 로컬 LLM 코딩 도구 (VS Code 확장)</h3>
+<h3>4-1. ZeroLlama 🔒 — 소비자용 GPU의 로컬 모델 시나리오를 위해 만든 에이전틱 코딩 클라이언트 (VS Code 확장)</h3>
 <ul>
 <li><strong>무엇 (왜 만들었나)</strong>: 로컬 LLM으로 코딩을 시도한 사람 대부분은 "역시 로컬은 안 되네" 하고 클라우드로 돌아간다 — 편집 블록이 매번 안 맞아 아무것도 안 붙고, 추론 모델의 <code>&lt;think&gt;</code>가 컨텍스트를 금세 채우고, 메모리 기능은 모델이 tool을 안 불러 작동 안 하고, 비싼 카드를 사도 체감이 그대로고, "8GB에 35B 올라간다"는 글대로 하면 OOM. 이 문제들은 기존 도구가 <strong>클라우드 대형 모델(200K 컨텍스트·거의 100% 지시 준수)을 전제로 설계</strong>됐기 때문이다. ZeroLlama는 소비자용 GPU(4~24GB·양자화 모델)에서 그 실패들을 하나씩 없앤 <strong>로컬 전용 코딩 도구</strong>다.</li>
 <li><strong>기술</strong>: TypeScript · llama.cpp · 🔒 비공개 (pre-alpha) · <code>src/zerollama/</code> 아래 35개 모듈 <strong>27,515 LOC(테스트 제외)</strong> 서브시스템</li>
