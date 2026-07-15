@@ -26,7 +26,8 @@ for GitHub Pages, Search Console, and analytics setup.
 - **SEO / AI**: JSON-LD (`ProfilePage`/`Person`), OG image (1200×630),
   `sitemap.xml`, `robots.txt` (AI crawlers explicitly allowed), `llms.txt`
   (structured summary for LLM crawlers).
-- **Deploy**: GitHub Actions → GitHub Pages on every push to `main`.
+- **Deploy**: GitHub Actions → GitHub Pages on every push to `main`
+  (auto-retries once on the intermittent Pages backend flake).
 
 ## Optimization techniques used
 
@@ -64,9 +65,10 @@ for GitHub Pages, Search Console, and analytics setup.
 **Loading**
 - `<Preload all />` compiles every scene's shaders up front — no mid-scroll
   compile hitches (the web equivalent of PSO precaching)
-- Code splitting: `three` (683 KB) / `r3f` / `react` vendor chunks are
+- Code splitting: `three` (683 KB) / `r3f` (287 KB) / `react` vendor chunks are
   cache-stable across content deploys — a content edit re-ships only the
-  ~54 KB app chunk; postprocessing lives in its own lazy chunk
+  ~62 KB app chunk; postprocessing lives in its own lazy chunk (never
+  downloaded on mobile)
 - Web fonts load non-blocking (preload + media swap), GA/Clarity async
 
 **Scroll feel**
@@ -75,6 +77,10 @@ for GitHub Pages, Search Console, and analytics setup.
 - 3D page: native scroll input, damped (0.15) camera/overlay follow; unified
   custom scrollbars and a scrollbar-width-compensated top bar so switching
   pages causes zero layout shift
+- Scene↔text sync: panel centers are measured at runtime and scroll offset is
+  remapped through a piecewise-linear timewarp, so each scene peaks exactly as
+  its panel reaches screen center — on any viewport, even when long panels
+  stretch the layout (mobile). Falls back to a uniform grid pre-measurement
 
 ## Run locally
 
@@ -100,6 +106,7 @@ src/
     SceneRig.jsx          scene registry; each scene culls itself by scroll range
     CameraRig.jsx         per-section camera keyframes (lib/cameras.js)
     ScrollBridge.jsx      scroll → store/gauge/GA bridge (no re-renders)
+    lib/scrollMap.js      measured panel centers → scroll-offset timewarp (scene sync)
     scenes/               one file per section (17)
 ```
 
