@@ -363,6 +363,15 @@
     border-radius: 999px;
   }
   .switcher a.view3d:hover { color: #fff; text-decoration: none; }
+  /* 기본 이력서 PDF 저장 버튼 — 탭과 같은 다크 톤 */
+  .pdfbtn {
+    flex: none; display: inline-flex; align-items: center; gap: 5px;
+    height: 26px; padding: 0 12px;
+    background: #0b0f18; border: 1px solid rgba(120, 140, 190, 0.16); border-radius: 999px;
+    color: #a9b3cc; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .pdfbtn:hover { color: #fff; border-color: rgba(120, 140, 190, 0.3); }
+  .pdfbtn svg { width: 13px; height: 13px; }
   .view { display: none; }
   .view.on { display: block; }
 
@@ -426,6 +435,10 @@
         <button data-view="detail">상세</button>
         <a class="view3d" href="./interactive.html" aria-label="3D 인터랙티브 이력서 보기">3D</a>
       </div>
+      <button class="pdfbtn" id="pdfDownload" title="기본 이력서를 PDF로 저장" aria-label="기본 이력서 PDF 다운로드">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>
+        PDF
+      </button>
       <button class="toggle" id="themeToggle" aria-label="테마 전환">◐</button>
     </div>
   </div>
@@ -1622,6 +1635,26 @@
       var qv = new URLSearchParams(location.search).get('view');
       if (qv) show(qv);
     } catch (e) {}
+
+    /* '기본' 이력서를 PDF로 저장 — 인쇄 스타일(@media print)이 기본 뷰
+       기준으로 튜닝돼 있어 브라우저 인쇄 대화상자의 'PDF로 저장'을 쓴다.
+       (텍스트 선택 가능·라이트 컬러 강제·페이지 브레이크 처리 그대로) */
+    var pdfBtn = document.getElementById('pdfDownload');
+    if (pdfBtn) {
+      pdfBtn.addEventListener('click', function () {
+        show('design');           // 상세 뷰였어도 기본으로 강제 전환 후 인쇄
+        window.scrollTo(0, 0);
+        if (window.gtag) window.gtag('event', 'pdf_download', { view: 'design' });
+        var prevTitle = document.title;
+        document.title = '오정록 이력서 (Jeongrok Oh)';  // 저장 파일명 기본값
+        function restore() {
+          document.title = prevTitle;
+          window.removeEventListener('afterprint', restore);
+        }
+        window.addEventListener('afterprint', restore);
+        setTimeout(function () { window.print(); }, 80);  // 뷰 전환 반영 뒤 인쇄
+      });
+    }
   })();
 
   /* ===== 스크롤 진행 게이지 + 현재 섹션 표시 ===== */
