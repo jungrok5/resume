@@ -177,6 +177,14 @@
   }
   .summary strong { font-weight: 700; }
   .summary .lead { color: var(--accent); font-weight: 700; }
+  /* 기본 뷰 → 상세 이력서로 안내하는 인라인 링크 */
+  .detail-link { margin: 2px 0 0; font-size: 13.5px; }
+  .detail-link a {
+    display: inline-flex; align-items: center; gap: 5px;
+    color: var(--accent); font-weight: 600; text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+  .detail-link a:hover { border-bottom-color: var(--accent); }
 
   /* Section */
   section { margin-top: 34px; }
@@ -303,6 +311,7 @@
     section, .theme, .early .row { break-inside: avoid; }
     a { color: var(--text); }
     .topbar, .switcher { display: none !important; }
+    .detail-link { display: none !important; }
   }
 
   /* ===== 고정 상단바 — 3D 페이지와 완전히 동일한 다크 바 =====
@@ -459,6 +468,9 @@
 
   <p class="summary">
     <strong>매니징보다 기술을 직접 주도하는 역할을 지향</strong>합니다. 디렉터 직책이 아닌 최전선 실무 트랙에서 <strong>설계 방향을 정하고 팀 표준을 세우는 방식으로 팀의 기술을 이끕니다.</strong>
+  </p>
+  <p class="detail-link">
+    <a href="./?view=detail" onclick="var b=document.querySelector('.switcher button[data-view=detail]');if(b){event.preventDefault();b.click();}">프로젝트별 실측 수치·기술 심화가 담긴 상세 이력서 보기 →</a>
   </p>
 
   <section>
