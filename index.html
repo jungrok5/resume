@@ -536,6 +536,7 @@
       <ul class="bul">
         <li><b>유저 창작 스크립트 런타임 R&amp;D</b> — 무패치 로직 다운로드 실행, 서버 권위 판정(치팅 방지) 구조를 백지에서 설계·프로토타이핑</li>
         <li><b>서버 구조 전환·성능 리서치</b> — 프로토타입(Node.js)을 C# 데디케이트 서버로 전환·구조 개선, 소켓/프로토콜 성능 규명(WebSocket vs TCP 등), 루아 런타임 부하를 정량 측정해 다인스턴스 스케일아웃 구조로 방향 결정</li>
+        <li><b>MMO 패킷 배칭 기법의 WebSocket 이식</b> — send 큐 + count 헤더 병합 전송(프레임당 최대 2,048패킷)·전송 완료 기반 적응형 플러시를 Node.js·C# 양쪽에 구현, 1,000+ 동시 커서 동기화의 기반. 동일 장비 비교 실측에서 브로드캐스트 처리량 <span class="metric">3배</span>(초당 37.5만 msg 무손실)·서버 CPU <span class="metric">1/7</span>, 클라 송신 배칭만으로도 서버 CPU <span class="metric">45%↓</span> — uWebSockets.js·Bun 등 고성능 런타임 위에서도 동일 재현됨을 검증</li>
         <li><b>웹 실시간 협업 에디터</b> — 브라우저에서 <span class="metric">1,000명 이상</span> 동시 커서 동기화, 충돌·병합 없는 동시 편집 구현</li>
         <li><b>클라이언트 엔진·플랫폼 선정 리서치</b> — Unity·Godot·웹(Three.js/React/Flutter)·모바일 네이티브 연동 매트릭스를 실증해 엔진·플랫폼 결정 근거 확보</li>
         <li><b>프랍 조합 미니게임 구현</b> — 서바이벌·페인트맨(팀전) 등을 유저 스크립트·프랍 메시지 교환만으로 제작, 한 공간에서 다중 게임 동시 플레이 실증 (사내 취업 설명회 공개 <a href="https://www.youtube.com/shorts/Jqbj27VUMDI" target="_blank" rel="noopener">영상</a>)</li>
@@ -1117,6 +1118,7 @@
 </ul>
 <p><strong>기술 심화</strong></p>
 <ul>
+<li><strong>MMO식 send/recv 패킷 배칭을 WebSocket에 이식</strong>: send 큐에 모아 count 헤더로 병합 전송(최대 2,048개)·수신측 일괄 파싱, 전송 완료 콜백 기반 적응형 플러시(저부하 저지연·고부하 고효율 자동 조절). Node.js·C# 동시 구현, 이후 ENP 서버 프로덕션 구조로 발전. 실측: 브로드캐스트 처리량 3배·서버 CPU 1/7, 클라 배칭 단독으로 서버 CPU 45% 절감, uWebSockets.js·Bun에 이식해도 동일 재현(언어·런타임 불문 유효 검증).</li>
 <li><strong>서버 아키텍처·부하 방법론</strong>: 방(room) 목적지 라우팅 특성상 L4 로드밸런싱 불가 → 커스텀 로드밸런서 설계, 정량 논거(동접 100만·서버당 7천 수렴 → SpaceService 142대)로 게이트웨이 직접 연결 채택. PING을 CLIENT/SERVER/NETWORK 계층으로 분해 계측(서버 네트워크 처리 3ms 미만). 봇 클라 자체 병목을 발견해 C#으로 재구현, 외형/데이터 캐릭터 분리로 순수 서버 부하 측정.</li>
 <li><strong>유저 창작 스크립트 런타임(핵심 R&amp;D)</strong>: "런타임 로직 레이어" 개념 정립(Static/Dynamic Layer, 무패치 런타임 코드·애셋 다운로드, Goal 판정은 서버 전용으로 치팅 방지). Godot 런타임 스크립트 주입 3종 기법을 엔진 소스 레벨까지 분석, MiniScriptApp(스페이스 앱)·SmartPropScript(프랍 앱, 프랍 간 메시지 교환)·스키마리스 커스텀 RPC 구현. GDScript↔VisualScript 변환 실험으로 노드 기능 해상도의 범용성-난이도 트레이드오프 도출.</li>
 <li><strong>클라 기술스택 검증</strong>: Unity vs Godot(GDScript/C#) 벤치, 멀티플랫폼 연동 매트릭스(Android/iOS Native+Godot 부분 렌더링, Three.js+WebView, Flutter·React+Godot) 실증, 웹 GDScript 에디터를 VSCode 플러그인(가상 파일시스템 확장)으로 포팅, EnpClient PCK 암호화(엔진 소스 수정, GDScript AES256 / PCK XOR, 로딩 영향 오차 내).</li>
