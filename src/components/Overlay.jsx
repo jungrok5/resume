@@ -46,6 +46,24 @@ function Summary() {
         <p style={{ color: 'var(--ink-faint)', margin: '0 0 8px', fontSize: '.86em' }}>
           AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 실험해 본 프로젝트들.
         </p>
+        {/* 프로젝트 실측 녹화 — media 필드가 있는 프로젝트만 (현재 Hellfarm 1개), 목록보다 먼저 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8, margin: '0 0 12px', maxWidth: 560 }}>
+          {projects.flatMap((p) => p.media || []).map((m) => (
+            <a key={m.src} href={m.src} target="_blank" rel="noreferrer">
+              <video
+                src={m.src}
+                autoPlay
+                loop
+                muted
+                playsInline
+                style={{ width: '100%', display: 'block', borderRadius: 8, background: '#000' }}
+              />
+              <span style={{ display: 'block', marginTop: 4, fontSize: 11, lineHeight: 1.5, color: 'var(--ink-faint)' }}>
+                {m.cap}
+              </span>
+            </a>
+          ))}
+        </div>
         <ul>
           {projects.map((p) => (
             <li key={p.name}>
@@ -63,22 +81,6 @@ function Summary() {
             </li>
           ))}
         </ul>
-        {/* 프로젝트 실측 캡처/녹화 — media 필드가 있는 프로젝트만 (현재 Hellfarm 1개) */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8, marginTop: 12, maxWidth: 560 }}>
-          {projects.flatMap((p) => p.media || []).map((m) => (
-            <a key={m.src} href={m.src} target="_blank" rel="noreferrer">
-              <img
-                src={m.src}
-                alt={m.cap}
-                loading="lazy"
-                style={{ width: '100%', display: 'block', borderRadius: 8, background: '#000', imageRendering: 'pixelated' }}
-              />
-              <span style={{ display: 'block', marginTop: 4, fontSize: 11, lineHeight: 1.5, color: 'var(--ink-faint)' }}>
-                {m.cap}
-              </span>
-            </a>
-          ))}
-        </div>
       </div>
       <div>
         <h3>기술 스택</h3>
