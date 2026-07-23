@@ -63,6 +63,22 @@ function Summary() {
             </li>
           ))}
         </ul>
+        {/* 프로젝트 실측 캡처/녹화 — media 필드가 있는 프로젝트만 (현재 Hellfarm 2개) */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+          {projects.flatMap((p) => p.media || []).map((m) => (
+            <a key={m.src} href={m.src} target="_blank" rel="noreferrer">
+              <img
+                src={m.src}
+                alt={m.cap}
+                loading="lazy"
+                style={{ width: '100%', display: 'block', borderRadius: 8, background: '#000' }}
+              />
+              <span style={{ display: 'block', marginTop: 4, fontSize: 11, lineHeight: 1.5, color: 'var(--ink-faint)' }}>
+                {m.cap}
+              </span>
+            </a>
+          ))}
+        </div>
       </div>
       <div>
         <h3>기술 스택</h3>

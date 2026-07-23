@@ -320,6 +320,25 @@ export const timeline = [
 // private: true 인 저장소는 비공개(자물쇠 표시, 링크 없음).
 export const projects = [
   {
+    name: 'Hellfarm',
+    tag: '디아블로식 파밍 + 뱀서라이크를 합친 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android)',
+    href: 'https://github.com/jungrok5/super-vs',
+    private: true,
+    tech: 'Godot · C#',
+    metric: '동시 100만 마리 시뮬레이션',
+    points: [
+      '노드/GC 없는 데이터지향 엔진 — 모든 엔티티를 SoA 플랫 배열로, 시스템당 드로우콜 1개(MultiMesh)·물리엔진 대신 배열 기반 공간해시로 동시 100만 마리 실제 시뮬레이션 (화면 내 935,424마리 실측 캡처)',
+      '호드 뭉침의 O(n²) 폭주를 38배 최적화 — 이웃 검사 하드바운드·화면 밖 LOD 시간분할·격프레임 그리드 재구축·무락 병렬화로 프레임당 2,500ms → 38ms. SIMD는 효과 0으로 측정·기각, 병목은 메모리 대역폭임을 규명',
+      '모바일 GL 드라이버 함정 규명·회피 — COLOR 채널 패킹·고정 InstanceCount·카메라 상대 좌표 재앵커링, 같은 코드가 모바일(캡 5만)에서도 구동',
+      '봇 셀프플레이 자동 테스트 — minFps·피크 객체 수 리포트, 릴리즈 전 테스트 게이트가 실패 시 배포 자동 중단',
+      '최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치',
+    ],
+    media: [
+      { src: 'hellfarm/million_battle.png', cap: '화면 내 933,639마리 실시뮬 — 디버그 라인의 obj 947,600이 실측값 (봇 인게임 캡처)' },
+      { src: 'hellfarm/gameplay.gif', cap: '봇이 직접 플레이한 실제 인게임 녹화 (셀프플레이 자동 테스트)' },
+    ],
+  },
+  {
     name: 'ZeroLlama',
     tag: '소비자용 GPU의 로컬 모델 시나리오를 위해 만든 에이전틱 코딩 클라이언트 (VS Code 확장)',
     href: 'https://github.com/jungrok5/zerollama',
@@ -357,21 +376,6 @@ export const projects = [
     points: [
       '단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)',
       '현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치',
-    ],
-  },
-  {
-    name: 'Hellfarm',
-    tag: '디아블로식 파밍 + 뱀서라이크를 합친 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android)',
-    href: 'https://github.com/jungrok5/super-vs',
-    private: true,
-    tech: 'Godot · C#',
-    metric: '동시 100만 마리 시뮬레이션',
-    points: [
-      '노드/GC 없는 데이터지향 엔진 — 모든 엔티티를 SoA 플랫 배열로, 시스템당 드로우콜 1개(MultiMesh)·물리엔진 대신 배열 기반 공간해시로 동시 100만 마리 실제 시뮬레이션 (화면 내 935,424마리 실측 캡처)',
-      '호드 뭉침의 O(n²) 폭주를 38배 최적화 — 이웃 검사 하드바운드·화면 밖 LOD 시간분할·격프레임 그리드 재구축·무락 병렬화로 프레임당 2,500ms → 38ms. SIMD는 효과 0으로 측정·기각, 병목은 메모리 대역폭임을 규명',
-      '모바일 GL 드라이버 함정 규명·회피 — COLOR 채널 패킹·고정 InstanceCount·카메라 상대 좌표 재앵커링, 같은 코드가 모바일(캡 5만)에서도 구동',
-      '봇 셀프플레이 자동 테스트 — minFps·피크 객체 수 리포트, 릴리즈 전 테스트 게이트가 실패 시 배포 자동 중단',
-      '최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치',
     ],
   },
   {
