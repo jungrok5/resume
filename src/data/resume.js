@@ -334,8 +334,7 @@ export const projects = [
       '최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치',
     ],
     media: [
-      { src: 'hellfarm/million_battle.png', cap: '화면 내 933,639마리 실시뮬 — 디버그 라인의 obj 947,600이 실측값 (봇 인게임 캡처)' },
-      { src: 'hellfarm/gameplay.gif', cap: '봇이 직접 플레이한 실제 인게임 녹화 (셀프플레이 자동 테스트)' },
+      { src: 'hellfarm/million_battle.gif', cap: '만렙 스킬 6종 vs 화면 내 86만 마리 실시뮬 — 처치 13.3만 → 18.4만 구간 인게임 녹화 (봇 셀프플레이, 피크 966,021마리)' },
     ],
   },
   {
