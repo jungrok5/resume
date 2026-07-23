@@ -365,9 +365,11 @@ export const projects = [
     href: 'https://github.com/jungrok5/super-vs',
     private: true,
     tech: 'Godot · C#',
-    metric: '1만+ 엔티티 60fps',
+    metric: '49,000마리 동시 206fps',
     points: [
-      '노드/GC 없는 데이터지향 엔진 — 엔티티 SoA 배열·단일 드로우콜 MultiMesh 배칭·물리엔진 대신 자작 공간해시로 화면 내 1만+ 엔티티를 60fps로 렌더링',
+      '노드/GC 없는 데이터지향 엔진 — 모든 엔티티를 SoA 플랫 배열로, 시스템당 드로우콜 1개(MultiMesh)·물리엔진 대신 배열 기반 공간해시로 한 화면 49,000마리 동시 206fps 실측 (실플레이 평균 573fps)',
+      '모바일 GL 드라이버 함정 규명·회피 — COLOR 채널 패킹·고정 InstanceCount·카메라 상대 좌표 재앵커링으로 안드로이드에서도 같은 물량 유지',
+      '봇 셀프플레이 자동 테스트 — minFps·피크 객체 수 리포트로 성능 회귀를 커밋 단위로 감시',
       '최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치',
     ],
   },

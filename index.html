@@ -648,7 +648,9 @@
       </div>
       <div class="job-sub"><span class="stack">Godot · C#</span></div>
       <ul class="bul">
-        <li><b>노드/GC 없는 데이터지향 엔진</b> — 엔티티 SoA 배열·단일 드로우콜 MultiMesh 배칭·물리엔진 대신 자작 공간해시로 화면 내 <span class="metric">1만+ 엔티티 60fps</span> 렌더링</li>
+        <li><b>노드/GC 없는 데이터지향 엔진</b> — 모든 적·탄환·이펙트·젬을 SoA 플랫 배열로 두고 시스템당 드로우콜 1개(MultiMesh·프레임당 버퍼 업로드 1회), 물리엔진 대신 배열 기반 공간해시(프레임당 힙 할당 0)로 한 화면 <span class="metric">49,000마리 동시 206fps</span> 실측 (실플레이 평균 573fps)</li>
+        <li><b>모바일 GL 드라이버 함정을 실기기로 규명·회피</b> — 인스턴스 데이터 COLOR 채널 패킹, 고정 InstanceCount, 카메라 상대 좌표 재앵커링으로 안드로이드에서도 같은 물량 유지</li>
+        <li>봇이 스스로 플레이하며 minFps·피크 객체 수를 리포트로 남기는 셀프플레이 자동 테스트 — 성능 회귀를 커밋 단위로 감시</li>
         <li>최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치</li>
       </ul>
     </div>
@@ -836,7 +838,9 @@
     <div class="exp">Hellfarm <span title="비공개 저장소">🔒</span> — 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android) <span class="m">· 1인 개발 · 🔒 비공개</span></div>
     <div class="tech">기술: Godot, C#</div>
     <ul>
-      <li>노드/GC 없는 데이터지향 엔진 — 엔티티 SoA 배열·단일 드로우콜 MultiMesh 배칭·자작 공간해시로 화면 내 1만+ 엔티티 60fps 렌더링</li>
+      <li>노드/GC 없는 데이터지향 엔진 — 모든 엔티티를 SoA 플랫 배열로, 시스템당 드로우콜 1개(MultiMesh)·물리엔진 대신 배열 기반 공간해시로 한 화면 49,000마리 동시 206fps 실측 (실플레이 평균 573fps)</li>
+      <li>모바일 GL 드라이버 함정 규명·회피 — COLOR 채널 패킹, 고정 InstanceCount, 카메라 상대 좌표 재앵커링으로 안드로이드에서도 같은 물량 유지</li>
+      <li>봇 셀프플레이 자동 테스트 — minFps·피크 객체 수 리포트로 성능 회귀를 커밋 단위로 감시</li>
       <li>최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치</li>
     </ul>
 
@@ -1497,7 +1501,10 @@
 <ul>
 <li><strong>무엇</strong>: 디아블로식 아이템 파밍과 뱀서라이크(대규모 몹 처치)를 합친 한 손 조작 액션 게임.</li>
 <li><strong>기술</strong>: Godot · C# · 🔒 비공개</li>
-<li><strong>구현</strong>: 노드/GC 없는 데이터지향 엔진(엔티티 SoA 배열·단일 드로우콜 MultiMesh 배칭·물리엔진 대신 자작 공간해시)으로 화면 내 <strong>1만+ 엔티티를 60fps로 렌더링</strong>.</li>
+<li><strong>구현</strong>: 노드/GC 없는 데이터지향 엔진 — 모든 적·탄환·이펙트·젬을 노드가 아닌 SoA 플랫 배열로 두고, 시스템당 드로우콜 1개(MultiMesh, <code>RenderingServer</code> 버퍼 업로드 프레임당 1회), 물리엔진 대신 배열 기반 공간해시 그리드(매 프레임 재구축, 힙 할당 0)로 충돌·범위 쿼리 전부 처리.</li>
+<li><strong>성능</strong>: 스트레스 테스트 실측 <strong>한 화면 49,000마리 동시 206fps</strong>(데스크톱), 실플레이 평균 573fps·최저 317fps. 동시 객체 용량 8만+ (적 50,000 · 이펙트 16,384 · 탄환/젬 각 8,192).</li>
+<li><strong>모바일</strong>: 안드로이드 GL Compatibility 함정을 실기기 회귀로 규명 — INSTANCE_CUSTOM 미신뢰 → 프레임/피격 플래시/틴트를 인스턴스 COLOR에 패킹, 런타임 버퍼 리사이즈 시 인스턴스 소실 → 고정 InstanceCount, 원점에서 멀어지면 배치 통째 소실 → 카메라 상대 좌표로 매 프레임 재앵커링.</li>
+<li><strong>검증</strong>: 봇이 스스로 플레이하는 자동 테스트 하네스(<code>--autotest</code>·<code>--stress</code>) — 스크린샷·minFps·피크 객체 수를 리포트로 남겨 성능 회귀를 커밋 단위로 감시.</li>
 <li><strong>리서치</strong>: 최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치.</li>
 </ul>
 <hr />
