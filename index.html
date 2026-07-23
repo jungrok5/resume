@@ -618,6 +618,39 @@
 
     <div class="job">
       <div class="job-head">
+        <div class="job-title">Hellfarm <span class="lock" title="비공개 저장소">🔒</span> <span class="genre">— 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android)</span></div>
+        <div class="job-meta">1인 개발</div>
+      </div>
+      <div class="job-sub"><span class="stack">Godot · C#</span></div>
+      <ul class="bul">
+        <li><b>노드/GC 없는 데이터지향 엔진</b> — 모든 적·탄환·이펙트·젬을 노드가 아닌 SoA 플랫 배열로 두고 시스템당 드로우콜 1개(MultiMesh·프레임당 버퍼 업로드 1회), 물리엔진 대신 배열 기반 공간해시로 <span class="metric">동시 100만 마리 실제 시뮬레이션</span> (화면 내 935,424마리 + 만렙 스킬 전투 실측 캡처)</li>
+        <li><b>호드 뭉침의 O(n²) 폭주를 38배 최적화</b> — 이웃 검사 하드바운드·화면 밖 LOD 시간분할·격프레임 그리드 재구축·무락(lock-free) 병렬화로 프레임당 <span class="metric">2,500ms → 38ms</span> (4코어·소프트웨어 GL 최악 조건). SIMD 프리패스는 효과 0으로 측정되어 기각 — 병목이 연산이 아닌 메모리 대역폭임을 규명</li>
+        <li><b>모바일 GL 드라이버 함정을 실기기로 규명·회피</b> — 인스턴스 데이터 COLOR 채널 패킹, 고정 InstanceCount, 카메라 상대 좌표 재앵커링. 같은 코드가 모바일(캡 5만)에서도 구동</li>
+        <li>봇이 스스로 플레이하며 minFps·피크 객체 수를 리포트로 남기는 셀프플레이 자동 테스트 — 릴리즈 전 테스트 게이트가 실패 시 배포를 자동 중단</li>
+        <li>최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치</li>
+      </ul>
+      <div class="shots">
+        <a href="hellfarm/million_battle.png" target="_blank" rel="noopener">
+          <img src="hellfarm/million_battle.png" alt="Hellfarm 100만 마리 스트레스 테스트 캡처" loading="lazy">
+          <span class="cap">화면 내 933,639마리 실시뮬 — 디버그 라인의 obj 947,600이 실측값 (봇 인게임 캡처)</span>
+        </a>
+        <a href="hellfarm/gameplay.gif" target="_blank" rel="noopener">
+          <img src="hellfarm/gameplay.gif" alt="Hellfarm 실제 게임플레이 GIF" loading="lazy">
+          <span class="cap">봇이 직접 플레이한 실제 인게임 녹화 (셀프플레이 자동 테스트)</span>
+        </a>
+        <a href="hellfarm/frozen_orb.gif" target="_blank" rel="noopener">
+          <img src="hellfarm/frozen_orb.gif" alt="프로즌 오브 스킬 GIF" loading="lazy">
+          <span class="cap">시그니처 스킬 '프로즌 오브' — 스킬 35종 전부 봇이 인게임 녹화</span>
+        </a>
+        <a href="hellfarm/lightning_fury.gif" target="_blank" rel="noopener">
+          <img src="hellfarm/lightning_fury.gif" alt="라이트닝 퓨리 스킬 GIF" loading="lazy">
+          <span class="cap">시그니처 스킬 '라이트닝 퓨리' — 연쇄 낙뢰 이펙트</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="job">
+      <div class="job-head">
         <div class="job-title">ZeroLlama <span class="lock" title="비공개 저장소">🔒</span> <span class="genre">— 소비자용 GPU의 로컬 모델 시나리오를 위해 만든 에이전틱 코딩 클라이언트 (VS Code 확장)</span></div>
         <div class="job-meta">pre-alpha · 35개 모듈 27,515 LOC</div>
       </div>
@@ -653,39 +686,6 @@
         <li>단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)</li>
         <li>현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치</li>
       </ul>
-    </div>
-
-    <div class="job">
-      <div class="job-head">
-        <div class="job-title">Hellfarm <span class="lock" title="비공개 저장소">🔒</span> <span class="genre">— 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android)</span></div>
-        <div class="job-meta">1인 개발</div>
-      </div>
-      <div class="job-sub"><span class="stack">Godot · C#</span></div>
-      <ul class="bul">
-        <li><b>노드/GC 없는 데이터지향 엔진</b> — 모든 적·탄환·이펙트·젬을 노드가 아닌 SoA 플랫 배열로 두고 시스템당 드로우콜 1개(MultiMesh·프레임당 버퍼 업로드 1회), 물리엔진 대신 배열 기반 공간해시로 <span class="metric">동시 100만 마리 실제 시뮬레이션</span> (화면 내 935,424마리 + 만렙 스킬 전투 실측 캡처)</li>
-        <li><b>호드 뭉침의 O(n²) 폭주를 38배 최적화</b> — 이웃 검사 하드바운드·화면 밖 LOD 시간분할·격프레임 그리드 재구축·무락(lock-free) 병렬화로 프레임당 <span class="metric">2,500ms → 38ms</span> (4코어·소프트웨어 GL 최악 조건). SIMD 프리패스는 효과 0으로 측정되어 기각 — 병목이 연산이 아닌 메모리 대역폭임을 규명</li>
-        <li><b>모바일 GL 드라이버 함정을 실기기로 규명·회피</b> — 인스턴스 데이터 COLOR 채널 패킹, 고정 InstanceCount, 카메라 상대 좌표 재앵커링. 같은 코드가 모바일(캡 5만)에서도 구동</li>
-        <li>봇이 스스로 플레이하며 minFps·피크 객체 수를 리포트로 남기는 셀프플레이 자동 테스트 — 릴리즈 전 테스트 게이트가 실패 시 배포를 자동 중단</li>
-        <li>최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치</li>
-      </ul>
-      <div class="shots">
-        <a href="hellfarm/million_battle.png" target="_blank" rel="noopener">
-          <img src="hellfarm/million_battle.png" alt="Hellfarm 100만 마리 스트레스 테스트 캡처" loading="lazy">
-          <span class="cap">화면 내 933,639마리 실시뮬 — 디버그 라인의 obj 947,600이 실측값 (봇 인게임 캡처)</span>
-        </a>
-        <a href="hellfarm/gameplay.gif" target="_blank" rel="noopener">
-          <img src="hellfarm/gameplay.gif" alt="Hellfarm 실제 게임플레이 GIF" loading="lazy">
-          <span class="cap">봇이 직접 플레이한 실제 인게임 녹화 (셀프플레이 자동 테스트)</span>
-        </a>
-        <a href="hellfarm/frozen_orb.gif" target="_blank" rel="noopener">
-          <img src="hellfarm/frozen_orb.gif" alt="프로즌 오브 스킬 GIF" loading="lazy">
-          <span class="cap">시그니처 스킬 '프로즌 오브' — 스킬 35종 전부 봇이 인게임 녹화</span>
-        </a>
-        <a href="hellfarm/lightning_fury.gif" target="_blank" rel="noopener">
-          <img src="hellfarm/lightning_fury.gif" alt="라이트닝 퓨리 스킬 GIF" loading="lazy">
-          <span class="cap">시그니처 스킬 '라이트닝 퓨리' — 연쇄 낙뢰 이펙트</span>
-        </a>
-      </div>
     </div>
 
     <div class="job">
@@ -844,6 +844,16 @@
     <h2>개인 프로젝트 (GitHub)</h2>
     <p class="pre-note">AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 실험해 본 프로젝트들.</p>
 
+    <div class="exp">Hellfarm <span title="비공개 저장소">🔒</span> — 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android) <span class="m">· 1인 개발 · 🔒 비공개</span></div>
+    <div class="tech">기술: Godot, C#</div>
+    <ul>
+      <li>노드/GC 없는 데이터지향 엔진 — 모든 엔티티를 SoA 플랫 배열로, 시스템당 드로우콜 1개(MultiMesh)·물리엔진 대신 배열 기반 공간해시로 동시 100만 마리 실제 시뮬레이션 (화면 내 935,424마리 실측 캡처)</li>
+      <li>호드 뭉침의 O(n²) 폭주를 38배 최적화 — 이웃 검사 하드바운드·화면 밖 LOD 시간분할·격프레임 그리드 재구축·무락 병렬화로 프레임당 2,500ms → 38ms (4코어·소프트웨어 GL 최악 조건). SIMD는 효과 0으로 측정·기각, 병목은 메모리 대역폭임을 규명</li>
+      <li>모바일 GL 드라이버 함정 규명·회피 — COLOR 채널 패킹, 고정 InstanceCount, 카메라 상대 좌표 재앵커링. 같은 코드가 모바일(캡 5만)에서도 구동</li>
+      <li>봇 셀프플레이 자동 테스트 — minFps·피크 객체 수 리포트, 릴리즈 전 테스트 게이트가 실패 시 배포 자동 중단</li>
+      <li>최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치</li>
+    </ul>
+
     <div class="exp">ZeroLlama <span title="비공개 저장소">🔒</span> — 소비자용 GPU의 로컬 모델 시나리오를 위해 만든 에이전틱 코딩 클라이언트 (VS Code 확장) <span class="m">· pre-alpha · 🔒 비공개 · 35개 모듈 27,515 LOC</span></div>
     <div class="tech">기술: TypeScript, llama.cpp</div>
     <ul>
@@ -866,16 +876,6 @@
     <ul>
       <li>단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)</li>
       <li>현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치</li>
-    </ul>
-
-    <div class="exp">Hellfarm <span title="비공개 저장소">🔒</span> — 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android) <span class="m">· 1인 개발 · 🔒 비공개</span></div>
-    <div class="tech">기술: Godot, C#</div>
-    <ul>
-      <li>노드/GC 없는 데이터지향 엔진 — 모든 엔티티를 SoA 플랫 배열로, 시스템당 드로우콜 1개(MultiMesh)·물리엔진 대신 배열 기반 공간해시로 동시 100만 마리 실제 시뮬레이션 (화면 내 935,424마리 실측 캡처)</li>
-      <li>호드 뭉침의 O(n²) 폭주를 38배 최적화 — 이웃 검사 하드바운드·화면 밖 LOD 시간분할·격프레임 그리드 재구축·무락 병렬화로 프레임당 2,500ms → 38ms (4코어·소프트웨어 GL 최악 조건). SIMD는 효과 0으로 측정·기각, 병목은 메모리 대역폭임을 규명</li>
-      <li>모바일 GL 드라이버 함정 규명·회피 — COLOR 채널 패킹, 고정 InstanceCount, 카메라 상대 좌표 재앵커링. 같은 코드가 모바일(캡 5만)에서도 구동</li>
-      <li>봇 셀프플레이 자동 테스트 — minFps·피크 객체 수 리포트, 릴리즈 전 테스트 게이트가 실패 시 배포 자동 중단</li>
-      <li>최적화에 대한 깊은 이해가 있는 사람이 Fable5 모델을 이용했을 때 어느 수준까지 최적화를 이뤄내는지 리서치</li>
     </ul>
 
     <div class="exp">thesauros — 한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스 <span class="m">· 라이브 운영 · <a href="https://github.com/jungrok5/thesauros" target="_blank" rel="noopener">github.com/jungrok5/thesauros</a></span></div>
@@ -1499,39 +1499,7 @@
 <h2>4. 개인 프로젝트 (GitHub)</h2>
 <p>AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 실험해 본 프로젝트들.</p>
 
-<h3>4-1. ZeroLlama 🔒 — 소비자용 GPU의 로컬 모델 시나리오를 위해 만든 에이전틱 코딩 클라이언트 (VS Code 확장)</h3>
-<ul>
-<li><strong>무엇</strong>: 소비자용 GPU(4~24GB)에서 양자화된 로컬 모델로 코딩하기 위한 에이전틱 코딩 클라이언트. 기존 에이전트/런타임은 클라우드 대형 모델을 전제로 설계돼 이 환경에서 제약이 큰데, 그 격차를 아래 레이어로 메웠다.</li>
-<li><strong>기술</strong>: TypeScript · llama.cpp · 🔒 비공개 (pre-alpha) · <code>src/zerollama/</code> 아래 35개 모듈 <strong>27,515 LOC(테스트 제외)</strong> 서브시스템</li>
-<li><strong>차별점 — 소비자용 GPU·양자화 모델 시나리오 전용 레이어</strong>:
-<ul>
-<li><strong>자동 튜닝</strong> — 복잡한 옵션을 몰라도 GPU 사양·VRAM에 맞춰 적합한 모델·양자화를 제안하고, KV 캐시 크기·GPU에 올릴 레이어 수(ngl)·컨텍스트 크기·flash-attn 등을 최적으로 설정한다. 왜 그렇게 잡았는지 근거도 함께 보여주고(원하면 직접 조정 가능), MoE 모델이 OOM 나면 <strong>전문가(expert) 레이어를 CPU RAM으로 오프로드</strong>해 8GB VRAM으로도 <strong>35B급(활성 ~3B) 모델을 구동</strong>한다 — 활성·공유 부분만 GPU에, 전문가는 CPU RAM에.</li>
-<li><strong>양자화 모델용 도구 재설계</strong> — 작은 모델·작은 컨텍스트(8~32K)에서도 실제로 쓸 수 있도록 도구를 다시 만들었다. 시스템 프롬프트를 통상의 <strong>1/8</strong>로 줄여 사고할 공간을 확보하고, 편집 블록을 9가지 방식으로 대조해 공백·들여쓰기가 조금 어긋나도 적용되게 하고, 추론(<code>&lt;think&gt;</code>) 블록은 다음 턴 입력 전에 제거하며, 코드 수정 후 ESLint·TypeScript·ruff·cargo·go를 돌려 에러를 모델에 되돌려준다.</li>
-<li><strong>도구 호출에 의존하지 않는 메모리</strong> — 작은 모델이 메모리 도구 호출을 자주 빠뜨리는 문제를 피하려 저장·회수 판단을 모델 밖에서 처리한다. 자동으로 저장하고 매 턴 관련 기억을 프롬프트에 붙여주되, 노이즈를 걸러 불필요한 회수를 크게 줄이면서(측정상 회수 토큰 −92%) 정작 필요한 기억은 유지한다. 임베딩 모델 다운로드 없이 SQLite FTS5로 구현.</li>
-<li><strong>작은 컨텍스트에 모든 입력을 담는 설계</strong> — 8~32K 창에 프롬프트·기억·코드·로그가 다 들어가도록, 로그는 핵심 줄만 요약하고(5,000줄→100줄 수준), 저장소는 tree-sitter+PageRank로 중요도를 매겨 예산 안에 포함하고, 창이 차오르면 마무리를 유도하거나 대화를 압축한다. 입력이 차지하던 공간을 줄여 추론에 쓸 여유를 확보한다.</li>
-<li><strong>폰 원격 (계정 불필요)</strong> — PC와 폰을 6자리 PIN·QR로 한 번 연결하면 폰 브라우저에서 진행 상황 확인·도구 실행 승인·모델 전환. 별도 클라우드 계정을 만들지 않는다.</li>
-</ul></li>
-<li><strong>엔지니어링</strong>: 하드웨어 감지 NVIDIA(nvidia-smi)/AMD·Vulkan/Apple Metal, JIT 프로비저너(모델 선택→llama.cpp 다운로드→인자 튜닝→채팅 배선 자동화), 실제 import를 grep해 미연결 모듈을 표시하는 자가 감사 리포트. 대부분 모듈이 자체 단위 테스트 포함.</li>
-<li><strong>리서치</strong>: 소비자용 GPU에서 로컬 모델 코딩이 어느 수준까지 되는지 리서치.</li>
-</ul>
-<hr />
-<h3>4-2. ondevice-imagen — 온디바이스 이미지 생성 앱</h3>
-<ul>
-<li><strong>무엇</strong>: 날씨·장소·시간 같은 메타정보를 토대로 그림엽서 이미지를 온디바이스에서 생성하는 앱.</li>
-<li><strong>기술</strong>: Kotlin · ONNX Runtime · Python · <a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">github.com/jungrok5/ondevice-imagen</a> (실기기 검증, 연구 R&amp;D)</li>
-<li><strong>구현</strong>: Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 구현.</li>
-<li><strong>리서치</strong>: 모바일 기기에서 로컬 모델을 이용한 이미지 생성이 어느 수준까지 되는지 리서치.</li>
-</ul>
-<hr />
-<h3>4-3. one-scroll-bible — 다국어 성경 스크롤 웹 (200+개 언어)</h3>
-<ul>
-<li><strong>무엇</strong>: 성경 전체의 구속사를 한 화면 스크롤로 풀어낸 다국어 모바일 웹 (200+개 언어).</li>
-<li><strong>기술</strong>: Vanilla JS · Node · Vercel · <a href="https://github.com/jungrok5/one-scroll-bible" target="_blank" rel="noopener">github.com/jungrok5/one-scroll-bible</a> (라이브 · <a href="https://one-scroll-bible.com/" target="_blank" rel="noopener">one-scroll-bible.com</a>)</li>
-<li><strong>구현</strong>: 단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap).</li>
-<li><strong>리서치</strong>: 현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치.</li>
-</ul>
-<hr />
-<h3>4-4. Hellfarm 🔒 — 핵앤슬래시 액션 게임 (Windows·Android)</h3>
+<h3>4-1. Hellfarm 🔒 — 핵앤슬래시 액션 게임 (Windows·Android)</h3>
 <ul>
 <li><strong>무엇</strong>: 디아블로식 아이템 파밍과 뱀서라이크(대규모 몹 처치)를 합친 한 손 조작 액션 게임.</li>
 <li><strong>기술</strong>: Godot · C# · 🔒 비공개</li>
@@ -1552,6 +1520,38 @@
     <span class="cap">봇이 직접 플레이한 실제 인게임 녹화 (셀프플레이 자동 테스트)</span>
   </a>
 </div>
+<hr />
+<h3>4-2. ZeroLlama 🔒 — 소비자용 GPU의 로컬 모델 시나리오를 위해 만든 에이전틱 코딩 클라이언트 (VS Code 확장)</h3>
+<ul>
+<li><strong>무엇</strong>: 소비자용 GPU(4~24GB)에서 양자화된 로컬 모델로 코딩하기 위한 에이전틱 코딩 클라이언트. 기존 에이전트/런타임은 클라우드 대형 모델을 전제로 설계돼 이 환경에서 제약이 큰데, 그 격차를 아래 레이어로 메웠다.</li>
+<li><strong>기술</strong>: TypeScript · llama.cpp · 🔒 비공개 (pre-alpha) · <code>src/zerollama/</code> 아래 35개 모듈 <strong>27,515 LOC(테스트 제외)</strong> 서브시스템</li>
+<li><strong>차별점 — 소비자용 GPU·양자화 모델 시나리오 전용 레이어</strong>:
+<ul>
+<li><strong>자동 튜닝</strong> — 복잡한 옵션을 몰라도 GPU 사양·VRAM에 맞춰 적합한 모델·양자화를 제안하고, KV 캐시 크기·GPU에 올릴 레이어 수(ngl)·컨텍스트 크기·flash-attn 등을 최적으로 설정한다. 왜 그렇게 잡았는지 근거도 함께 보여주고(원하면 직접 조정 가능), MoE 모델이 OOM 나면 <strong>전문가(expert) 레이어를 CPU RAM으로 오프로드</strong>해 8GB VRAM으로도 <strong>35B급(활성 ~3B) 모델을 구동</strong>한다 — 활성·공유 부분만 GPU에, 전문가는 CPU RAM에.</li>
+<li><strong>양자화 모델용 도구 재설계</strong> — 작은 모델·작은 컨텍스트(8~32K)에서도 실제로 쓸 수 있도록 도구를 다시 만들었다. 시스템 프롬프트를 통상의 <strong>1/8</strong>로 줄여 사고할 공간을 확보하고, 편집 블록을 9가지 방식으로 대조해 공백·들여쓰기가 조금 어긋나도 적용되게 하고, 추론(<code>&lt;think&gt;</code>) 블록은 다음 턴 입력 전에 제거하며, 코드 수정 후 ESLint·TypeScript·ruff·cargo·go를 돌려 에러를 모델에 되돌려준다.</li>
+<li><strong>도구 호출에 의존하지 않는 메모리</strong> — 작은 모델이 메모리 도구 호출을 자주 빠뜨리는 문제를 피하려 저장·회수 판단을 모델 밖에서 처리한다. 자동으로 저장하고 매 턴 관련 기억을 프롬프트에 붙여주되, 노이즈를 걸러 불필요한 회수를 크게 줄이면서(측정상 회수 토큰 −92%) 정작 필요한 기억은 유지한다. 임베딩 모델 다운로드 없이 SQLite FTS5로 구현.</li>
+<li><strong>작은 컨텍스트에 모든 입력을 담는 설계</strong> — 8~32K 창에 프롬프트·기억·코드·로그가 다 들어가도록, 로그는 핵심 줄만 요약하고(5,000줄→100줄 수준), 저장소는 tree-sitter+PageRank로 중요도를 매겨 예산 안에 포함하고, 창이 차오르면 마무리를 유도하거나 대화를 압축한다. 입력이 차지하던 공간을 줄여 추론에 쓸 여유를 확보한다.</li>
+<li><strong>폰 원격 (계정 불필요)</strong> — PC와 폰을 6자리 PIN·QR로 한 번 연결하면 폰 브라우저에서 진행 상황 확인·도구 실행 승인·모델 전환. 별도 클라우드 계정을 만들지 않는다.</li>
+</ul></li>
+<li><strong>엔지니어링</strong>: 하드웨어 감지 NVIDIA(nvidia-smi)/AMD·Vulkan/Apple Metal, JIT 프로비저너(모델 선택→llama.cpp 다운로드→인자 튜닝→채팅 배선 자동화), 실제 import를 grep해 미연결 모듈을 표시하는 자가 감사 리포트. 대부분 모듈이 자체 단위 테스트 포함.</li>
+<li><strong>리서치</strong>: 소비자용 GPU에서 로컬 모델 코딩이 어느 수준까지 되는지 리서치.</li>
+</ul>
+<hr />
+<h3>4-3. ondevice-imagen — 온디바이스 이미지 생성 앱</h3>
+<ul>
+<li><strong>무엇</strong>: 날씨·장소·시간 같은 메타정보를 토대로 그림엽서 이미지를 온디바이스에서 생성하는 앱.</li>
+<li><strong>기술</strong>: Kotlin · ONNX Runtime · Python · <a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">github.com/jungrok5/ondevice-imagen</a> (실기기 검증, 연구 R&amp;D)</li>
+<li><strong>구현</strong>: Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 구현.</li>
+<li><strong>리서치</strong>: 모바일 기기에서 로컬 모델을 이용한 이미지 생성이 어느 수준까지 되는지 리서치.</li>
+</ul>
+<hr />
+<h3>4-4. one-scroll-bible — 다국어 성경 스크롤 웹 (200+개 언어)</h3>
+<ul>
+<li><strong>무엇</strong>: 성경 전체의 구속사를 한 화면 스크롤로 풀어낸 다국어 모바일 웹 (200+개 언어).</li>
+<li><strong>기술</strong>: Vanilla JS · Node · Vercel · <a href="https://github.com/jungrok5/one-scroll-bible" target="_blank" rel="noopener">github.com/jungrok5/one-scroll-bible</a> (라이브 · <a href="https://one-scroll-bible.com/" target="_blank" rel="noopener">one-scroll-bible.com</a>)</li>
+<li><strong>구현</strong>: 단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap).</li>
+<li><strong>리서치</strong>: 현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치.</li>
+</ul>
 <hr />
 <h3>4-5. thesauros — 주식 분석·알림 서비스 (한국·미국)</h3>
 <ul>
