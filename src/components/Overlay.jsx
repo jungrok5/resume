@@ -52,6 +52,7 @@ function Summary() {
             <a key={m.src} href={m.src} target="_blank" rel="noreferrer">
               <video
                 src={m.src}
+                poster={m.poster}
                 autoPlay
                 loop
                 muted

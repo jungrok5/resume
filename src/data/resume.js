@@ -334,7 +334,7 @@ export const projects = [
       '그리드 빌드 융합 — 직렬 100만 삽입 루프 대신 병렬 이동 패스 안에서 무락(lock-free) 버킷 푸시로 재구축, 마지막 직렬 O(n) 단계를 제거해 다중코어 암달 병목 방지',
     ],
     media: [
-      { src: 'hellfarm/million_battle.mp4', cap: '만렙 스킬 6종 vs 화면 내 86만 마리 실시뮬 — 처치 13.3만 → 18.4만 구간 인게임 녹화 (봇 셀프플레이, 피크 966,021마리)' },
+      { src: 'hellfarm/million_battle.mp4', poster: 'hellfarm/million_battle.jpg', cap: '만렙 스킬 6종 vs 화면 내 86만 마리 실시뮬 — 처치 13.3만 → 18.4만 구간 인게임 녹화 (봇 셀프플레이, 피크 966,021마리)' },
     ],
   },
   {
