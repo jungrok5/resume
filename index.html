@@ -248,7 +248,13 @@
     line-height: 1.5;
   }
   @media (max-width: 560px) { .shots { grid-template-columns: 1fr; } }
-  @media print { .shots { display: none; } }
+  /* 인쇄(PDF): 영상은 못 싣으니 같은 장면의 스틸 이미지로 대체 */
+  .shots .print-img { display: none; }
+  @media print {
+    .shots video { display: none; }
+    .shots .print-img { display: block; }
+    .shots { break-inside: avoid; }
+  }
 
   /* Earlier career */
   .early-lead { color: var(--muted); font-size: 13.3px; line-height: 1.65; margin: 0 0 14px; }
@@ -487,8 +493,8 @@
     <strong>매니징보다 기술을 직접 주도하는 역할을 지향</strong>합니다. 디렉터 직책이 아닌 최전선 실무 트랙에서 <strong>설계 방향을 정하고 팀 표준을 세우는 방식으로 팀의 기술을 이끕니다.</strong>
   </p>
   <p class="detail-link">
-    상세 이력서:
-    <a href="https://jungrok5.github.io/resume/?view=detail" onclick="var b=document.querySelector('.switcher button[data-view=detail]');if(b){event.preventDefault();b.click();}">jungrok5.github.io/resume/?view=detail</a>
+    이력서:
+    <a href="https://jungrok5.github.io/resume/">jungrok5.github.io/resume/</a>
   </p>
 
   <section>
@@ -625,7 +631,8 @@
       <div class="job-sub"><span class="stack">Godot · C#</span></div>
       <div class="shots shots--one">
         <a href="hellfarm/million_battle.mp4" target="_blank" rel="noopener">
-          <video src="hellfarm/million_battle.mp4" autoplay loop muted playsinline></video>
+          <video src="hellfarm/million_battle.mp4" poster="hellfarm/million_battle.jpg" autoplay loop muted playsinline></video>
+          <img class="print-img" src="hellfarm/million_battle.jpg" alt="Hellfarm 86만 마리 전투 캡처">
           <span class="cap">만렙 스킬 6종 vs 화면 내 86만 마리 실시뮬 — 처치 13.3만 → 18.4만 구간 인게임 녹화 (봇 셀프플레이, 피크 966,021마리)</span>
         </a>
       </div>
@@ -1491,7 +1498,8 @@
 <h3>4-1. Hellfarm 🔒 — 핵앤슬래시 액션 게임 (Windows·Android)</h3>
 <div class="shots shots--one">
   <a href="hellfarm/million_battle.mp4" target="_blank" rel="noopener">
-    <video src="hellfarm/million_battle.mp4" autoplay loop muted playsinline></video>
+    <video src="hellfarm/million_battle.mp4" poster="hellfarm/million_battle.jpg" autoplay loop muted playsinline></video>
+    <img class="print-img" src="hellfarm/million_battle.jpg" alt="Hellfarm 86만 마리 전투 캡처">
     <span class="cap">만렙 스킬 6종 vs 화면 내 86만 마리 실시뮬 — 처치 13.3만 → 18.4만 구간 인게임 녹화 (봇 셀프플레이, 피크 966,021마리)</span>
   </a>
 </div>
