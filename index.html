@@ -630,18 +630,19 @@
       </div>
       <div class="job-sub"><span class="stack">Godot · C#</span></div>
       <div class="shots shots--one">
-        <a href="hellfarm/million_battle.mp4" target="_blank" rel="noopener">
-          <video src="hellfarm/million_battle.mp4" poster="hellfarm/million_battle.jpg" autoplay loop muted playsinline></video>
-          <img class="print-img" src="hellfarm/million_battle.jpg" alt="Hellfarm 86만 마리 전투 캡처">
-          <span class="cap">만렙 스킬 6종 vs 화면 내 86만 마리 실시뮬 — 처치 13.3만 → 18.4만 구간 인게임 녹화 (봇 셀프플레이, 피크 966,021마리)</span>
+        <a href="hellfarm/battle_100m.mp4" target="_blank" rel="noopener">
+          <video src="hellfarm/battle_100m.mp4" poster="hellfarm/battle_100m.jpg" autoplay loop muted playsinline controls></video>
+          <img class="print-img" src="hellfarm/battle_100m.jpg" alt="Hellfarm 1억 마리 전투 캡처">
+          <span class="cap">1억 마리 안에서 만렙 스킬 6종이 구멍을 뚫는 중 — 5초에 208만 마리 처치. HUD의 <code>obj 99,549,966</code>이 실측값 (i5-9600K 6코어 · 봇 셀프플레이 인게임 녹화)</span>
         </a>
       </div>
       <ul class="bul">
-        <li><b>노드/GC 없는 데이터지향 엔진</b> — 모든 적·탄환·이펙트·젬을 노드가 아닌 SoA 플랫 배열로 두고 시스템당 드로우콜 1개(MultiMesh·프레임당 버퍼 업로드 1회), 물리엔진 대신 배열 기반 공간해시로 <span class="metric">동시 100만 마리 실제 시뮬레이션</span> (화면 내 935,424마리 + 만렙 스킬 전투 실측 캡처)</li>
+        <li><b>노드/GC 없는 데이터지향 엔진</b> — 모든 적·탄환·이펙트·젬을 노드가 아닌 SoA 플랫 배열로 두고 시스템당 드로우콜 1개(MultiMesh·프레임당 버퍼 업로드 1회), 물리엔진 대신 배열 기반 공간해시로 <span class="metric">동시 1억 2,800만 마리</span> 시뮬레이션 + 만렙 스킬 전투 실측 (스폰·렌더까지는 1억 9,200만 확인)</li>
         <li><b>호드 뭉침의 O(n²) 폭주를 38배 최적화</b> — 이웃 검사 하드바운드·화면 밖 LOD 시간분할·격프레임 그리드 재구축·무락(lock-free) 병렬화로 프레임당 <span class="metric">2,500ms → 38ms</span> (4코어·소프트웨어 GL 최악 조건). SIMD 프리패스는 효과 0으로 측정되어 기각 — 병목이 연산이 아닌 메모리 대역폭임을 규명</li>
         <li><b>셰이더 인스턴싱</b> — 아틀라스 프레임·피격 플래시를 INSTANCE_CUSTOM 인스턴스 데이터로 셰이더에서 처리</li>
         <li><b>이동·분리 병렬화</b> — 마리당 상태는 자기 인덱스에만 쓰는 구조라 Parallel.ForEach가 안전. 사격·자폭 부수효과는 Interlocked 큐에 모아 메인 스레드에서 드레인, 난수는 결정론적 해시로 대체 → 코어 수에 비례해 확장</li>
         <li><b>그리드 빌드 융합</b> — 직렬 100만 삽입 루프 대신 병렬 이동 패스 안에서 무락(lock-free) 버킷 푸시로 재구축, 마지막 직렬 O(n) 단계를 제거해 다중코어 암달 병목 방지</li>
+        <li><b>천장의 정체를 규명 — 연산이 아니라 메모리</b>: 캡을 풀어가며 측정해 SoA <span class="metric">마리당 112바이트</span>가 한계임을 확인(64M=7.9GB·128M=15.3GB 선형 일치). 자료형 다이어트로 54B까지 줄이면 2.7억이 가능하다는 예산표까지 산출 — 위치 양자화는 월드 좌표 범위와 충돌해 기각</li>
       </ul>
     </div>
 
@@ -843,11 +844,12 @@
     <div class="exp">Hellfarm <span title="비공개 저장소">🔒</span> — 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android) <span class="m">· 1인 개발 · 🔒 비공개</span></div>
     <div class="tech">기술: Godot, C#</div>
     <ul>
-      <li>노드/GC 없는 데이터지향 엔진 — 모든 엔티티를 SoA 플랫 배열로, 시스템당 드로우콜 1개(MultiMesh)·물리엔진 대신 배열 기반 공간해시로 동시 100만 마리 실제 시뮬레이션 (화면 내 935,424마리 실측 캡처)</li>
+      <li>노드/GC 없는 데이터지향 엔진 — 모든 엔티티를 SoA 플랫 배열로, 시스템당 드로우콜 1개(MultiMesh)·물리엔진 대신 배열 기반 공간해시로 동시 1억 2,800만 마리 시뮬레이션 + 만렙 스킬 전투 실측 (스폰·렌더까지는 1억 9,200만 확인)</li>
       <li>호드 뭉침의 O(n²) 폭주를 38배 최적화 — 이웃 검사 하드바운드·화면 밖 LOD 시간분할·격프레임 그리드 재구축·무락 병렬화로 프레임당 2,500ms → 38ms (4코어·소프트웨어 GL 최악 조건). SIMD는 효과 0으로 측정·기각, 병목은 메모리 대역폭임을 규명</li>
       <li>셰이더 인스턴싱 — 아틀라스 프레임·피격 플래시를 INSTANCE_CUSTOM 인스턴스 데이터로 셰이더에서 처리</li>
       <li>이동·분리 병렬화 — 마리당 상태는 자기 인덱스에만 쓰는 구조라 Parallel.ForEach가 안전. 사격·자폭 부수효과는 Interlocked 큐에 모아 메인 스레드에서 드레인, 난수는 결정론적 해시로 대체 → 코어 수에 비례해 확장</li>
       <li>그리드 빌드 융합 — 직렬 100만 삽입 루프 대신 병렬 이동 패스 안에서 무락(lock-free) 버킷 푸시로 재구축, 마지막 직렬 O(n) 단계를 제거해 다중코어 암달 병목 방지</li>
+      <li>천장의 정체를 규명 — 연산이 아니라 메모리(SoA 마리당 112바이트, 64M=7.9GB·128M=15.3GB 선형 일치). 자료형 다이어트로 54B까지 줄이면 2.7억 가능하다는 예산표 산출</li>
     </ul>
 
     <div class="exp">ZeroLlama <span title="비공개 저장소">🔒</span> — 소비자용 GPU의 로컬 모델 시나리오를 위해 만든 에이전틱 코딩 클라이언트 (VS Code 확장) <span class="m">· pre-alpha · 🔒 비공개 · 35개 모듈 27,515 LOC</span></div>
@@ -1497,21 +1499,22 @@
 
 <h3>4-1. Hellfarm 🔒 — 핵앤슬래시 액션 게임 (Windows·Android)</h3>
 <div class="shots shots--one">
-  <a href="hellfarm/million_battle.mp4" target="_blank" rel="noopener">
-    <video src="hellfarm/million_battle.mp4" poster="hellfarm/million_battle.jpg" autoplay loop muted playsinline></video>
-    <img class="print-img" src="hellfarm/million_battle.jpg" alt="Hellfarm 86만 마리 전투 캡처">
-    <span class="cap">만렙 스킬 6종 vs 화면 내 86만 마리 실시뮬 — 처치 13.3만 → 18.4만 구간 인게임 녹화 (봇 셀프플레이, 피크 966,021마리)</span>
+  <a href="hellfarm/battle_100m.mp4" target="_blank" rel="noopener">
+    <video src="hellfarm/battle_100m.mp4" poster="hellfarm/battle_100m.jpg" autoplay loop muted playsinline controls></video>
+    <img class="print-img" src="hellfarm/battle_100m.jpg" alt="Hellfarm 1억 마리 전투 캡처">
+    <span class="cap">1억 마리 안에서 만렙 스킬 6종이 구멍을 뚫는 중 — 5초에 208만 마리 처치. HUD의 <code>obj 99,549,966</code>이 실측값 (i5-9600K 6코어 · 봇 셀프플레이 인게임 녹화)</span>
   </a>
 </div>
 <ul>
 <li><strong>무엇</strong>: 디아블로식 아이템 파밍과 뱀서라이크(대규모 몹 처치)를 합친 한 손 조작 액션 게임.</li>
 <li><strong>기술</strong>: Godot · C# · 🔒 비공개</li>
 <li><strong>구현</strong>: 노드/GC 없는 데이터지향 엔진 — 모든 적·탄환·이펙트·젬을 노드가 아닌 SoA 플랫 배열로 두고, 시스템당 드로우콜 1개(MultiMesh, <code>RenderingServer</code> 버퍼 업로드 프레임당 1회, 화면 밖 컬링), 물리엔진 대신 배열 기반 공간해시 그리드로 충돌·범위 쿼리 전부 처리.</li>
-<li><strong>성능</strong>: <strong>동시 1,000,000마리 실제 시뮬레이션 + 만렙 스킬 전투</strong> 실측 — 화면 내 935,424마리 캡처(전부 실시뮬), 93만 마리 블롭 전투에서 16초에 110,396킬. 적 캡 PC 100만 / 모바일 50,000.</li>
+<li><strong>성능</strong>: <strong>동시 1억 2,800만 마리 시뮬레이션 + 만렙 스킬 전투</strong> 실측 (16초에 153만 킬), 스폰·시뮬·렌더까지는 <strong>1억 9,200만 마리</strong> 확인. 1억 마리 전투는 영상으로도 녹화(5초에 208만 킬). 측정 장비는 게이밍 상급기가 아닌 i5-9600K 6코어 · Radeon Pro 580X · RAM 32GB. <strong>출하 캡은 PC 100만 / 모바일 5만</strong> — 천장이 아니라 실플레이 여유를 둔 값이고, 그 위는 디버그 전용 <code>--enemycap=N</code>으로 열어 측정.</li>
 <li><strong>최적화 스택 (합계 ~38배)</strong>: 호드가 뭉치면 이웃 검사가 O(n²)로 폭주(100만 뭉침 = 프레임당 2.5초) → ① 분리 검사 마리당 하드바운드 ② 캡 비례 해시 테이블(20만 초과 시 2^18 버킷) ③ 화면 밖 LOD 시간분할(4프레임에 1회, dt×4) ④ 격프레임 그리드 재구축 ⑤ 아래의 병렬화·그리드 빌드 융합 → 프레임당 <strong>2,500ms → 35~40ms</strong> (4코어·소프트웨어 GL 최악 조건, 8코어+ PC는 ~20ms). SIMD 프리패스는 <strong>효과 0으로 측정되어 기각</strong> — 병목이 연산이 아닌 메모리 대역폭임을 규명하고 기록.</li>
 <li><strong>셰이더 인스턴싱</strong>: 아틀라스 프레임·피격 플래시를 INSTANCE_CUSTOM 인스턴스 데이터로 셰이더에서 처리 — 개체별 애니메이션·피격 표현이 CPU 비용·추가 드로우콜 없이 GPU에서 병렬 처리.</li>
 <li><strong>이동·분리 병렬화</strong>: 마리당 상태는 자기 인덱스에만 쓰는 구조라 <code>Parallel.ForEach</code>가 안전 — 사격·자폭 같은 부수효과는 Interlocked 큐에 모아 메인 스레드에서 드레인, 난수는 결정론적 해시로 대체 → 코어 수에 비례해 확장.</li>
 <li><strong>그리드 빌드 융합</strong>: 직렬 100만 삽입 루프 대신 병렬 이동 패스 안에서 무락(lock-free) 버킷 푸시(CAS)로 재구축 — 마지막 직렬 O(n) 단계를 제거해 다중코어 암달 병목 방지. 버킷 체인 순서의 비결정성은 모든 쿼리가 실좌표 거리검사를 하므로 무해.</li>
+<li><strong>천장의 정체 규명 — 연산이 아니라 메모리</strong>: 캡을 1M→192M로 스윕하며 측정해, 한계가 CPU가 아니라 SoA 배열의 <strong>마리당 약 112바이트</strong>(float 23 + int 3 + short 1 + byte 4 + sbyte 2)임을 확인 — 실측 메모리가 정확히 그 선형을 따른다(64M=7.9GB · 128M=15.3GB). 여기서 <strong>자료형 다이어트 예산표</strong>를 도출: Tier 1(쿼리 스크래치 버퍼 분리·틴트 byte화 등, 동작 변화 0) 90B → 약 1.6억, Tier 2(타이머 양자화 포함) 54B → <strong>약 2.7억</strong>. 반대로 위치를 short로 줄이는 안은 <strong>기각</strong> — 4B밖에 못 줄이는데 스폰 반경이 캡에 비례해 커져(1.92억에서 80,558) far-origin 회귀 테스트의 150,000 좌표와 충돌한다.</li>
 </ul>
 <hr />
 <h3>4-2. ZeroLlama 🔒 — 소비자용 GPU의 로컬 모델 시나리오를 위해 만든 에이전틱 코딩 클라이언트 (VS Code 확장)</h3>

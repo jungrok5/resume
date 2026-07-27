@@ -57,6 +57,7 @@ function Summary() {
                 loop
                 muted
                 playsInline
+                controls
                 style={{ width: '100%', display: 'block', borderRadius: 8, background: '#000' }}
               />
               <span style={{ display: 'block', marginTop: 4, fontSize: 11, lineHeight: 1.5, color: 'var(--ink-faint)' }}>
