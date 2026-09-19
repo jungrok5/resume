@@ -8,3 +8,6 @@ dist-ssr
 
 # Claude Code: share launch.json, keep personal settings local
 .claude/settings.local.json
+
+# llms-full.txt 는 tools/build-llms-full.mjs 가 index.html 에서 생성한다.
+# 다만 GitHub Pages 가 dist 를 그대로 서빙하므로 커밋해 둔다(생성물이지만 추적 대상).

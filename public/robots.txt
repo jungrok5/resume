@@ -1,23 +1,85 @@
+# https://jungrok5.github.io/resume/
+# AI 검색·답변 엔진 환영 — 구조화 요약: /llms.txt · 전문: /llms-full.txt
+
 User-agent: *
 Allow: /
 
-# AI crawlers welcome — structured summary at /llms.txt
+# ── 검색 엔진 ──────────────────────────────────────────────
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# 네이버
+User-agent: Yeti
+Allow: /
+
+# 다음
+User-agent: Daumoa
+Allow: /
+
+# ── AI 답변 엔진 (실시간 검색·인용) ────────────────────────
+# ChatGPT 검색 색인
+User-agent: OAI-SearchBot
+Allow: /
+
+# ChatGPT 사용자 요청 시 방문
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# Claude 사용자 요청 시 방문
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# Gemini / AI Overviews 근거 활용
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: MistralAI-User
+Allow: /
+
+# ── AI 학습·수집 크롤러 ────────────────────────────────────
 User-agent: GPTBot
 Allow: /
 
 User-agent: ClaudeBot
 Allow: /
 
-User-agent: Claude-Web
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
 User-agent: CCBot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Diffbot
 Allow: /
 
 Sitemap: https://jungrok5.github.io/resume/sitemap.xml

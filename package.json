@@ -6,8 +6,10 @@
   "description": "Interactive 3D resume — server-side game architecture, made visible.",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node tools/build-llms-full.mjs",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "llms": "node tools/build-llms-full.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.114.3",
