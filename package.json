@@ -9,7 +9,8 @@
     "prebuild": "node tools/build-llms-full.mjs",
     "build": "vite build",
     "preview": "vite preview",
-    "llms": "node tools/build-llms-full.mjs"
+    "llms": "node tools/build-llms-full.mjs",
+    "indexnow": "node tools/indexnow.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.114.3",
