@@ -20,6 +20,13 @@
 <meta name="keywords" content="MMO 서버, 서버 아키텍트, Technical Director, Orleans, 분산 서버, 게임 서버 프로그래머, 오정록, Jeongrok Oh, NCSOFT" />
 <link rel="canonical" href="https://jungrok5.github.io/resume/" />
 
+<!-- ===== AEO (AI 답변 엔진 최적화) =====
+     구조화 요약(llms.txt)과 전문(llms-full.txt)을 명시해 AI 크롤러가 평문 사본을 바로 찾게 한다.
+     llms-full.txt 는 tools/build-llms-full.mjs 가 상세 뷰에서 자동 생성한다(빌드 시 갱신). -->
+<link rel="alternate" type="text/plain" href="https://jungrok5.github.io/resume/llms.txt" title="llms.txt — AI 검색용 구조화 요약" />
+<link rel="alternate" type="text/plain" href="https://jungrok5.github.io/resume/llms-full.txt" title="llms-full.txt — 상세 이력서 전문" />
+<meta name="ai-content-declaration" content="human-authored resume; all metrics are measured values from real projects" />
+
 <!-- Open Graph / Twitter (링크 공유 미리보기) -->
 <meta property="og:type" content="profile" />
 <meta property="og:title" content="오정록 · Technical Director / MMO Server Architect" />
@@ -33,39 +40,412 @@
 <meta name="twitter:title" content="오정록 · Technical Director / MMO Server Architect" />
 <meta name="twitter:description" content="20년차 MMO 서버 아키텍트 · 분산 서버 · 전 영역 최적화(서버·클라·DB) · AI 개발 생산성." />
 <meta name="twitter:image" content="https://jungrok5.github.io/resume/og.png" />
-<meta name="robots" content="index, follow, max-image-preview:large" />
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
 <meta name="theme-color" content="#05060a" />
 
 <!-- 구조화 데이터(JSON-LD): 검색엔진·AI가 인물/이력을 이해하도록 (ProfilePage + Person) -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "ProfilePage",
-  "dateModified": "2026-07-02",
-  "mainEntity": {
-    "@type": "Person",
-    "name": "오정록",
-    "alternateName": "Jeongrok Oh",
-    "jobTitle": "Technical Director · MMO Server Architect",
-    "description": "20년간 MMO 서버 프레임워크를 백지에서 반복 설계·구축. 가상 액터 기반 분산 서버·서버·클라이언트·데이터베이스 전 영역의 최적화·난제 해결 전문.",
-    "email": "mailto:jungrok5@gmail.com",
-    "url": "https://jungrok5.github.io/resume/",
-    "image": "https://jungrok5.github.io/resume/og.png",
-    "sameAs": ["https://github.com/jungrok5"],
-    "worksFor": { "@type": "Organization", "name": "NCSOFT" },
-    "alumniOf": { "@type": "CollegeOrUniversity", "name": "홍익대학교" },
-    "award": "NCDP 2019 최우수상 — 1000 vs 1000 대규모 유저를 채널 없이 서비스 하기 위한 고민들",
-    "hasOccupation": {
-      "@type": "Occupation",
-      "name": "Game Server Programmer / Technical Director",
-      "skills": "MMO server architecture, virtual-actor-based distributed systems (Orleans), performance optimization, gRPC/TCP, server physics, navigation, AI developer tooling (MCP, local LLM)"
+  "@graph": [
+    {
+      "@type": "ProfilePage",
+      "@id": "https://jungrok5.github.io/resume/#profilepage",
+      "url": "https://jungrok5.github.io/resume/",
+      "name": "오정록 (Jeongrok Oh) — Technical Director · MMO Server Architect",
+      "inLanguage": "ko-KR",
+      "dateModified": "2026-09-19",
+      "mainEntity": {
+        "@id": "https://jungrok5.github.io/resume/#person"
+      },
+      "about": {
+        "@id": "https://jungrok5.github.io/resume/#person"
+      },
+      "primaryImageOfPage": "https://jungrok5.github.io/resume/og.png",
+      "isPartOf": {
+        "@id": "https://jungrok5.github.io/resume/#website"
+      }
     },
-    "knowsAbout": [
-      "MMO 서버 아키텍처", "분산 시스템", "Orleans", "성능 최적화", "gRPC", "샤딩",
-      "서버 물리", "복셀 네비게이션", "클라이언트 위임 분산 시뮬레이션",
-      "MCP", "로컬 LLM", "AI 개발 생산성"
-    ]
-  }
+    {
+      "@type": "WebSite",
+      "@id": "https://jungrok5.github.io/resume/#website",
+      "url": "https://jungrok5.github.io/resume/",
+      "name": "오정록 이력서",
+      "inLanguage": "ko-KR",
+      "publisher": {
+        "@id": "https://jungrok5.github.io/resume/#person"
+      }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://jungrok5.github.io/resume/#person",
+      "name": "오정록",
+      "alternateName": [
+        "Jeongrok Oh",
+        "오정록 (Jeongrok Oh)"
+      ],
+      "givenName": "정록",
+      "familyName": "오",
+      "jobTitle": "Technical Director · MMO Server Architect",
+      "description": "20년차(2007–) 게임 서버 프로그래머 겸 기술 디렉터. MMO 서버 프레임워크를 여러 프로젝트에서 백지부터 반복 설계·구축했다. 가상 액터 기반 분산 서버, 서버·클라이언트·데이터베이스 전 영역의 성능 최적화, 대규모 동시 처리 난제 해결이 강점이다.",
+      "email": "mailto:jungrok5@gmail.com",
+      "url": "https://jungrok5.github.io/resume/",
+      "image": "https://jungrok5.github.io/resume/og.png",
+      "nationality": {
+        "@type": "Country",
+        "name": "대한민국"
+      },
+      "knowsLanguage": [
+        "ko",
+        "en"
+      ],
+      "sameAs": [
+        "https://github.com/jungrok5"
+      ],
+      "alumniOf": [
+        {
+          "@type": "CollegeOrUniversity",
+          "name": "홍익대학교",
+          "sameAs": "https://www.hongik.ac.kr/"
+        }
+      ],
+      "award": [
+        "NCDP 2019 최우수상 — 1000 vs 1000 대규모 유저를 채널 없이 서비스 하기 위한 고민들",
+        "NCSOFT 시니어 전문면접관 · Job Title 운영위원 (Programming, 2019–2021)"
+      ],
+      "worksFor": {
+        "@type": "OrganizationRole",
+        "roleName": "Technical Director",
+        "startDate": "2016",
+        "worksFor": {
+          "@type": "Organization",
+          "name": "NCSOFT",
+          "sameAs": "https://kr.ncsoft.com/"
+        }
+      },
+      "hasOccupation": [
+        {
+          "@type": "Occupation",
+          "name": "게임 서버 프로그래머 / Technical Director",
+          "occupationalCategory": "15-1252.00",
+          "skills": "MMO 서버 아키텍처, 가상 액터 기반 분산 시스템(Orleans), 성능 최적화, gRPC/TCP, 락프리 동시성, 서버 물리·네비게이션, 대규모 브로드캐스팅, 데이터베이스 튜닝, AI 개발 도구(MCP·로컬 LLM)",
+          "experienceRequirements": {
+            "@type": "OccupationalExperienceRequirements",
+            "monthsOfExperience": 224
+          }
+        },
+        {
+          "@type": "OrganizationRole",
+          "roleName": "Technical Director — Panthera (블레이드&소울 IP 키우기류 RPG)",
+          "startDate": "2024",
+          "description": "Orleans Grain 분산 모델 채택 주도 및 팀 표준 정착, gRPC→TCP 전송 계층 전환, 샤딩 기반 데이터 분산. proto 단일 소스에서 서버·클라이언트 코드·CSV·유효성 검증을 자동 생성하는 파이프라인 확립. 부하 테스트 실측 gRPC 초당 24만 요청, EntityFramework 5만 TPS. MCP 자체 구현·AI 테스트/코드리뷰 에이전트·사내 유출 없는 로컬 LLM 코딩 스택 도입 주도.",
+          "worksFor": {
+            "@type": "Organization",
+            "name": "NCSOFT"
+          }
+        },
+        {
+          "@type": "OrganizationRole",
+          "roleName": "Technical Director — Miniverse (UE5, 유저 창작 샌드박스 MMO)",
+          "startDate": "2023",
+          "description": "단일 공간 5,000만 프랍 풀 틱 처리와 동시 2,000명 밀집 건축 구현. ISM 인스턴싱·물리 청킹으로 드로우콜 20,967→503, FPS 16.5→47.4 개선. 서버사이드 다이나믹 복셀 네비메시(DotRecast) 및 Godot 기반 서버 시각화 뷰어 자체 개발. 로블록스식 네트워크 오너십 개념을 NPC AI에 적용한 클라이언트 위임 분산 시뮬레이션 구현.",
+          "worksFor": {
+            "@type": "Organization",
+            "name": "NCSOFT"
+          },
+          "endDate": "2024"
+        },
+        {
+          "@type": "OrganizationRole",
+          "roleName": "Technical Director — Miniverse (웹·Godot 유저 창작 메타버스)",
+          "startDate": "2021",
+          "description": "브라우저 한 공간에서 1,000명 이상 동시 커서 동기화 협업 에디터 구현. 유저 창작 스크립트 런타임 R&D(무패치 로직 실행, 서버 권위 판정). Node.js→C# 데디케이티드 서버 전환으로 수용력 1.5배 실측.",
+          "worksFor": {
+            "@type": "Organization",
+            "name": "NCSOFT"
+          },
+          "endDate": "2023"
+        },
+        {
+          "@type": "OrganizationRole",
+          "roleName": "Technical Director — AION2 · 아이온 모바일 (MMORPG)",
+          "startDate": "2016",
+          "description": "MMO 서버 프레임워크 전체를 백지에서 설계·구축(네트워크·스레딩·메시지 처리·네비게이션·서버 물리). 채널 없는 대규모 밀집 전투 최적화로 NCDP 2019 최우수상 수상 — 한 시야 1,000명 전투의 초당 1,300만 패킷을 네트워크 부하 분산·셀 기반 브로드캐스팅·Packet Shrink(트래픽 36% 감소)로 해결해 2,000 vs 2,000으로 확장. 복셀 기반 3D 비행 네비게이션 구현.",
+          "worksFor": {
+            "@type": "Organization",
+            "name": "NCSOFT"
+          },
+          "endDate": "2021"
+        },
+        {
+          "@type": "OrganizationRole",
+          "roleName": "프로그램팀장 — ONE for kakao (모바일 액션RPG)",
+          "startDate": "2014",
+          "description": "서버 구조·네트워크 프레임워크 전체 구현, 클라이언트 UI·툴·사내 개발환경 구축, 서버 팀 리드. 국내 정식 서비스.",
+          "worksFor": {
+            "@type": "Organization",
+            "name": "코어크리에이티브"
+          },
+          "endDate": "2015"
+        },
+        {
+          "@type": "OrganizationRole",
+          "roleName": "서버파트리더 — 트리니티사가 · 드리프트러시 (모바일 RPG·레이싱)",
+          "startDate": "2013",
+          "description": "웹(HTTP)+소켓(TCP) 통합 C# 서버 프레임워크 전체 구현, 결제 검증·운영툴·부하 테스트 시스템 담당.",
+          "worksFor": {
+            "@type": "Organization",
+            "name": "위메이드엔터테인먼트(오르카)"
+          },
+          "endDate": "2014"
+        },
+        {
+          "@type": "OrganizationRole",
+          "roleName": "프로그램팀장 — 형!·오빠·드래곤 도와줘 (모바일 시뮬레이션RPG)",
+          "startDate": "2011",
+          "description": "KB온라인 개발팀이 투자 유치로 설립한 신설 법인에서 연속 근무. C++ 서버와 Unity 클라이언트 전반 구현, 국내·일본·중국 서비스 및 직접 운영, 자동화 툴·DB 최적화, 프로그램 팀 리드.",
+          "worksFor": {
+            "@type": "Organization",
+            "name": "자이언트드림"
+          },
+          "endDate": "2013"
+        },
+        {
+          "@type": "OrganizationRole",
+          "roleName": "서버팀장 — 슈퍼 다다다 (PC 캐주얼 레이싱)",
+          "startDate": "2010",
+          "description": "서버 프레임워크 재검토·교체, 서버 컨텐츠·퍼블리셔 빌링/보안 연동, 웹 기반 모니터링 툴 구축. 국내·태국 서비스. 이후 팀과 함께 자이언트드림으로 이동해 연속 근무.",
+          "worksFor": {
+            "@type": "Organization",
+            "name": "KB온라인(SEED)"
+          },
+          "endDate": "2011"
+        },
+        {
+          "@type": "OrganizationRole",
+          "roleName": "서버팀원 — 와일드 플래닛 (PC MMO 슈팅)",
+          "startDate": "2007",
+          "description": "파티·클랜전·점령전·전장 등 대규모 멀티플레이 시스템을 서버·클라이언트 양쪽으로 구현. DB 쿼리·인덱스 튜닝, 자동 패치 시스템, GM 툴 개발.",
+          "worksFor": {
+            "@type": "Organization",
+            "name": "액토즈소프트(프롬나인)"
+          },
+          "endDate": "2010"
+        }
+      ],
+      "knowsAbout": [
+        "MMO 서버 아키텍처",
+        "분산 시스템",
+        "Microsoft Orleans",
+        "가상 액터 모델",
+        "성능 최적화",
+        "gRPC",
+        "TCP/IOCP",
+        "데이터베이스 샤딩",
+        "락프리 동시성",
+        "서버 물리",
+        "복셀 네비게이션",
+        "Recast/Detour",
+        "클라이언트 위임 분산 시뮬레이션",
+        "대규모 브로드캐스팅",
+        "Unreal Engine 5",
+        "Godot Engine",
+        "Unity3D",
+        "C++",
+        "C#",
+        "TypeScript",
+        "Model Context Protocol (MCP)",
+        "로컬 LLM",
+        "llama.cpp",
+        "데이터지향 설계(SoA)",
+        "GPU 인스턴싱",
+        "공간 해시"
+      ],
+      "seeks": {
+        "@type": "Demand",
+        "name": "매니징보다 기술을 직접 주도하는 실무 트랙 역할 — 새로운 MMO를 처음부터 설계하는 팀에서 서버의 근간을 맡는 일"
+      },
+      "subjectOf": {
+        "@type": "ProfilePage",
+        "@id": "https://jungrok5.github.io/resume/#profilepage"
+      }
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://jungrok5.github.io/resume/#projects",
+      "name": "개인 프로젝트 (GitHub)",
+      "description": "AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 실험해 본 프로젝트들",
+      "numberOfItems": 5,
+      "itemListOrder": "https://schema.org/ItemListOrderAscending",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "SoftwareSourceCode",
+            "name": "Hellfarm",
+            "description": "디아블로식 아이템 파밍과 뱀서라이크(대규모 몹 처치)를 합친 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android). 노드/GC 없는 데이터지향 엔진(SoA 플랫 배열 + 시스템당 MultiMesh 드로우콜 1개 + 물리엔진 대신 자작 공간해시)으로 동시 1억 2,800만 마리 시뮬레이션과 만렙 스킬 전투를 실측했다(스폰·시뮬·렌더까지는 1억 9,200만 확인). 호드 뭉침으로 O(n²)가 되는 이웃 검사를 하드바운드·화면 밖 LOD 시간분할·격프레임 그리드 재구축·무락 병렬화로 프레임당 2,500ms에서 38ms로 38배 최적화했다.",
+            "programmingLanguage": [
+              "Godot Engine",
+              "C#"
+            ],
+            "author": {
+              "@id": "https://jungrok5.github.io/resume/#person"
+            },
+            "creativeWorkStatus": "비공개 저장소"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "SoftwareSourceCode",
+            "name": "ZeroLlama",
+            "description": "소비자용 GPU의 로컬 모델 시나리오를 위해 만든 에이전틱 코딩 클라이언트(VS Code 확장). GPU와 VRAM에 맞춰 적합한 모델·양자화를 제안하고 KV 캐시·GPU 레이어 수(ngl)·컨텍스트 크기를 자동 설정하며, MoE 전문가를 CPU RAM으로 오프로드해 8GB VRAM으로도 35B급(활성 약 3B) 모델을 구동한다. 양자화 모델용으로 시스템 프롬프트를 통상의 1/8로 줄이고 편집 블록을 9가지 방식으로 대조 적용한다. 35개 모듈 27,515 LOC.",
+            "programmingLanguage": [
+              "TypeScript",
+              "llama.cpp"
+            ],
+            "author": {
+              "@id": "https://jungrok5.github.io/resume/#person"
+            },
+            "creativeWorkStatus": "비공개 저장소 · pre-alpha"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "SoftwareSourceCode",
+            "name": "ondevice-imagen",
+            "description": "날씨·장소·시간 같은 메타정보를 토대로 그림엽서 이미지를 온디바이스에서 생성하는 안드로이드 앱. Stable Diffusion 추론 파이프라인(CLIP 토크나이저·스케줄러·UNet 루프·VAE)을 안드로이드 네이티브로 직접 구현했다.",
+            "programmingLanguage": [
+              "Kotlin",
+              "ONNX Runtime",
+              "Python"
+            ],
+            "author": {
+              "@id": "https://jungrok5.github.io/resume/#person"
+            },
+            "creativeWorkStatus": "공개 · 실기기 검증",
+            "codeRepository": "https://github.com/jungrok5/ondevice-imagen",
+            "url": "https://github.com/jungrok5/ondevice-imagen"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "SoftwareSourceCode",
+            "name": "one-scroll-bible",
+            "description": "성경 전체의 구속사를 한 화면 스크롤로 풀어낸 다국어 모바일 웹. 200개 이상 언어를 지원하며 단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인과 SEO(JSON-LD·hreflang·sitemap)를 갖췄다. 라이브 서비스: https://one-scroll-bible.com/",
+            "programmingLanguage": [
+              "JavaScript",
+              "Node.js",
+              "Vercel"
+            ],
+            "author": {
+              "@id": "https://jungrok5.github.io/resume/#person"
+            },
+            "creativeWorkStatus": "공개 · 라이브 운영",
+            "codeRepository": "https://github.com/jungrok5/one-scroll-bible",
+            "url": "https://github.com/jungrok5/one-scroll-bible"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "item": {
+            "@type": "SoftwareSourceCode",
+            "name": "thesauros",
+            "description": "한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스. 데이터 수집에서 분석·백테스트·알림까지 프로덕션으로 직접 운영한다(Vercel·Supabase·크론 8개·CI).",
+            "programmingLanguage": [
+              "Python",
+              "Next.js",
+              "Supabase"
+            ],
+            "author": {
+              "@id": "https://jungrok5.github.io/resume/#person"
+            },
+            "creativeWorkStatus": "공개 · 라이브 운영",
+            "codeRepository": "https://github.com/jungrok5/thesauros",
+            "url": "https://github.com/jungrok5/thesauros"
+          }
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://jungrok5.github.io/resume/#faq",
+      "inLanguage": "ko-KR",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "오정록(Jeongrok Oh)은 누구인가요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "오정록(영문 Jeongrok Oh)은 20년차 게임 서버 프로그래머이자 기술 디렉터(Technical Director)입니다. 2007년 액토즈소프트에서 시작해 2016년부터 NCSOFT에서 Technical Director로 재직 중이며, MMO 서버 프레임워크를 여러 프로젝트에서 백지부터 반복 설계·구축해 왔습니다. 가상 액터 기반 분산 서버와 서버·클라이언트·데이터베이스 전 영역의 성능 최적화가 전문 분야입니다."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "오정록은 어떤 회사에서 어떤 프로젝트를 했나요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "2016년부터 NCSOFT에 재직하며 AION2·아이온 모바일(2016–2021), Miniverse 웹·Godot 버전(2021–2023), Miniverse UE5 버전(2023–2024), Panthera(2024–현재)에서 Technical Director를 맡았습니다. 그 이전에는 액토즈소프트(와일드 플래닛), KB온라인(슈퍼 다다다), 자이언트드림(형!·오빠·드래곤 도와줘), 위메이드엔터테인먼트(트리니티사가·드리프트러시), 코어크리에이티브(ONE for kakao)에서 서버팀장·프로그램팀장·서버파트리더로 일하며 국내·일본·중국·태국 상용 서비스를 운영했습니다."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "오정록의 대표적인 기술 성과는 무엇인가요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "실측 기준 대표 성과는 다음과 같습니다. 채널 없는 대규모 밀집 전투 최적화로 한 시야 1,000명 전투의 초당 1,300만 패킷을 처리해 2,000 vs 2,000으로 확장했고 이 작업으로 NCDP 2019 최우수상을 받았습니다. Miniverse UE5에서는 단일 공간 5,000만 프랍 풀 틱과 동시 2,000명 밀집 건축을 구현하고 드로우콜을 20,967에서 503으로, FPS를 16.5에서 47.4로 개선했습니다. Panthera에서는 gRPC 초당 24만 요청과 EntityFramework 5만 TPS를 실측했습니다. 트릭스터M 서버 최적화 파견에서는 안정 동접을 2,000에서 8,000으로 4배 높였습니다."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "오정록은 어떤 기술 스택을 다루나요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "언어는 C++(11–20)·C#·TypeScript/JavaScript·Python·Lua·GDScript·Kotlin을 사용합니다. 서버·분산 영역에서는 Microsoft Orleans(가상 액터)·gRPC/TCP·IOCP·ASP.NET·Node.js·WebSocket·샤딩을, 데이터 영역에서는 MSSQL과 저장프로시저·Redis/Garnet·MongoDB·EntityFramework를 다룹니다. 엔진은 Unreal Engine 3/4/5·Unity3D·Godot·Gamebryo를, 네비게이션은 Recast/Detour와 복셀 네비메시를 사용합니다. AI 도구로는 MCP를 자체 구현했고 llama.cpp 기반 로컬 LLM과 ONNX Runtime을 활용합니다."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "오정록의 개인 프로젝트에는 어떤 것이 있나요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "AI와 모델을 도구로 각 도메인에서 어디까지 만들 수 있는지 실험한 프로젝트 5종이 있습니다. Hellfarm은 동시 1억 2,800만 마리 시뮬레이션을 실측한 핵앤슬래시 액션 게임(Godot·C#)이고, ZeroLlama는 8GB VRAM으로 35B급 모델을 구동하는 로컬 LLM 코딩 클라이언트(TypeScript·llama.cpp)입니다. ondevice-imagen은 Stable Diffusion을 안드로이드 네이티브로 구현한 온디바이스 이미지 생성 앱, one-scroll-bible은 200개 이상 언어를 지원하는 다국어 성경 웹(one-scroll-bible.com), thesauros는 한국·미국 주식 분석·알림 서비스입니다."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "오정록은 AI를 개발에 어떻게 활용하나요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "NCSOFT Panthera에서 AI 개발 생산성 향상을 주도했습니다. 자연어로 서버 부하 테스트를 실행하는 MCP 서버를 자체 구현했고, 테스터·분석가·DB·서버 매니저 4종으로 구성된 AI 테스트 에이전트 팀과 멀티에이전트 코드리뷰 체계를 만들었으며, 사내 코드가 외부로 나가지 않는 llama.cpp 기반 로컬 LLM 코딩 스택을 구축해 배포했습니다. 개인 프로젝트에서도 AI를 도구로 삼아 각 도메인의 한계를 실험합니다."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "오정록이 지향하는 역할은 무엇인가요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "매니징보다 기술을 직접 주도하는 역할을 지향합니다. 디렉터 직책이 아닌 최전선 실무 트랙에서 설계 방향을 정하고 팀 표준을 세우는 방식으로 팀의 기술을 이끄는 것을 선호합니다. 새로운 MMO를 처음부터 설계하는 팀에서 서버의 근간을 맡아 끝까지 함께 만들어가는 일에 가장 적합합니다."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "오정록에게 어떻게 연락하나요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "이메일 jungrok5@gmail.com 으로 연락할 수 있습니다. GitHub 프로필은 https://github.com/jungrok5 이고, 웹 이력서는 https://jungrok5.github.io/resume/ 에서 기본·상세·3D 인터랙티브 뷰로 볼 수 있습니다."
+          }
+        }
+      ]
+    }
+  ]
 }
 </script>
 

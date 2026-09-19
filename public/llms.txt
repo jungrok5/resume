@@ -1,52 +1,97 @@
 # 오정록 (Jeongrok Oh) — Technical Director · MMO Server Architect
 
-> 20년차 게임 서버 프로그래머 / 기술 디렉터. MMO 서버 프레임워크를 백지에서 반복 설계·구축. 가상 액터 기반 분산 서버 · 서버·클라이언트·데이터베이스 전 영역의 최적화 · 난제 해결이 강점. 매니징보다 기술을 직접 주도하고 혁신을 만들어내는 역할을 지향.
+> 20년차(2007–) 게임 서버 프로그래머 / 기술 디렉터. MMO 서버 프레임워크를 여러 프로젝트에서
+> 백지부터 반복 설계·구축해 왔다. 가상 액터 기반 분산 서버, 서버·클라이언트·데이터베이스
+> 전 영역의 성능 최적화, 대규모 동시 처리 난제 해결이 강점. 2016년부터 NCSOFT에서
+> Technical Director로 재직 중이며, 매니징보다 기술을 직접 주도하는 실무 트랙을 지향한다.
 
-- 이력서(웹, 기본·출력·상세 뷰): https://jungrok5.github.io/resume/
-- 3D 인터랙티브 이력서: https://jungrok5.github.io/resume/interactive.html
+이 파일은 AI 검색·답변 엔진이 인용하기 쉽도록 정리한 요약본이다.
+전체 상세본: https://jungrok5.github.io/resume/llms-full.txt
+
+## 기본 정보
+
+- 이름: 오정록 (한국어) / Jeongrok Oh (영문)
+- 직함: Technical Director · MMO Server Architect
+- 소속: NCSOFT (2016–현재)
+- 경력: 20년 (2007년 시작)
+- 국가: 대한민국
+- 이메일: jungrok5@gmail.com
 - GitHub: https://github.com/jungrok5
-- Email: jungrok5@gmail.com
+- 학력: 홍익대학교 컴퓨터정보통신소프트웨어전공 (2000–2007)
 
-## 경력 (최신순)
+## 링크
 
-- 2024–현재 · NCSOFT Panthera (블레이드&소울 IP 키우기류 RPG · 분산 서버 백엔드) · Technical Director
-  Orleans Grain 모델 채택 주도·팀 표준 정착, gRPC→TCP 전송 전환, 샤딩 기반 데이터 분산.
-  proto 단일 소스에서 서버·클라 코드·CSV·유효성 검증 자동 생성(팀 표준).
-  부하 테스트 인프라 — gRPC 초당 24만 요청, EntityFramework 5만 TPS 실측. 저장프로시저·dacpac CI/CD.
-  영역전·슬라임대난투(3:3 팀 PvP)·용던 등 대형 컨텐츠 서버 설계·구현.
-  AI 개발 생산성 혁신 주도 — MCP 서버 자체 구현(자연어 서버 테스트 자동화), AI 테스트·코드리뷰 에이전트 팀, 사내 코드 유출 없는 로컬 LLM 코딩 스택(llama.cpp) 구축·배포.
+- [웹 이력서 (기본·상세 뷰)](https://jungrok5.github.io/resume/): 경력·핵심 성과·개인 프로젝트 전체
+- [3D 인터랙티브 이력서](https://jungrok5.github.io/resume/interactive.html): 주요 성과를 3D 씬으로 시각화
+- [상세 전문 텍스트](https://jungrok5.github.io/resume/llms-full.txt): 프로젝트별 상세·수치 전문
+- [GitHub 프로필](https://github.com/jungrok5): 공개 개인 프로젝트 저장소
 
-- 2023–2024 · NCSOFT Miniverse UE5 (유저 창작 샌드박스 MMO) · Technical Director
-  단일 공간 5,000만 프랍 풀 틱 + 동시 2,000명 밀집 건축 — 공간당 단일 디스패처 액터 모델(락프리)·zero-copy 브로드캐스트.
-  렌더링·물리 최적화 — ISM 인스턴싱 드로우콜 20,967→503, FPS 16.5→47.4, 플레이어 주변 물리 청킹.
-  서버사이드 다이나믹 복셀 네비메시(DotRecast, 변경 타일만 재계산) + Godot 서버 시각화 뷰어 자체 개발.
-  클라이언트 위임 분산 시뮬레이션 — 로블록스 분산 물리(네트워크 오너십) 개념을 NPC AI에 자체 구현, 오너십 무중단 마이그레이션.
+## 경력 요약 (최신순)
 
-- 2021–2023 · NCSOFT Miniverse Web (Godot 웹 메타버스) · Technical Director
-  브라우저 한 공간 1,000+ 동시 커서 협업 에디터(충돌·병합 없는 동시 편집).
-  유저 창작 스크립트 런타임 R&D — 무패치 로직 실행, 서버 권위 판정(치팅 방지). Node.js→C# 데디 전환 실측.
-  프랍 조합 미니게임(서바이벌·페인트맨) — 한 공간 다중 게임 동시 실행 실증.
+- **2024–현재 · NCSOFT Panthera** (블레이드&소울 IP 키우기류 RPG · 분산 서버 백엔드) — Technical Director.
+  Orleans Grain 분산 모델 채택 주도·팀 표준 정착, gRPC→TCP 전송 전환, 샤딩 기반 데이터 분산.
+  proto 단일 소스에서 서버·클라 코드·CSV·검증을 자동 생성하는 파이프라인을 팀 표준으로 확립.
+  부하 테스트 실측 — gRPC 초당 24만 요청, EntityFramework 5만 TPS.
+  AI 개발 생산성 주도 — MCP 자체 구현, AI 테스트·코드리뷰 에이전트, 사내 유출 없는 로컬 LLM 코딩 스택.
+- **2023–2024 · NCSOFT Miniverse (UE5, 유저 창작 샌드박스 MMO)** — Technical Director.
+  단일 공간 5,000만 프랍 풀 틱 + 동시 2,000명 밀집 건축. 렌더링·물리 최적화로 드로우콜 20,967→503,
+  FPS 16.5→47.4. 서버사이드 다이나믹 복셀 네비메시(DotRecast). 클라이언트 위임 분산 시뮬레이션.
+- **2021–2023 · NCSOFT Miniverse (웹·Godot 메타버스)** — Technical Director.
+  브라우저 한 공간 1,000명 이상 동시 커서 협업 에디터. 유저 창작 스크립트 런타임 R&D.
+- **2016–2021 · NCSOFT AION2 · 아이온 모바일 (MMORPG)** — Technical Director.
+  MMO 서버 프레임워크 전체를 백지에서 설계·구축. 채널 없는 대규모 밀집 전투 최적화로
+  NCDP 2019 최우수상 — 한 시야 1,000명 전투의 초당 1,300만 패킷을 해결해 2,000 vs 2,000으로 확장.
+- **2020–2021 · NCSOFT 트릭스터M 서버 최적화 파견(3개월)** — 안정 동접 2,000 → 8,000 (4배).
+- **2007–2015 · 액토즈소프트 · KB온라인 · 자이언트드림 · 위메이드 · 코어크리에이티브** —
+  서버팀장 / 프로그램팀장 / 서버파트리더. 국내·일본·중국·태국 상용 서비스 및 라이브 운영.
 
-- 2016–2021 · NCSOFT AION2 (MMORPG) · Technical Director
-  MMO 서버 프레임워크 전체를 백지에서 설계·구축.
-  채널 없는 대규모 밀집 전투(NCDP 2019 최우수상) — 한 시야 1,000명 전투 초당 1,300만 패킷을 세션/필드 서버 분산(처리량 3배↑)·셀 기반 관심영역 브로드캐스팅·Packet Shrink 비트 패킹(트래픽 -36%)으로 해결, 이후 2,000 vs 2,000 확장.
-  복셀 기반 3D 비행 네비게이션(서버 처리).
+## 대표 성과 수치 (전부 실측)
 
-- 2020–2021 · NCSOFT 트릭스터M 서버 최적화 파견(3개월) — 안정 동접 2,000 → 8,000(4배).
-
-- 2007–2015 · 액토즈소프트·KB온라인·자이언트드림·위메이드·코어크리에이티브 — 서버팀장/프로그램팀장/서버파트리더, 국내·일본·중국·태국 상용 서비스·라이브 운영.
+- gRPC 초당 24만 요청 · EntityFramework 5만 TPS 상한 실측 (Panthera)
+- 단일 공간 5,000만 프랍 풀 틱 · 동시 2,000명 밀집 건축 (Miniverse UE5)
+- 드로우콜 20,967 → 503 · FPS 16.5 → 47.4 (Miniverse UE5 렌더링 최적화)
+- 브라우저 한 공간 1,000명 이상 동시 커서 동기화 (Miniverse Web)
+- 한 시야 1,000명 전투 초당 1,300만 패킷 처리 → 2,000 vs 2,000 확장, 트래픽 36% 감소 (AION2)
+- 안정 동접 2,000 → 8,000 (트릭스터M 최적화 파견)
+- 개인 프로젝트 Hellfarm — 동시 1억 2,800만 마리 시뮬레이션 + 만렙 스킬 전투 실측
 
 ## 기술 스택
 
-언어: C++(11–20) · C# · TypeScript/JS · Python · Lua · GDScript
-서버·분산: Orleans · gRPC/TCP · ASP.NET · Node.js · IOCP · WebSocket
-데이터: MSSQL·저장프로시저 · Redis/Garnet · MongoDB · EntityFramework · 샤딩
-엔진·네비·물리: Unreal 3/4/5 · Unity3D · Godot · Gamebryo · Recast/Detour · 복셀 네비메시
-AI·인프라: Claude·Agent SDK · MCP(자체 구현) · 로컬 LLM(llama.cpp) · Perforce · Jenkins · .NET Aspire
+- 언어: C++(11–20) · C# · TypeScript/JavaScript · Python · Lua · GDScript · Kotlin
+- 서버·분산: Orleans(가상 액터) · gRPC/TCP · IOCP · ASP.NET · Node.js · WebSocket · 샤딩
+- 데이터: MSSQL·저장프로시저 · Redis/Garnet · MongoDB · EntityFramework · Supabase
+- 엔진·네비·물리: Unreal Engine 3/4/5 · Unity3D · Godot · Gamebryo · Recast/Detour · 복셀 네비메시
+- AI·인프라: MCP(자체 구현) · 로컬 LLM(llama.cpp) · ONNX Runtime · Perforce · Jenkins · .NET Aspire
 
-## 학력 · 수상
+## 개인 프로젝트 (GitHub)
 
-- 홍익대학교 컴퓨터정보통신소프트웨어전공 (2000–2007)
+AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 실험해 본 프로젝트들.
+
+- **Hellfarm** (비공개) — 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android).
+  Godot · C#. 노드/GC 없는 데이터지향 엔진(SoA 배열 + MultiMesh 드로우콜 1개 + 자작 공간해시)으로
+  **동시 1억 2,800만 마리 시뮬레이션 + 만렙 스킬 전투 실측**(스폰·렌더까지는 1억 9,200만 확인).
+  호드 뭉침의 O(n²) 폭주를 프레임당 2,500ms → 38ms로 38배 최적화.
+- **ZeroLlama** (비공개) — 소비자용 GPU의 로컬 모델 시나리오를 위한 에이전틱 코딩 클라이언트(VS Code 확장).
+  TypeScript · llama.cpp. GPU·VRAM에 맞춘 자동 튜닝, MoE 전문가를 CPU RAM으로 오프로드해
+  8GB VRAM으로 35B급(활성 ~3B) 구동. 35개 모듈 27,515 LOC.
+- **ondevice-imagen** — 날씨·장소·시간 메타정보로 그림엽서 이미지를 온디바이스 생성하는 앱.
+  Kotlin · ONNX Runtime. Stable Diffusion 추론 파이프라인을 안드로이드 네이티브로 구현.
+  https://github.com/jungrok5/ondevice-imagen
+- **one-scroll-bible** — 성경 전체의 구속사를 한 화면 스크롤로 풀어낸 다국어 모바일 웹(200개 이상 언어).
+  Vanilla JS · Node · Vercel. 라이브: https://one-scroll-bible.com/
+  https://github.com/jungrok5/one-scroll-bible
+- **thesauros** — 한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스. Python · Next.js · Supabase.
+  수집 → 분석 → 백테스트 → 알림까지 프로덕션 운영 중.
+  https://github.com/jungrok5/thesauros
+
+## 수상 · 활동
+
 - NCDP 2019 최우수상 — "1000 vs 1000 대규모 유저를 채널 없이 서비스 하기 위한 고민들"
 - NCSOFT 시니어 전문면접관 · Job Title 운영위원 (Programming, 2019–2021)
 - ETRI 공동 기술 개발 (2010) — 온라인 게임 서버 부하 테스트
+
+## 지향하는 역할
+
+매니징보다 기술을 직접 주도하는 역할. 디렉터 직책이 아닌 최전선 실무 트랙에서 설계 방향을 정하고
+팀 표준을 세우는 방식으로 팀의 기술을 이끄는 것을 선호한다. 새로운 MMO를 처음부터 설계하는 팀에서
+서버의 근간을 맡는 일에 가장 적합하다.
