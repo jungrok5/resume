@@ -1,0 +1,114 @@
+# Jeongrok Oh (오정록) — Technical Director · MMO Server Architect
+
+> Game server engineer and technical director with 20 years of experience (since 2007).
+> Has designed and built MMO server frameworks from scratch across multiple projects.
+> Specializes in virtual-actor-based distributed servers, end-to-end performance
+> optimization across server/client/database, and solving large-scale concurrency
+> problems. Technical Director at NCSOFT since 2016, based in South Korea.
+
+This file is a structured summary for AI search and answer engines.
+Korean version: https://jungrok5.github.io/resume/llms.txt
+Full detail (Korean): https://jungrok5.github.io/resume/llms-full.txt
+
+## Profile
+
+- Name: Jeongrok Oh (Korean: 오정록)
+- Title: Technical Director · MMO Server Architect
+- Employer: NCSOFT (2016–present)
+- Experience: 20 years (started 2007)
+- Location: South Korea
+- Email: jungrok5@gmail.com
+- GitHub: https://github.com/jungrok5
+- LinkedIn: https://www.linkedin.com/in/jungrok5
+- Education: Hongik University, Computer & Information Communication Software (2000–2007)
+
+## Links
+
+- [Resume (English summary)](https://jungrok5.github.io/resume/en/): career, achievements, projects
+- [Resume (Korean, full)](https://jungrok5.github.io/resume/): complete detail with per-project breakdowns
+- [3D interactive resume](https://jungrok5.github.io/resume/interactive.html): key achievements as scroll-driven 3D scenes
+- [GitHub](https://github.com/jungrok5): public personal project repositories
+
+## Career (most recent first)
+
+- **2024–present · NCSOFT, Panthera** (Blade & Soul IP idle/growth RPG, distributed server backend) — Technical Director.
+  Drove adoption of the Microsoft Orleans grain model and established it as the team standard;
+  migrated the transport layer from gRPC to TCP; introduced sharding-based data distribution.
+  Built a single-source pipeline generating server/client code, CSV and validation from proto definitions.
+  Load-test measurements: 240,000 gRPC requests/second, 50,000 TPS on EntityFramework.
+  Led AI developer productivity: implemented an MCP server in-house, built an AI test/code-review
+  agent team, and deployed a local LLM coding stack (llama.cpp) that keeps company code in-house.
+- **2023–2024 · NCSOFT, Miniverse (Unreal Engine 5, user-generated sandbox MMO)** — Technical Director.
+  50 million props full-tick in a single space with 2,000 concurrent players building densely.
+  Rendering and physics optimization: draw calls 20,967 → 503, FPS 16.5 → 47.4.
+  Server-side dynamic voxel navmesh (DotRecast) plus a custom Godot-based server visualization viewer.
+  Client-delegated distributed simulation: applied the Roblox network-ownership concept to NPC AI
+  with seamless ownership migration.
+- **2021–2023 · NCSOFT, Miniverse (Web / Godot metaverse)** — Technical Director.
+  Real-time collaborative editor synchronizing 1,000+ concurrent cursors in one browser space.
+  R&D on a user-generated script runtime (patchless logic execution, server-authoritative validation).
+- **2016–2021 · NCSOFT, AION2 / AION Mobile (MMORPG)** — Technical Director.
+  Designed and built the entire MMO server framework from scratch.
+  Won the NCDP 2019 Grand Prize for channel-free large-scale dense combat optimization —
+  handled 13 million packets/second from 1,000-player single-view combat via network load
+  distribution, cell-based interest-area broadcasting and packet bit-packing (36% traffic reduction),
+  then scaled to 2,000 vs 2,000.
+- **2020–2021 · NCSOFT, TRICKSTER M server optimization (3-month assignment)** —
+  raised stable concurrent users from 2,000 to 8,000 (4x).
+- **2007–2015 · Actoz Soft, KB Online, Giant Dream, Wemade, Core Creative** —
+  Server Team Lead / Program Team Lead / Server Part Lead. Shipped and operated live commercial
+  services in Korea, Japan, China and Thailand.
+
+## Key measured results
+
+- 240,000 gRPC requests/sec · 50,000 TPS on EntityFramework (Panthera)
+- 50 million props full-tick · 2,000 concurrent players building (Miniverse UE5)
+- Draw calls 20,967 → 503 · FPS 16.5 → 47.4 (Miniverse UE5)
+- 1,000+ concurrent cursors synchronized in one browser space (Miniverse Web)
+- 13 million packets/sec in 1,000-player combat → scaled to 2,000 vs 2,000, traffic −36% (AION2)
+- Stable concurrent users 2,000 → 8,000 (TRICKSTER M optimization)
+- Personal project Hellfarm — 128 million entities simulated concurrently (measured)
+
+## Technical skills
+
+- Languages: C++ (11–20), C#, TypeScript/JavaScript, Python, Lua, GDScript, Kotlin
+- Server & distributed: Microsoft Orleans (virtual actors), gRPC/TCP, IOCP, ASP.NET, Node.js, WebSocket, sharding
+- Data: MSSQL & stored procedures, Redis/Garnet, MongoDB, EntityFramework, Supabase
+- Engines, navigation & physics: Unreal Engine 3/4/5, Unity3D, Godot, Gamebryo, Recast/Detour, voxel navmesh
+- AI & infrastructure: MCP (own implementation), local LLM (llama.cpp), ONNX Runtime, Perforce, Jenkins, .NET Aspire
+
+## Personal projects (GitHub)
+
+Experiments in how far each domain can be pushed using AI and models as tools.
+
+- **Hellfarm** (private) — Diablo-style loot farming meets Vampire-Survivors-like one-hand
+  hack-and-slash action game (Windows/Android), Godot + C#. A node-free, GC-free data-oriented
+  engine (struct-of-arrays flat arrays, one MultiMesh draw call per system, custom spatial hash
+  instead of a physics engine) that **simulates 128 million entities concurrently with max-level
+  skill combat** (192 million verified for spawn/simulate/render). Optimized the O(n²) blow-up of
+  dense horde clustering from 2,500 ms to 38 ms per frame — a 38x improvement.
+- **ZeroLlama** (private) — Agentic coding client (VS Code extension) built for local-model
+  scenarios on consumer GPUs. TypeScript + llama.cpp. Auto-tunes model and quantization choice
+  to the available GPU/VRAM, and offloads MoE experts to CPU RAM so a 35B-class model
+  (~3B active) runs on 8 GB of VRAM. 35 modules, 27,515 lines of code.
+- **ondevice-imagen** — Android app generating postcard images on-device from metadata such as
+  weather, place and time. Kotlin + ONNX Runtime; the Stable Diffusion inference pipeline was
+  implemented natively for Android. https://github.com/jungrok5/ondevice-imagen
+- **one-scroll-bible** — Multilingual mobile web telling the whole Bible's redemptive history as a
+  single scroll, in 200+ languages. Vanilla JS, Node, Vercel. Live at https://one-scroll-bible.com/
+  https://github.com/jungrok5/one-scroll-bible
+- **thesauros** — Service analyzing and alerting on buy timing for Korean and US equities.
+  Python, Next.js, Supabase. Runs in production from collection through analysis, backtesting and alerts.
+  https://github.com/jungrok5/thesauros
+
+## Awards & activities
+
+- NCDP 2019 Grand Prize — "Serving 1000 vs 1000 large-scale users without channels"
+- NCSOFT Senior Technical Interviewer · Job Title Committee member (Programming, 2019–2021)
+- Joint technology development with ETRI (2010) — online game server load testing
+
+## Role sought
+
+Prefers leading technology hands-on rather than through management — setting design direction and
+establishing team standards from a front-line engineering track rather than a director title.
+Best suited to owning the server foundation of a team designing a new MMO from the ground up.

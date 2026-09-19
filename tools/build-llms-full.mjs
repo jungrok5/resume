@@ -46,7 +46,7 @@ const out = `# 오정록 (Jeongrok Oh) — 상세 이력서 전문
 > 원본 웹 이력서: ${SITE}/  ·  최종 갱신: ${today}
 > 이 문서의 모든 수치는 실제 프로젝트에서 측정한 값입니다.
 
-연락처: jungrok5@gmail.com · GitHub: https://github.com/jungrok5
+연락처: jungrok5@gmail.com · GitHub: https://github.com/jungrok5 · LinkedIn: https://www.linkedin.com/in/jungrok5
 
 ${text}
 `

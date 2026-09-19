@@ -1,5 +1,7 @@
 # https://jungrok5.github.io/resume/
-# AI 검색·답변 엔진 환영 — 구조화 요약: /llms.txt · 전문: /llms-full.txt
+# AI 검색·답변 엔진 환영
+# 구조화 요약: /llms.txt (한국어) · /llms-en.txt (English)
+# 전문: /llms-full.txt
 
 User-agent: *
 Allow: /

@@ -4,7 +4,7 @@
 > 원본 웹 이력서: https://jungrok5.github.io/resume/  ·  최종 갱신: 2026-09-19
 > 이 문서의 모든 수치는 실제 프로젝트에서 측정한 값입니다.
 
-연락처: jungrok5@gmail.com · GitHub: https://github.com/jungrok5
+연락처: jungrok5@gmail.com · GitHub: https://github.com/jungrok5 · LinkedIn: https://www.linkedin.com/in/jungrok5
 
 # 오정록 (Jeongrok Oh) — Technical Director / MMO Server Architect
 
@@ -19,6 +19,8 @@
 E-mail | jungrok5@gmail.com
 
 GitHub | github.com/jungrok5
+
+LinkedIn | linkedin.com/in/jungrok5
 
 학력 | 홍익대학교 컴퓨터정보통신소프트웨어전공 졸업 (2000-03 ~ 2007-02)
 

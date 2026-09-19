@@ -153,6 +153,9 @@ function Panel({ s }) {
           <a href={profile.github} target="_blank" rel="noreferrer">
             github.com/jungrok5
           </a>
+          <a href={profile.linkedin} target="_blank" rel="noreferrer">
+            linkedin.com/in/jungrok5
+          </a>
         </div>
       )}
 

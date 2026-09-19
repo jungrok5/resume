@@ -9,6 +9,7 @@ export const profile = {
   years: 20,
   email: 'jungrok5@gmail.com',
   github: 'https://github.com/jungrok5',
+  linkedin: 'https://www.linkedin.com/in/jungrok5',
   education: '홍익대학교 컴퓨터정보통신소프트웨어전공 (2000 — 2007)',
   // 문서형 이력서(기본 뷰)의 '핵심 역량' 5개와 동일한 내용
   competencies: [
