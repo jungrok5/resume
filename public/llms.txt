@@ -7,6 +7,7 @@
 
 이 파일은 AI 검색·답변 엔진이 인용하기 쉽도록 정리한 요약본이다.
 전체 상세본: https://jungrok5.github.io/resume/llms-full.txt
+English version: https://jungrok5.github.io/resume/llms-en.txt
 
 ## 기본 정보
 
@@ -17,14 +18,17 @@
 - 국가: 대한민국
 - 이메일: jungrok5@gmail.com
 - GitHub: https://github.com/jungrok5
+- LinkedIn: https://www.linkedin.com/in/jungrok5
 - 학력: 홍익대학교 컴퓨터정보통신소프트웨어전공 (2000–2007)
 
 ## 링크
 
 - [웹 이력서 (기본·상세 뷰)](https://jungrok5.github.io/resume/): 경력·핵심 성과·개인 프로젝트 전체
 - [3D 인터랙티브 이력서](https://jungrok5.github.io/resume/interactive.html): 주요 성과를 3D 씬으로 시각화
+- [English resume](https://jungrok5.github.io/resume/en/): 영문 요약본
 - [상세 전문 텍스트](https://jungrok5.github.io/resume/llms-full.txt): 프로젝트별 상세·수치 전문
 - [GitHub 프로필](https://github.com/jungrok5): 공개 개인 프로젝트 저장소
+- [LinkedIn 프로필](https://www.linkedin.com/in/jungrok5): 경력 요약
 
 ## 경력 요약 (최신순)
 
