@@ -94,7 +94,7 @@
         {
           "@type": "Question",
           "name": "What are Jeongrok Oh's personal projects?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Five projects exploring how far each domain can be pushed using AI and models as tools. Hellfarm is an action game whose custom data-oriented engine simulates 128 million entities concurrently (Godot, C#). ZeroLlama is an agentic coding client that runs 35B-class models on 8 GB of VRAM by offloading MoE experts to CPU RAM (TypeScript, llama.cpp). ondevice-imagen implements the Stable Diffusion inference pipeline natively on Android. one-scroll-bible is a multilingual web app in 200+ languages. thesauros is a production equity analysis and alerting service." }
+          "acceptedAnswer": { "@type": "Answer", "text": "Six projects exploring how far each domain can be pushed using AI and models as tools. The Game Lag White Paper (jungrok5.github.io/mmo-lag-anatomy) is a public encyclopedia of 228 online game lag causes across 13 layers, each with how to confirm it, the owning team and sources, in 12 languages. Hellfarm is an action game whose custom data-oriented engine simulates 128 million entities concurrently (Godot, C#). ZeroLlama is an agentic coding client that runs 35B-class models on 8 GB of VRAM by offloading MoE experts to CPU RAM (TypeScript, llama.cpp). ondevice-imagen implements the Stable Diffusion inference pipeline natively on Android. one-scroll-bible is a multilingual web app in 200+ languages. thesauros is a production equity analysis and alerting service." }
         },
         {
           "@type": "Question",
@@ -285,6 +285,18 @@
 
   <h2>Personal projects</h2>
   <p class="note">Experiments in how far each domain can be pushed using AI and models as tools.</p>
+
+  <div class="job">
+    <div class="job-head">
+      <div class="job-title"><a href="https://jungrok5.github.io/mmo-lag-anatomy/en/">Game Lag White Paper</a> <span class="genre">— public encyclopedia of 228 online game lag causes across 13 layers, from client to database (12 languages)</span></div>
+      <div class="job-meta">HTML · JavaScript · Python · MIT</div>
+    </div>
+    <ul class="bul">
+      <li><b>228 causes, each written to be confirmed</b> — symptoms, graph shape, how to confirm (where to look, what confirms or rules it out), owning team (game dev, infra, external) with per-team actions, and authoritative sources (<span class="metric">630 source URLs</span> from 83 publishers), so an incident log can be matched to candidate causes.</li>
+      <li><b>28 interactive experiments</b> that reproduce symptoms such as stutter, teleporting and rubber-banding by changing network, server and client conditions; a triage helper that ranks causes by who is affected, when and what the graph looks like; 12 public postmortems and step-by-step playbooks.</li>
+      <li>Korean original with 11 translations, static per-cause pages, llms.txt and structured data for search engines and AI assistants; ships as a single self-contained HTML file.</li>
+    </ul>
+  </div>
 
   <div class="job">
     <div class="job-head">
