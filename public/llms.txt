@@ -28,6 +28,7 @@ English version: https://jungrok5.github.io/resume/llms-en.txt
 - [English resume](https://jungrok5.github.io/resume/en/): 영문 요약본
 - [상세 전문 텍스트](https://jungrok5.github.io/resume/llms-full.txt): 프로젝트별 상세·수치 전문
 - [GitHub 프로필](https://github.com/jungrok5): 공개 개인 프로젝트 저장소
+- [게임 렉 백서](https://jungrok5.github.io/mmo-lag-anatomy/): 직접 만든 온라인 게임 렉 원인 백과(원인 228가지, 12개 언어)
 - [LinkedIn 프로필](https://www.linkedin.com/in/jungrok5): 경력 요약
 
 ## 경력 요약 (최신순)
@@ -71,6 +72,10 @@ English version: https://jungrok5.github.io/resume/llms-en.txt
 
 AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 실험해 본 프로젝트들.
 
+- **게임 렉 백서** — 온라인 게임 렉 원인 228가지를 내 화면부터 서버 DB까지 13개 층과 3개 주제로 정리한 공개 백과.
+  원인마다 증상·그래프 모양·확인 방법·주 담당 팀(게임개발팀·인프라팀·외부)·공신력 있는 출처(출처 주소 630개, 발행처 83곳).
+  조건을 바꿔 증상을 재현하는 실험 28개, 공개 장애 사후 분석 12건. 한국어 원문과 11개 언어판. MIT.
+  https://jungrok5.github.io/mmo-lag-anatomy/ (AI용 요약: https://jungrok5.github.io/mmo-lag-anatomy/llms.txt)
 - **Hellfarm** (비공개) — 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android).
   Godot · C#. 노드/GC 없는 데이터지향 엔진(SoA 배열 + MultiMesh 드로우콜 1개 + 자작 공간해시)으로
   **동시 1억 2,800만 마리 시뮬레이션 + 만렙 스킬 전투 실측**(스폰·렌더까지는 1억 9,200만 확인).

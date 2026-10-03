@@ -281,12 +281,29 @@
       "@id": "https://jungrok5.github.io/resume/#projects",
       "name": "개인 프로젝트 (GitHub)",
       "description": "AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 실험해 본 프로젝트들",
-      "numberOfItems": 5,
+      "numberOfItems": 6,
       "itemListOrder": "https://schema.org/ItemListOrderAscending",
       "itemListElement": [
         {
           "@type": "ListItem",
           "position": 1,
+          "item": {
+            "@type": "TechArticle",
+            "@id": "https://jungrok5.github.io/mmo-lag-anatomy/#article",
+            "name": "게임 렉 백서",
+            "alternateName": "Game Lag White Paper",
+            "description": "온라인 게임의 렉 원인 228가지를 내 화면부터 서버 데이터베이스까지 13개 층과 3개 주제(동기화 설계, 일부에게만 생기는 문제, TCP 재전송)로 정리한 공개 백과. 원인마다 증상, 그래프 모양, 확인 방법, 주 담당 팀(게임개발팀·인프라팀·외부)과 팀별 할 일, 공신력 있는 출처(출처 주소 630개, 발행처 83곳)를 달았고, 조건을 바꿔 증상을 재현하는 실험 28개와 공개 장애 사후 분석 12건을 담았다. 한국어 원문과 11개 언어판.",
+            "url": "https://jungrok5.github.io/mmo-lag-anatomy/",
+            "inLanguage": ["ko", "en", "ja", "zh-CN", "zh-TW", "de", "th", "vi", "ru", "pt-BR", "es", "id"],
+            "license": "https://opensource.org/licenses/MIT",
+            "author": {
+              "@id": "https://jungrok5.github.io/resume/#person"
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
           "item": {
             "@type": "SoftwareSourceCode",
             "name": "Hellfarm",
@@ -303,7 +320,7 @@
         },
         {
           "@type": "ListItem",
-          "position": 2,
+          "position": 3,
           "item": {
             "@type": "SoftwareSourceCode",
             "name": "ZeroLlama",
@@ -320,7 +337,7 @@
         },
         {
           "@type": "ListItem",
-          "position": 3,
+          "position": 4,
           "item": {
             "@type": "SoftwareSourceCode",
             "name": "ondevice-imagen",
@@ -340,7 +357,7 @@
         },
         {
           "@type": "ListItem",
-          "position": 4,
+          "position": 5,
           "item": {
             "@type": "SoftwareSourceCode",
             "name": "one-scroll-bible",
@@ -360,7 +377,7 @@
         },
         {
           "@type": "ListItem",
-          "position": 5,
+          "position": 6,
           "item": {
             "@type": "SoftwareSourceCode",
             "name": "thesauros",
@@ -422,7 +439,7 @@
           "name": "오정록의 개인 프로젝트에는 어떤 것이 있나요?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "AI와 모델을 도구로 각 도메인에서 어디까지 만들 수 있는지 실험한 프로젝트 5종이 있습니다. Hellfarm은 동시 1억 2,800만 마리 시뮬레이션을 실측한 핵앤슬래시 액션 게임(Godot·C#)이고, ZeroLlama는 8GB VRAM으로 35B급 모델을 구동하는 로컬 LLM 코딩 클라이언트(TypeScript·llama.cpp)입니다. ondevice-imagen은 Stable Diffusion을 안드로이드 네이티브로 구현한 온디바이스 이미지 생성 앱, one-scroll-bible은 200개 이상 언어를 지원하는 다국어 성경 웹(one-scroll-bible.com), thesauros는 한국·미국 주식 분석·알림 서비스입니다."
+            "text": "AI와 모델을 도구로 각 도메인에서 어디까지 만들 수 있는지 실험한 프로젝트 6종이 있습니다. 게임 렉 백서(jungrok5.github.io/mmo-lag-anatomy)는 온라인 게임 렉 원인 228가지를 13개 층으로 정리하고 원인마다 확인 방법·담당 팀·출처를 단 공개 백과(12개 언어)입니다. Hellfarm은 동시 1억 2,800만 마리 시뮬레이션을 실측한 핵앤슬래시 액션 게임(Godot·C#)이고, ZeroLlama는 8GB VRAM으로 35B급 모델을 구동하는 로컬 LLM 코딩 클라이언트(TypeScript·llama.cpp)입니다. ondevice-imagen은 Stable Diffusion을 안드로이드 네이티브로 구현한 온디바이스 이미지 생성 앱, one-scroll-bible은 200개 이상 언어를 지원하는 다국어 성경 웹(one-scroll-bible.com), thesauros는 한국·미국 주식 분석·알림 서비스입니다."
           }
         },
         {
@@ -1016,6 +1033,20 @@
 
     <div class="job">
       <div class="job-head">
+        <div class="job-title"><a href="https://jungrok5.github.io/mmo-lag-anatomy/" target="_blank" rel="noopener">게임 렉 백서</a> <span class="genre">— 온라인 게임 렉 원인 228가지를 내 화면부터 서버 DB까지 13개 층으로 정리한 공개 백과 (12개 언어)</span></div>
+        <div class="job-meta">공개 · MIT</div>
+      </div>
+      <div class="job-sub"><span class="stack">HTML · JavaScript · Python</span></div>
+      <ul class="bul">
+        <li><b>원인 228가지를 판정할 수 있게 정리</b> — 원인마다 증상·그래프 모양·확인 방법(확인할 곳·맞음·아님)·주 담당 팀(게임개발팀·인프라팀·외부)과 팀별 할 일·공신력 있는 출처를 달아 장애 기록과 바로 대조 (출처 주소 <span class="metric">630개</span>, 발행처 83곳)</li>
+        <li><b>조건을 바꿔 증상을 재현하는 실험 28개</b> — 회선·서버·클라이언트 조건에 따라 뚝뚝 끊김·순간이동·고무줄 같은 증상이 생기는 과정과 동기화 방식·TCP 재전송·틱 예산·GC 멈춤의 영향을 수치로 확인</li>
+        <li><b>진단 도우미와 판정 절차</b> — 누가·언제·어떤 모양으로 겪는지로 원인 순위를 매기고 범위 → 시점 → 계층 순으로 판정. 공개 장애 사후 분석 12건과 “패치 이후 렉”·“해외 국가 추가” 절차 포함</li>
+        <li><b>검색엔진·AI 인용 대응</b> — 한국어 원문과 11개 언어판, 언어별 원인·증상 정적 페이지와 llms.txt·구조화 데이터. 글꼴까지 넣은 HTML 파일 하나라 오프라인에서도 열림</li>
+      </ul>
+    </div>
+
+    <div class="job">
+      <div class="job-head">
         <div class="job-title">Hellfarm <span class="lock" title="비공개 저장소">🔒</span> <span class="genre">— 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android)</span></div>
         <div class="job-meta">1인 개발</div>
       </div>
@@ -1230,6 +1261,14 @@
 
     <h2>개인 프로젝트 (GitHub)</h2>
     <p class="pre-note">AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 실험해 본 프로젝트들.</p>
+
+    <div class="exp">게임 렉 백서 — 온라인 게임 렉 원인 228가지를 내 화면부터 서버 DB까지 13개 층으로 정리한 공개 백과 (12개 언어) <span class="m">· 공개 · MIT · <a href="https://jungrok5.github.io/mmo-lag-anatomy/" target="_blank" rel="noopener">jungrok5.github.io/mmo-lag-anatomy</a></span></div>
+    <div class="tech">기술: HTML, JavaScript, Python</div>
+    <ul>
+      <li>원인마다 증상·그래프 모양·확인 방법·주 담당 팀과 팀별 할 일·공신력 있는 출처(출처 주소 630개, 발행처 83곳)를 달아 장애 기록과 대조할 수 있게 정리</li>
+      <li>조건을 바꿔 증상을 재현하는 실험 28개, 누가·언제·어떤 모양으로 원인 순위를 매기는 진단 도우미, 공개 장애 사후 분석 12건과 상황별 절차</li>
+      <li>한국어 원문과 11개 언어판, 원인·증상별 정적 페이지와 llms.txt·구조화 데이터로 검색엔진·AI 인용 대응</li>
+    </ul>
 
     <div class="exp">Hellfarm <span title="비공개 저장소">🔒</span> — 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android) <span class="m">· 1인 개발 · 🔒 비공개</span></div>
     <div class="tech">기술: Godot, C#</div>
@@ -1890,7 +1929,18 @@
 <h2>4. 개인 프로젝트 (GitHub)</h2>
 <p>AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 실험해 본 프로젝트들.</p>
 
-<h3>4-1. Hellfarm 🔒 — 핵앤슬래시 액션 게임 (Windows·Android)</h3>
+<h3>4-1. 게임 렉 백서 — 온라인 게임 렉 원인 백과 (공개 웹 · 12개 언어)</h3>
+<ul>
+<li><strong>무엇</strong>: 온라인 게임의 렉 원인 228가지를 내 게임 화면부터 서버 데이터베이스까지 13개 층과 3개 주제(동기화 설계, 일부에게만 생기는 문제, TCP 재전송)로 나눠 설명하는 공개 백과. 유저 제보나 장애 기록을 보고 원인과 담당 팀을 가려내는 데 쓴다. MMO 사례를 중심으로 썼다.</li>
+<li><strong>기술</strong>: HTML · CSS · JavaScript(프레임워크 없음) · Python 빌드 · <a href="https://jungrok5.github.io/mmo-lag-anatomy/" target="_blank" rel="noopener">jungrok5.github.io/mmo-lag-anatomy</a> · <a href="https://github.com/jungrok5/mmo-lag-anatomy" target="_blank" rel="noopener">github.com/jungrok5/mmo-lag-anatomy</a> (MIT)</li>
+<li><strong>내용</strong>: 원인마다 왜 → 그러면 → 화면에서는의 세 단계, 관련 증상, 네 가지 요인(지연·지터·손실·정체), 누가·언제 겪는지, 수치 감각, 그래프 모양(13가지), 확인 방법(확인할 곳·이러면 맞음·아님·확인 수단), 주 담당 팀(게임개발팀·인프라팀·외부)과 팀별 할 일, 공신력 있는 출처(표준 문서·커널·OS·클라우드·엔진·DB 공식 문서·논문, 출처 주소 630개·발행처 83곳).</li>
+<li><strong>실험</strong>: 조건을 바꿔 보는 실험 28개 — 렉 실험실(증상 8종 재현), 동기화 방식 비교, TCP 재전송, 틱 예산, GC 멈춤, 커넥션 풀, 백분위 읽기 등.</li>
+<li><strong>판정 도구</strong>: 누가·언제·어떤 모양으로 원인 순위를 매기는 진단 도우미, 범위 → 시점 → 계층 순의 판정 흐름과 신호표, 공개 장애 사후 분석 12건, “패치 이후 렉”·“해외 국가 추가” 단계별 절차.</li>
+<li><strong>배포</strong>: 글꼴까지 넣은 HTML 파일 하나(오프라인에서도 열림). 한국어 원문과 11개 언어판, 언어별 원인·증상 정적 페이지, llms.txt·구조화 데이터·sitemap으로 검색엔진·AI 인용에 대응.</li>
+</ul>
+<hr />
+
+<h3>4-2. Hellfarm 🔒 — 핵앤슬래시 액션 게임 (Windows·Android)</h3>
 <div class="shots shots--one">
   <a href="hellfarm/battle_100m.mp4" target="_blank" rel="noopener">
     <video src="hellfarm/battle_100m.mp4" poster="hellfarm/battle_100m.jpg" autoplay loop muted playsinline controls></video>
@@ -1909,7 +1959,7 @@
 <li><strong>그리드 빌드 융합</strong>: 직렬 100만 삽입 루프 대신 병렬 이동 패스 안에서 무락(lock-free) 버킷 푸시(CAS)로 재구축 — 마지막 직렬 O(n) 단계를 제거해 다중코어 암달 병목 방지. 버킷 체인 순서의 비결정성은 모든 쿼리가 실좌표 거리검사를 하므로 무해.</li>
 </ul>
 <hr />
-<h3>4-2. ZeroLlama 🔒 — 소비자용 GPU의 로컬 모델 시나리오를 위해 만든 에이전틱 코딩 클라이언트 (VS Code 확장)</h3>
+<h3>4-3. ZeroLlama 🔒 — 소비자용 GPU의 로컬 모델 시나리오를 위해 만든 에이전틱 코딩 클라이언트 (VS Code 확장)</h3>
 <ul>
 <li><strong>무엇</strong>: 소비자용 GPU(4~24GB)에서 양자화된 로컬 모델로 코딩하기 위한 에이전틱 코딩 클라이언트. 기존 에이전트/런타임은 클라우드 대형 모델을 전제로 설계돼 이 환경에서 제약이 큰데, 그 격차를 아래 레이어로 메웠다.</li>
 <li><strong>기술</strong>: TypeScript · llama.cpp · 🔒 비공개 (pre-alpha) · <code>src/zerollama/</code> 아래 35개 모듈 <strong>27,515 LOC(테스트 제외)</strong> 서브시스템</li>
@@ -1925,7 +1975,7 @@
 <li><strong>리서치</strong>: 소비자용 GPU에서 로컬 모델 코딩이 어느 수준까지 되는지 리서치.</li>
 </ul>
 <hr />
-<h3>4-3. ondevice-imagen — 온디바이스 이미지 생성 앱</h3>
+<h3>4-4. ondevice-imagen — 온디바이스 이미지 생성 앱</h3>
 <ul>
 <li><strong>무엇</strong>: 날씨·장소·시간 같은 메타정보를 토대로 그림엽서 이미지를 온디바이스에서 생성하는 앱.</li>
 <li><strong>기술</strong>: Kotlin · ONNX Runtime · Python · <a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">github.com/jungrok5/ondevice-imagen</a> (실기기 검증, 연구 R&amp;D)</li>
@@ -1933,7 +1983,7 @@
 <li><strong>리서치</strong>: 모바일 기기에서 로컬 모델을 이용한 이미지 생성이 어느 수준까지 되는지 리서치.</li>
 </ul>
 <hr />
-<h3>4-4. one-scroll-bible — 다국어 성경 스크롤 웹 (200+개 언어)</h3>
+<h3>4-5. one-scroll-bible — 다국어 성경 스크롤 웹 (200+개 언어)</h3>
 <ul>
 <li><strong>무엇</strong>: 성경 전체의 구속사를 한 화면 스크롤로 풀어낸 다국어 모바일 웹 (200+개 언어).</li>
 <li><strong>기술</strong>: Vanilla JS · Node · Vercel · <a href="https://github.com/jungrok5/one-scroll-bible" target="_blank" rel="noopener">github.com/jungrok5/one-scroll-bible</a> (라이브 · <a href="https://one-scroll-bible.com/" target="_blank" rel="noopener">one-scroll-bible.com</a>)</li>
@@ -1941,7 +1991,7 @@
 <li><strong>리서치</strong>: 현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치.</li>
 </ul>
 <hr />
-<h3>4-5. thesauros — 주식 분석·알림 서비스 (한국·미국)</h3>
+<h3>4-6. thesauros — 주식 분석·알림 서비스 (한국·미국)</h3>
 <ul>
 <li><strong>무엇</strong>: 한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스.</li>
 <li><strong>기술</strong>: Python · Next.js · Supabase · <a href="https://github.com/jungrok5/thesauros" target="_blank" rel="noopener">github.com/jungrok5/thesauros</a> (라이브 운영 중)</li>

@@ -28,6 +28,7 @@ Full detail (Korean): https://jungrok5.github.io/resume/llms-full.txt
 - [Resume (Korean, full)](https://jungrok5.github.io/resume/): complete detail with per-project breakdowns
 - [3D interactive resume](https://jungrok5.github.io/resume/interactive.html): key achievements as scroll-driven 3D scenes
 - [GitHub](https://github.com/jungrok5): public personal project repositories
+- [Game Lag White Paper](https://jungrok5.github.io/mmo-lag-anatomy/en/): his public encyclopedia of 228 online game lag causes (12 languages)
 
 ## Career (most recent first)
 
@@ -81,6 +82,11 @@ Full detail (Korean): https://jungrok5.github.io/resume/llms-full.txt
 
 Experiments in how far each domain can be pushed using AI and models as tools.
 
+- **Game Lag White Paper** — Public encyclopedia of 228 online game lag causes across 13 layers,
+  from the client to the server database. Each cause has symptoms, graph shape, how to confirm,
+  owning team (game dev, infra, external) and authoritative sources (630 source URLs, 83 publishers).
+  28 interactive experiments and 12 public postmortems. Korean original with 11 translations. MIT.
+  https://jungrok5.github.io/mmo-lag-anatomy/en/ (AI summary: https://jungrok5.github.io/mmo-lag-anatomy/en/llms.txt)
 - **Hellfarm** (private) — Diablo-style loot farming meets Vampire-Survivors-like one-hand
   hack-and-slash action game (Windows/Android), Godot + C#. A node-free, GC-free data-oriented
   engine (struct-of-arrays flat arrays, one MultiMesh draw call per system, custom spatial hash
