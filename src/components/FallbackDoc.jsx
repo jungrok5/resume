@@ -49,7 +49,7 @@ export default function FallbackDoc() {
                 <div key={org} style={{ display: 'flex', gap: 16, margin: '12px 0 0' }}>
                   <span style={{ fontFamily: 'var(--mono)', color: 'var(--cyan)', minWidth: 96 }}>{when}</span>
                   <span>
-                    <b>{org}</b> — <span style={{ color: 'var(--ink-dim)' }}>{what}</span>
+                    <b>{org}</b> · <span style={{ color: 'var(--ink-dim)' }}>{what}</span>
                   </span>
                 </div>
               ))}

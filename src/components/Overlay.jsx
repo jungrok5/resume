@@ -79,7 +79,7 @@ function Summary() {
                   <b>{p.name}</b>
                 </a>
               )}{' '}
-              — {p.tag} <span style={{ color: 'var(--ink-faint)' }}>({p.metric})</span>
+              · {p.tag} <span style={{ color: 'var(--ink-faint)' }}>({p.metric})</span>
             </li>
           ))}
         </ul>
