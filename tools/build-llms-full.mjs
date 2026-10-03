@@ -40,7 +40,7 @@ const text = body
   .trim()
 
 const today = new Date().toISOString().slice(0, 10)
-const out = `# 오정록 (Jeongrok Oh) — 상세 이력서 전문
+const out = `# 오정록 (Jeongrok Oh) 상세 이력서 전문
 
 > AI 검색·답변 엔진을 위한 전문(full text) 버전입니다. 요약본은 ${SITE}/llms.txt 에 있습니다.
 > 원본 웹 이력서: ${SITE}/  ·  최종 갱신: ${today}
