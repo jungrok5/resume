@@ -350,8 +350,7 @@ export const sections = [
 // 인터랙티브 페이지에서 모션 그래픽으로 보여주는 대표 이력 (보여줄 순서).
 // 각 id는 public/motion/<id>/index.html 의 모션 그래픽과 1:1로 대응한다.
 // 나머지 섹션은 '그 밖의 주요 작업' 카드로 텍스트만 노출한다.
-// navmesh 모션 그래픽은 제작 중 — 완성되면 'renderopt' 다음에 'navmesh'를 넣는다.
-export const highlights = ['combat', 'giant', 'collision', 'raycast', 'trickster', 'densebuild', 'spatial', 'renderopt', 'ownership', 'pipeline', 'ai']
+export const highlights = ['combat', 'giant', 'collision', 'raycast', 'trickster', 'densebuild', 'spatial', 'renderopt', 'navmesh', 'ownership', 'pipeline', 'ai']
 
 // 타임라인 + 폴백 문서가 쓰는 경력 요약 (최신 → 과거)
 export const timeline = [

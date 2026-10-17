@@ -87,8 +87,8 @@
 <section class="notes" id="notes">
   <h2>서버사이드 다이나믹 네비메시 <span class="fine">NCSOFT · Miniverse UE5 · 2023 – 2024</span></h2>
   <article data-ch="01"><p><b>문제.</b> Miniverse는 유저가 월드를 실시간으로 짓고 바꾸는 UGC 샌드박스 MMO입니다. 프랍 하나를 놓거나 치우면 서버의 네비메시가 더 이상 월드와 맞지 않고, NPC 경로가 새 프랍을 그대로 관통합니다. 게임을 멈추지 않고 네비메시를 다시 만들어 바꿔 끼워야 합니다.</p></article>
-  <article data-ch="02"><p><b>접근.</b> 복셀(<b>Recast HeightField</b>) 기반으로 <b>DotRecast</b>(Recast/Detour .NET 포팅)를 써서, 프랍이 바뀌면 <b>영향받은 타일만</b> 다시 계산합니다. 재빌드는 <b>백그라운드 스레드</b>에서 돌고, 그동안 메인 스레드는 계속 틱합니다. 결과 교체는 <b>메인 스레드 Job</b>이 맡아 쓰기는 한 스레드에서만 일어나게 했습니다(쓰기 단일 스레드 원칙). 짧은 시간에 몰린 변경은 리빌드를 <b>배치</b>로 묶어 처리하고, NPC는 교체된 네비메시 위에서 다시 길을 찾습니다. 지형·길찾기·충돌을 실시간으로 보는 <b>Godot 기반 서버 뷰어</b>도 직접 만들어 개발·디버깅에 썼습니다.</p></article>
-  <article data-ch="05"><p><b>결과.</b> 프랍 변경 시 영향 타일만 재계산해 <b>수~수십 ms</b> 안에 반영합니다.</p></article>
+  <article data-ch="02"><p><b>접근.</b> 복셀(<b>Recast HeightField</b>) 기반으로 <b>DotRecast</b>(Recast/Detour .NET 포팅)를 써서, 프랍이 바뀌면 <b>영향받은 타일만</b> 다시 계산합니다. 재빌드는 <b>백그라운드 스레드</b>에서 돌고, 그동안 메인 스레드는 계속 틱합니다. 결과 교체는 <b>메인 스레드 Job</b>이 맡아 쓰기는 한 스레드에서만 일어나게 했습니다(쓰기 단일 스레드 원칙). 변경을 모아 리빌드를 <b>배치</b>로 처리하고, NPC는 교체된 네비메시 위에서 다시 길을 찾습니다. 지형·길찾기·충돌을 실시간으로 보는 <b>Godot 기반 서버 뷰어</b>도 직접 만들어 개발·디버깅에 썼습니다.</p></article>
+  <article data-ch="05"><p><b>결과.</b> 프랍 변경 시 영향 타일만 재계산하며, 재계산 시간은 <b>수~수십 ms</b>입니다.</p></article>
   <p class="fine">화면 속 타일 크기와 개수, 프랍, 지형, 경로, 스레드 타임라인의 길이와 비율은 이해를 돕기 위한 개념도·예시입니다. 수치는 영향 타일 재계산 시간 수~수십 ms만 실제 이력 기준입니다.</p>
 </section>
 <script type="importmap">
@@ -780,7 +780,7 @@ function dock(t) {
 }
 function footnote(t) {
   const res = t >= 27;
-  const s = res ? '* 수~수십 ms만 실제 수치(영향 타일 재계산), 화면은 개념도' : '* 타일 크기·개수, 프랍, 경로, 스레드 시간 축은 개념도 · 예시';
+  const s = res ? '* 수~수십 ms만 실제 수치(영향 타일 재계산), 화면은 개념도' : '* 뷰어 화면 재현 · 타일·프랍·경로·시간 축은 개념도 · 예시';
   txt(s, W - (TALL ? 36 : 48), H - (TALL ? 26 : 26), { size: TALL ? 28 : 26, weight: 500, color: C.faint, align: 'right', alpha: .95 });
 }
 
