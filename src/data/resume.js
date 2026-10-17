@@ -169,9 +169,10 @@ export const sections = [
     num: '08',
     kicker: 'NCSOFT · Miniverse UE5 · 2023 – 2024',
     title: '서버사이드 다이나믹 네비메시',
-    metric: { big: '복셀', cap: '변경 타일만 재생성 · DotRecast' },
+    hook: '유저가 바꾼 지형 → 영향 타일만 재계산 (수~수십 ms)',
+    metric: { big: '수~수십 ms', cap: '프랍 변경 시 영향 타일만 재계산 · DotRecast' },
     points: [
-      '유저가 실시간으로 바꾸는 지형에 대응하는 동적 길찾기: 복셀 기반, 영향받은 타일만 재계산(수~수십 ms)',
+      '유저가 실시간으로 바꾸는 지형에 대응하는 동적 길찾기: 복셀(Recast HeightField) 기반, 영향받은 타일만 재계산(수~수십 ms), 네비메시 리빌드 배치 처리',
       'DotRecast(Recast/Detour .NET 포팅): 재빌드는 백그라운드 스레드, 결과 교체는 메인 스레드 Job(쓰기 단일 스레드 원칙)',
       '지형·길찾기·충돌을 실시간 시각화하는 Godot 기반 서버 뷰어를 자체 개발해 개발·디버깅 생산성 향상',
     ],
@@ -349,7 +350,7 @@ export const sections = [
 // 인터랙티브 페이지에서 모션 그래픽으로 보여주는 대표 이력 (보여줄 순서).
 // 각 id는 public/motion/<id>/index.html 의 모션 그래픽과 1:1로 대응한다.
 // 나머지 섹션은 '그 밖의 주요 작업' 카드로 텍스트만 노출한다.
-export const highlights = ['combat', 'giant', 'collision', 'raycast', 'trickster', 'densebuild', 'spatial', 'renderopt', 'ownership', 'pipeline', 'ai']
+export const highlights = ['combat', 'giant', 'collision', 'raycast', 'trickster', 'densebuild', 'spatial', 'renderopt', 'navmesh', 'ownership', 'pipeline', 'ai']
 
 // 타임라인 + 폴백 문서가 쓰는 경력 요약 (최신 → 과거)
 export const timeline = [
