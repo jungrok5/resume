@@ -100,6 +100,45 @@ export default function MotionSection({ s, n, flip, tall }) {
 
   const poster = base + (tall ? 'poster-tall.jpg' : 'poster.jpg')
   const solo = `${base}index.html${tall ? '?layout=tall' : ''}`
+  const mp4 = `${base}${s.id}${tall ? '-tall' : ''}.mp4`
+
+  // 공유: 이 항목으로 바로 오는 링크(interactive.html#<id>).
+  // 폰은 시스템 공유 시트, 그 밖에는 링크 복사.
+  const [shared, setShared] = useState('')
+  const share = async () => {
+    const url = `${location.origin}${location.pathname}#${s.id}`
+    const title = `${s.title} — 오정록 모션 그래픽 이력서`
+    window.gtag?.('event', 'share_click', { scene: s.id })
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text: s.hook || s.title, url })
+        return
+      } catch (e) {
+        if (e && e.name === 'AbortError') return
+      }
+    }
+    let ok = false
+    try {
+      await navigator.clipboard.writeText(url)
+      ok = true
+    } catch {
+      const ta = document.createElement('textarea')
+      ta.value = url
+      ta.setAttribute('readonly', '')
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      try {
+        ok = document.execCommand('copy')
+      } catch {
+        ok = false
+      }
+      ta.remove()
+    }
+    setShared(ok ? '링크 복사됨' : url)
+    setTimeout(() => setShared(''), ok ? 1800 : 6000)
+  }
 
   return (
     <section className={`ms${flip ? ' flip' : ''}`} ref={secRef} id={s.id} data-sid={s.id} data-now={s.title}>
@@ -121,6 +160,12 @@ export default function MotionSection({ s, n, flip, tall }) {
             <span className="ms-track" aria-hidden="true">
               <i ref={barRef} />
             </span>
+            <button type="button" className="ms-share" onClick={share} aria-label={`${s.title} 공유`}>
+              {shared || '공유'}
+            </button>
+            <a href={mp4} target="_blank" rel="noreferrer">
+              MP4
+            </a>
             <a href={solo} target="_blank" rel="noreferrer">
               따로 재생 ↗
             </a>

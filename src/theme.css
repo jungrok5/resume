@@ -677,6 +677,28 @@ h1.hero-name {
 .ms-under a:hover {
   color: var(--cyan);
 }
+.ms-share {
+  font-family: var(--kr);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+  background: rgba(53, 230, 255, 0.1);
+  border: 1px solid rgba(53, 230, 255, 0.45);
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 60vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ms-share:hover {
+  background: rgba(53, 230, 255, 0.2);
+}
+.ms-share:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
 .ms-panel {
   min-width: 0;
   max-height: calc(100svh - var(--barh) - 60px);

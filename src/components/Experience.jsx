@@ -83,6 +83,16 @@ export default function Experience() {
   const tall = useIsMobile(821)
   useChromeTracking()
 
+  // 공유 링크(interactive.html#<id>)로 들어오면 그 항목으로 이동.
+  // React가 그린 뒤라야 요소가 있으니, 마운트 후 한 번 더 스크롤한다.
+  useEffect(() => {
+    const id = decodeURIComponent(location.hash.slice(1))
+    if (!id) return
+    const go = () => document.getElementById(id)?.scrollIntoView({ block: 'start' })
+    const t = setTimeout(go, 60)
+    return () => clearTimeout(t)
+  }, [])
+
   const jump = (id) => (e) => {
     e.preventDefault()
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
