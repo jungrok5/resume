@@ -45,6 +45,7 @@ src/
 public/motion/
   <id>/index.html       one piece per highlight id (self-contained)
   <id>/poster.jpg       16:9 first frame, <id>/poster-tall.jpg 4:5 first frame
+  <id>/<id>.mp4         baked video, 1280×720 · <id>/<id>-tall.mp4 864×1080 (linked under each stage)
   assets/               vendored three.js 0.170 + Pretendard / JetBrains Mono
 ```
 
@@ -83,6 +84,10 @@ public/motion/
    provides the text panel; give it a one-line `hook`).
 3. Stills / MP4: `node <motion-graphics>/scripts/render.mjs public/motion/<id>/index.html out/ --stills 0,10,20`
    (add `--query layout=tall --size 1080x1350` for the phone composition), run from this repo's root.
+4. MP4: render in short segments with the same script and join them with ffmpeg, e.g.
+   `--query "embed&q=0.6667" --from 0 --to 6 --crf 16` (wide → 1280×720) or
+   `--query "embed&layout=tall&q=0.8" --size 1080x1350` (tall → 864×1080), then concat and re-encode at CRF 24.
+   Re-bake a piece's MP4s whenever its index.html changes.
 
 ## Conventions & gotchas (hard-won — keep these)
 

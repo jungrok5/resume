@@ -778,7 +778,7 @@ function tiers(t) {
 function footnote(t) {
   const a = win(t, 6.8, 29.2, .5); if (a <= 0) return;
   const s = '* 칸 크기·개수, 프랍 배치, 경로, 배치 주기의 화면 속도는 개념도';
-  if (TALL) txt(s, W - 40, H - 34, { size: 32, weight: 500, color: C.faint, align: 'right', alpha: a });
+  if (TALL) txt('* 칸·배치·경로·주기 속도는 개념도', W - 40, H - 34, { size: 32, weight: 500, color: C.faint, align: 'right', alpha: a });
   else txt(s, W - 60, H - 40, { size: 30, weight: 500, color: C.faint, align: 'right', alpha: a });
 }
 
