@@ -296,7 +296,7 @@ function drawMCP(g, t) {
   const w = 1080, h = 860;
   chrome(g, w, h, { col: K.mcp, tags: [['MCP', K.mcp]], title: 'MCP 서버 · 자체 구현' });
   gt(g, 'gRPC 리플렉션 → API 목록 자동 탐색', 40, 176, { size: 38, weight: 700, color: K.dim });
-  gt(g, '리플렉션 탐색 대기…', 40, 300, { size: 40, mono: true, color: K.faint, alpha: 1 - p(t, 2.6, .3) });
+  gt(g, '리플렉션 탐색 대기…', 40, 300, { size: 40, weight: 600, color: K.faint, alpha: 1 - p(t, 2.6, .3) });
   const scan = p(t, 2.7, 1.9);
   if (scan > 0 && scan < 1) { g.fillStyle = rgba(K.mcp, .5); g.fillRect(40, 192, (w - 80) * scan, 4); }
   API.forEach((name, i) => {
@@ -317,7 +317,7 @@ const seqRowY = i => 196 + i * 118;
 function drawSEQ(g, t) {
   const w = 1080, h = 860;
   chrome(g, w, h, { col: K.mcp, tags: [['gRPC', K.mcp]], title: '호출 시퀀스 · 자동 생성' });
-  gt(g, '자연어 요청 → 시퀀스 생성 대기…', 40, 210, { size: 40, mono: true, color: K.faint, alpha: 1 - p(t, 5.5, .2) });
+  gt(g, '자연어 요청 → 시퀀스 생성 대기…', 40, 210, { size: 40, weight: 600, color: K.faint, alpha: 1 - p(t, 5.5, .2) });
   SEQ.forEach((name, i) => {
     const k = eo(p(t, 5.6 + i * .45, .35)), y = seqRowY(i); if (k <= 0) return;
     const ok = eo(p(t, 5.9 + i * .45, .3));
@@ -365,7 +365,7 @@ function drawLOG(g, t) {
 function drawDB(g, t) {
   const w = 1080, h = 780;
   chrome(g, w, h, { col: K.db, tags: [['DB', K.db]], title: 'DB 검증' });
-  gt(g, '로그 분석 결과 대기…', 40, 176, { size: 40, mono: true, color: K.faint, alpha: 1 - p(t, 12.7, .15) });
+  gt(g, '로그 분석 결과 대기…', 40, 176, { size: 40, weight: 600, color: K.faint, alpha: 1 - p(t, 12.7, .15) });
   gt(g, typed('SELECT item_id, count FROM inventory', p(t, 12.8, .5)), 40, 176, { size: 36, mono: true, color: K.text });
   gt(g, typed('WHERE uid = 1001;', p(t, 13.3, .25)), 40, 226, { size: 36, mono: true, color: K.text });
   const kh = eo(p(t, 13.5, .3));
@@ -395,7 +395,7 @@ function drawDB(g, t) {
 function drawRPT(g, t) {
   const w = 960, h = 860;
   chrome(g, w, h, { col: K.nl, tags: [['보고서', K.nl]], title: 'test-report.md' });
-  gt(g, '작성 대기…', 40, 190, { size: 40, mono: true, color: K.faint, alpha: 1 - p(t, 14.8, .2) });
+  gt(g, '작성 대기…', 40, 190, { size: 40, weight: 600, color: K.faint, alpha: 1 - p(t, 14.8, .2) });
   gt(g, '# 인벤토리 지급 테스트', 40, 190, { size: 50, weight: 800, color: K.hi, alpha: eo(p(t, 14.9, .3)) });
   [['시나리오', '로그인 → 지급 → 확인'], ['실행', 'gRPC 시퀀스 · 통과'], ['로그', '이상 없음'], ['DB', '기대값 일치']].forEach(([a, b], i) => {
     const k = eo(p(t, 15.1 + i * .22, .3)), y = 290 + i * 86; if (k <= 0) return;

@@ -86,7 +86,7 @@
 </div>
 <section class="notes" id="notes">
   <h2>3단 공간 분할 · 시야 전송 <span class="fine">Miniverse UE5 · 2023 – 2024</span></h2>
-  <article data-ch="01"><p><b>문제.</b> 유저가 프랍을 직접 쌓는 하우징 샌드박스에서 최악의 경우를 정량 분석하면 공간 하나에 <b>51억 프랍, 422GB</b>가 나옵니다. 서버가 전부 들고 있을 수도, 클라이언트에 전부 보낼 수도 없는 크기입니다.</p></article>
+  <article data-ch="01"><p><b>문제.</b> 유저가 프랍을 직접 쌓는 UGC 샌드박스 MMO에서 최악의 경우를 정량 분석하면 공간 하나에 <b>51억 프랍, 422GB</b>가 나옵니다. 서버가 전부 들고 있을 수도, 클라이언트에 전부 보낼 수도 없는 크기입니다.</p></article>
   <article data-ch="02"><p><b>접근.</b> 공간을 <b>집터 · 청크 · 셀</b> 3단으로 나눴습니다. 저장은 집터 단위의 계층 구조로 하고, 바뀐 곳에 더티 플래그를 세운 뒤 <b>1초 배치</b>로 바뀐 집터만 써서 수천만 프랍을 영속화했습니다. 전송은 시야 기반으로, 플레이어 시야에 들어온 청크만 보내고 <b>SightIn</b>에 거쳐간 청크를 기록해 다시 들어와도 재전송하지 않습니다.</p></article>
   <article data-ch="05"><p><b>결과.</b> 처리량이 공간의 총량이 아니라 지금 보이고 바뀌는 부분, 즉 <b>활성량</b>을 따라갑니다. ‘총량 대신 활성량만 처리’.</p></article>
   <p class="fine">화면 속 칸의 크기와 개수(집터 4×4 청크, 청크 4×4 셀), 프랍 배치, 이동 경로, 배치 주기의 화면 속도는 이해를 돕기 위한 개념도입니다. 수치는 51억 프랍 · 422GB · 1초 배치 · 수천만 프랍만 실제 이력 기준입니다.</p>
@@ -777,7 +777,7 @@ function tiers(t) {
 }
 function footnote(t) {
   const a = win(t, 6.8, 29.2, .5); if (a <= 0) return;
-  const s = '* 칸 크기·개수, 배치, 경로는 개념도';
+  const s = '* 칸 크기·개수, 프랍 배치, 경로, 배치 주기의 화면 속도는 개념도';
   if (TALL) txt(s, W - 40, H - 34, { size: 32, weight: 500, color: C.faint, align: 'right', alpha: a });
   else txt(s, W - 60, H - 40, { size: 30, weight: 500, color: C.faint, align: 'right', alpha: a });
 }
@@ -790,7 +790,7 @@ function ov01(t) {
   if (!TALL) {
     const g = ctx.createLinearGradient(0, 0, 1150, 0); g.addColorStop(0, 'rgba(10,15,27,.9)'); g.addColorStop(.7, 'rgba(10,15,27,.55)'); g.addColorStop(1, 'rgba(10,15,27,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, 1150, H);
-    txt('Miniverse · 유저 창작 하우징 MMO', 104, 196, { size: 34, weight: 600, color: C.faint });
+    txt('Miniverse UE5 · UGC 샌드박스 MMO', 104, 196, { size: 34, weight: 600, color: C.faint });
     txt('최악의 경우 정량 분석 · 공간 하나에', 104, 272, { size: 40, weight: 700, color: C.dim });
     runs([['51억', C.text, false, 190], [' 프랍', C.text, false, 84]], 96, 470, 190, 800);
     runs([['422', C.red, false, 140], ['GB', C.red, false, 96]], 98, 628, 140, 800);

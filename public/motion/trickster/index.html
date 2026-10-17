@@ -936,8 +936,14 @@ if (!EMBED && !RENDER) {
   function pause() { playing = false; ui(); }
   function toggle() { playing ? pause() : play(); }
   function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+  // slow machines (software GL): leave the main thread idle between frames so input stays responsive
+  let cost = 0, lastDraw = 0;
   function frame(now) {
-    if (playing) { t += (now - last) / 1000 * rate; last = now; if (t >= DURATION) { t = DURATION; playing = false; } draw(); ui(); }
+    if (playing) {
+      t += (now - last) / 1000 * rate; last = now; if (t >= DURATION) { t = DURATION; playing = false; }
+      if (now - lastDraw >= cost * 1.5 || !playing) { const a = performance.now(); draw(); cost = performance.now() - a; lastDraw = performance.now(); }
+      ui();
+    }
     requestAnimationFrame(frame);
   }
   const RATES = [1, .75, .5];
