@@ -1,0 +1,1123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>서버 충돌 처리</title>
+<style>
+  /* One stage (16:9, or 4:5 with ?layout=tall), a transport bar, chapter chips, a short note. Single dark look. */
+  :root {
+    --bg: #0f1216; --surface: #171c23; --line: #29313c; --fg: #eef2f6; --dim: #9aa5b4; --text2: #c6ced9;
+    --accent: #4fd6e8;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center;
+    padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  body.tall .player { width: min(100%, calc((100vh - 170px) * 4 / 5), 640px); }
+  .stage { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  body.tall .stage { aspect-ratio: 4 / 5; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); height: auto; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--accent);
+    background: rgba(15,18,22,.78); color: var(--fg); display: grid; place-items: center; cursor: pointer; transition: transform .15s; }
+  .big[hidden] { display: none; }
+  .big:hover { transform: scale(1.06); }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 14px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--accent); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(79,214,232,.25); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(79,214,232,.12); }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  .notes { width: min(100%, 760px); margin-top: 40px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes h2 { font-size: 20px; line-height: 1.4; margin: 0 0 12px; }
+  .notes p { color: var(--text2); margin: 0 0 14px; }
+  .notes article { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+  .notes article h3 { font-size: 15px; margin: 0 0 4px; color: var(--accent); font-weight: 700; }
+  .notes .fine { font-size: 14px; color: var(--dim); }
+  /* #poster: canvas only, loops (gallery thumbnails) */
+  body.poster { padding: 0; }
+  body.poster .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .big, body.poster .notes, body.poster .set { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+  /* ?embed: the résumé drives renderAt(t); canvas only */
+  html.embed, html.embed body { height: 100%; }
+  html.embed body { padding: 0; margin: 0; display: block; overflow: hidden; }
+  html.embed .bar, html.embed .chapters, html.embed .set, html.embed .big, html.embed .notes { display: none !important; }
+  html.embed .player, html.embed .stage { display: block; width: 100%; height: 100%; border: 0; border-radius: 0; margin: 0; padding: 0; }
+  html.embed #c { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--bg); }
+</style>
+<script>
+  (function () { var s = location.search; if (/[?&]embed\b/.test(s)) document.documentElement.classList.add('embed'); })();
+</script>
+</head>
+<body>
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="플레이어가 보는 게임 화면을 서버의 충돌 디버그 뷰로 열어, 서버 PhysicsWorld의 충돌체와 시야 Ray·이동 Ray, grid·kd-tree·높이 전처리 리서치, PC vs NPC 20,000개 이동 충돌 테스트의 충돌 분산과 tick 분할을 차례로 보여주는 3D 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="34" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:34</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+    <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="이동"><a href="../../interactive.html">← 이력서로</a><a id="alt" href="?layout=tall">세로 화면</a></nav>
+</div>
+<section class="notes" id="notes">
+  <h2>AION2 · 서버 캐릭터 충돌 처리</h2>
+  <article data-ch="01"><h3>문제</h3>
+    <p>캐릭터끼리 부딪히고, 담 너머를 보고, 지형 위를 활강하는 판정을 서버도 내려야 했다. 서버에는 클라이언트가 가진 스태틱 메시가 없었다.</p></article>
+  <article data-ch="02"><h3>접근</h3>
+    <p>서버 충돌 처리의 방향을 정하고 PhysicsWorld · PhysicsSystem · CollisionShapes 구조를 설계했다. 클라이언트 스태틱 메시를 서버에서 충돌 가능한 환경으로 만들고(UE4 데이터 익스포트는 리서치),
+    PC vs PC · NPC vs NPC · PC vs NPC 충돌을 기본 구현했다. 사용할 충돌체 종류와 시야 Ray · 이동 Ray 개념을 정리하고, 지형 충돌(활강, line of sight)을 처리했다.</p>
+    <p>성능은 grid · kd-tree · 시야 ray 높이 기반 전처리 데이터 생성을 리서치했다.</p></article>
+  <article data-ch="04"><h3>대규모 Agent 리서치</h3>
+    <p>서버에서 PC vs NPC 20,000개 이동 충돌을 테스트했다. 네비게이션·길찾기 Agent를 다시 구현하고, 이동 범위를 기준으로 충돌 처리를 나누고 업데이트 tick을 분할했다.</p>
+    <p class="fine">화면의 지형, 구조물, 충돌체 모양, 셀 크기, 분할 수, Agent 점의 개수는 이해를 돕기 위한 개념도·예시다. 실제 수치는 테스트 규모 20,000뿐이다.</p></article>
+</section>
+<script type="importmap">
+{ "imports": { "three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/" } }
+</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  서버 캐릭터 충돌 처리 (AION2) — 분해해 들어가기 (open it up), 34 s.
+//  Start from what the player sees (a sunlit plaza, characters crowding, a glider over the ridge). A scan line sweeps the
+//  same moment into the server's view: a physics debug viewport where every client static mesh is a triangle wireframe,
+//  every character a capsule. Then go further in: rays, the broad-phase structures, the 20,000-agent test and its tick split.
+//    01  0.0– 7.0  game view → server PhysicsWorld (client static meshes become server collision meshes)
+//    02  7.0–16.5  shapes & rays: PC/NPC pairs · sight ray vs move ray at a low wall · terrain (glide, line of sight)
+//    03 16.5–23.5  performance research: grid → kd-tree → height-based precomputed data for sight rays
+//    04 23.5–30.5  large-scale agents: PC vs NPC 20,000 move-collision test · split by move range · update-tick split
+//    05 30.5–34.0  result hold
+//  Look: what this engineer looked at — a server-side collision debug view (graphite viewport, triangle wireframes over
+//  the level, coloured debug rays drawn on top). Only 20,000 is a real number; everything else is 개념도/예시.
+//  Every frame is a pure function of t. ?layout=tall → 1080×1350, ?embed, ?q=0.4–1, ?render.
+// ─────────────────────────────────────────────────────────────
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const QS = new URLSearchParams(location.search);
+const TALL = QS.get('layout') === 'tall';
+const EMBED = QS.has('embed'), RENDER = QS.has('render');
+const QUAL = EMBED ? clamp(parseFloat(QS.get('q')) || 1, .4, 1) : 1;
+const W = TALL ? 1080 : 1920, H = TALL ? 1350 : 1080, DURATION = 34;
+if (TALL) document.body.classList.add('tall');
+const cv = document.getElementById('c');
+cv.width = Math.round(W * QUAL); cv.height = Math.round(H * QUAL);
+const ctx = cv.getContext('2d');
+const SANS = 'Pretendard, "WenQuanYi Zen Hei", "DejaVu Sans", sans-serif';
+const MONO = '"JetBrains Mono", Pretendard, "DejaVu Sans Mono", monospace';
+// debug-draw colours: static = client static mesh · pc / npc = character capsules · sight / move = the two rays · hit = blocked
+const C = {
+  bg: '#0f1216', text: '#eef2f6', dim: '#9aa5b4', faint: '#667082', line: '#29313c',
+  stat: '#4fd6e8', terr: '#5f7590', pc: '#a6ff5c', npc: '#ff9d42', sight: '#c99bff', move: '#ffe14d', hit: '#ff4d5e',
+  grid: '#9fb0c4',
+};
+const HUE = ['#4fd6e8', '#c99bff', '#ffe14d', '#ff7eb6', '#a6ff5c', '#6fa8ff'];   // example groups
+const T = TALL
+  ? { lab: 46, body: 46, head: 66, kick: 46, num: 190, pad: 60 }
+  : { lab: 36, body: 38, head: 60, kick: 36, num: 150, pad: 96 };
+
+// ── math / easing ────────────────────────────────────────────
+const lerp = (a, b, t) => a + (b - a) * t;
+const p = (t, s, d) => clamp((t - s) / d);
+const eo = t => 1 - Math.pow(1 - t, 3);
+const eio = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const ss = u => u * u * u * (u * (u * 6 - 15) + 10);
+const sstep = (a, b, x) => { const u = clamp((x - a) / (b - a)); return u * u * (3 - 2 * u); };
+const win = (t, s, e, f = .45) => Math.min(eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let x = Math.imul(seed ^ seed >>> 15, 1 | seed); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+
+// ── story timeline ───────────────────────────────────────────
+const HEAD = [
+  [0.0, 7.0, '01', '서버도 충돌을 판정한다', '클라이언트 스태틱 메시 → 서버 PhysicsWorld'],
+  [7.0, 16.5, '02', '충돌체와 Ray', 'PC·NPC 충돌 · 시야 Ray / 이동 Ray · 지형'],
+  [16.5, 23.5, '03', '충돌 성능 확보 · 리서치', 'grid · kd-tree · 시야 ray 높이 기반 전처리'],
+  [23.5, 30.5, '04', '대규모 Agent · 리서치', 'PC vs NPC 20,000개 이동 충돌 테스트'],
+  [30.5, 34.0, '05', '서버 충돌 아키텍처', ''],
+];
+const SCAN0 = 1.7, SCAN1 = 4.3;             // the debug-view sweep
+const PAIR0 = 7.6;                          // 02a pairs walk into each other
+const WALL0 = 11.0;                         // 02b sight vs move ray
+const TERR0 = 13.9;                         // 02c terrain
+const GRID0 = 16.9, KD0 = 18.7, HGT0 = 20.5;
+const CROWD0 = 23.7, SPLIT0 = 25.4, TICK0 = 27.9, RES = 30.5;
+
+// ── world (1 unit = 1 m) ─────────────────────────────────────
+function terrH(x, z) {
+  const ridge = 16 * sstep(16, 46, -z) * (.75 + .25 * Math.sin(x * .07 + 1.0));
+  const hill = 8 * Math.exp(-((x - 30) ** 2 + (z - 10) ** 2) / 60);
+  return ridge + hill + .25 * Math.sin(x * .21 + .5) * Math.cos(z * .17 + .3);
+}
+// client static meshes (a ruined plaza): box [x, z, w, h, d, ry, base y] · rock [x, z, r]
+const BOXES = [
+  [-8, -4, 1.4, 7, 1.4, .2], [-3, -13, 1.4, 5, 1.4, .5], [-15, -12, 1.6, 7, 1.6, 0], [-9, -12, 1.6, 7, 1.6, 0], [-12, -12, 8, 1.2, 1.8, 0, 7],
+  [18, -6, 7, 6, 7, .1], [-19, 14, .6, 1.1, 6, 0], [26, 24, 9, 1.4, 6, -.2], [-33, -2, 1, 3, 10, .3], [34, -28, 5, 9, 5, .4],
+];
+const ROCKS = [[-28, 9, 2.4], [10, 19, 1.8], [36, -10, 3.2], [-42, 24, 2.6], [1, -24, 2.8], [44, 30, 2.2], [-46, -20, 3.4], [-24, -30, 3]];
+const WALL = BOXES[6];
+
+// characters: plaza crowd, three demo pairs, the wall demo, the LOS target behind the hill
+const CHAR = [];
+{
+  const r = rng(11);
+  for (let i = 0; i < 22; i++) {
+    let x, z; do { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 8.5; x = 4 + Math.cos(a) * d; z = 1 + Math.sin(a) * d; } while (Math.hypot(x + 8, z + 4) < 2.2);
+    CHAR.push({ kind: 'crowd', npc: i % 3 === 1, x, z, ph: r() * 6.28, f: .4 + r() * .4 });
+  }
+}
+const PAIRS = [[-4, false, false, 'PC vs PC'], [3, true, true, 'NPC vs NPC'], [10, false, true, 'PC vs NPC']].map(([x, a, b, label], k) => ({ x, z: 13, a, b, label, s: PAIR0 + k * .45 }));
+PAIRS.forEach((P, k) => { CHAR.push({ kind: 'pair', npc: P.a, pair: k, side: -1 }); CHAR.push({ kind: 'pair', npc: P.b, pair: k, side: 1 }); });
+const WNPC = { x0: -24, z: 14 }, WPC = { x: -14.5, z: 14 };
+CHAR.push({ kind: 'wnpc', npc: true, ph: 0 }); CHAR.push({ kind: 'wpc', npc: false, x: WPC.x, z: WPC.z, ph: -1.5 });
+const R = .4;                                   // capsule radius
+function pairSep(P, t) { return lerp(5, 2 * R + .02, eio(p(t, P.s, 1.5))); }
+function charPos(c, t) {
+  if (c.kind === 'crowd') return [c.x + .9 * Math.sin(t * c.f + c.ph), c.z + .9 * Math.cos(t * c.f * .8 + c.ph * 1.3)];
+  if (c.kind === 'pair') { const P = PAIRS[c.pair]; return [P.x + c.side * pairSep(P, t) / 2, P.z]; }
+  if (c.kind === 'wnpc') return [lerp(WNPC.x0, WALL[0] - WALL[2] / 2 - R - .05, eio(p(t, WALL0 + 1.4, 1.2))), WNPC.z];
+  return [c.x, c.z];
+}
+const CROWD_IDX = CHAR.map((c, i) => c.kind === 'crowd' ? i : -1).filter(i => i >= 0);
+const QUERY = CROWD_IDX[0];                     // the character whose neighbourhood is queried in 03
+
+// glider: glides down over the ridge toward the plaza
+const G0 = V3(30, 18, -36), G1 = V3(12, 12, -18);
+function gliderPos(t) { return G0.clone().lerp(G1, clamp(t / 16.5)); }
+const LOSB = (() => { const g = gliderPos(15.2), d = V3(30 - g.x, 0, 10 - g.z).normalize(); return { x: 30 + d.x * 12, z: 10 + d.z * 12 }; })();
+CHAR.push({ kind: 'losb', npc: true, x: LOSB.x, z: LOSB.z, ph: 2 });
+
+// big crowd for 04: clumps of agents (packs of NPCs, groups of PCs)
+const AG = [];
+{
+  const r = rng(7);
+  let clump = 0;
+  while (AG.length < 2400) {
+    const cx = -56 + r() * 112, cz = -40 + r() * 80;
+    if (Math.hypot(cx - 18, cz + 6) < 6) continue;
+    const n = 8 + Math.floor(r() * 22), sg = 1.3 + r() * 1.3, npc = r() < .7;
+    for (let k = 0; k < n && AG.length < 2400; k++) {
+      const a = r() * 6.283, d = sg * Math.sqrt(-2 * Math.log(1 - r() * .95));
+      AG.push({ x: cx + Math.cos(a) * d, z: cz + Math.sin(a) * d, npc, cl: clump, ph: r() * 6.28, f: .3 + r() * .5, ord: r() });
+    }
+    clump++;
+  }
+}
+const agPos = (a, t) => [a.x + .5 * Math.sin(t * a.f + a.ph), a.z + .5 * Math.cos(t * a.f * .9 + a.ph * 1.7)];
+
+// ── three.js setup ───────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(Math.round(W * QUAL), Math.round(H * QUAL), false);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NoToneMapping;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(C.bg);
+const camera = new THREE.PerspectiveCamera(34, W / H, .5, 2000);
+scene.add(camera);
+const composer = new EffectComposer(renderer);
+composer.setPixelRatio(1); composer.setSize(Math.round(W * QUAL), Math.round(H * QUAL));
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(W * QUAL / 2, H * QUAL / 2), .38, .45, .7);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+// one material for everything: a lit "game" look and a "debug" look (dark fill + triangle wireframe), mixed by the scan.
+// mode 0 = game-only (hidden behind the scan) · 1 = debug-only (appears behind the scan) · 2 = both, blended
+const SU = {
+  scan: { value: -1e3 }, soft: { value: 2.5 }, scanGlow: { value: 0 },
+  fogNear: { value: 100 }, fogFar: { value: 300 },
+  fogG: { value: new THREE.Color('#cfdde6') }, fogD: { value: new THREE.Color('#12161c') },
+  sun: { value: V3(-.45, .8, .42).normalize() },
+};
+const VS = `
+attribute vec3 bary;
+varying vec3 vB; varying vec3 vW; varying vec3 vN; varying vec3 vIC;
+void main() {
+  vec4 p = vec4(position, 1.0); vec3 n = normal;
+  #ifdef USE_INSTANCING
+    p = instanceMatrix * p; n = mat3(instanceMatrix) * n;
+  #endif
+  vIC = vec3(1.0);
+  #ifdef USE_INSTANCING_COLOR
+    vIC = instanceColor;
+  #endif
+  vec4 w = modelMatrix * p;
+  vW = w.xyz; vN = normalize(mat3(modelMatrix) * n); vB = bary;
+  gl_Position = projectionMatrix * viewMatrix * w;
+}`;
+const FS = `
+uniform vec3 gameCol, wireCol, fillCol, fogG, fogD, sun, col2, col3;
+uniform float terr, mode, wireA, width, scan, soft, fogNear, fogFar, scanGlow, dimK;
+varying vec3 vB; varying vec3 vW; varying vec3 vN; varying vec3 vIC;
+void main() {
+  float k = clamp((scan - vW.x) / soft + 0.5, 0.0, 1.0);
+  if (mode < 0.5 && k > 0.5) discard;
+  if (mode > 0.5 && mode < 1.5 && k < 0.5) discard;
+  vec3 n = normalize(vN); if (!gl_FrontFacing) n = -n;
+  float dif = max(dot(n, sun), 0.0), hemi = 0.5 + 0.5 * n.y;
+  vec3 base = gameCol;
+  if (terr > 0.5) {                      // grass, rock on steep slopes, a paved plaza with tile joints
+    base = mix(gameCol, col3, smoothstep(0.18, 0.42, 1.0 - n.y));
+    base *= 0.92 + 0.08 * sin(vW.x * 0.9 + sin(vW.z * 0.7) * 2.0);
+    float pl = 1.0 - smoothstep(12.0, 14.5, length(vW.xz - vec2(3.0, 5.0)));
+    float jt = max(step(0.94, fract(vW.x * 0.5)), step(0.94, fract(vW.z * 0.5)));
+    base = mix(base, col2 * (1.0 - 0.18 * jt), pl);
+  }
+  vec3 game = base * vIC * (0.40 * hemi + 0.72 * dif + 0.08);
+  vec3 fw = fwidth(vB);
+  vec3 a3 = smoothstep(fw * (width - 0.8), fw * (width + 0.8), vB);
+  float e = 1.0 - min(min(a3.x, a3.y), a3.z);
+  float dens = max(max(fw.x, fw.y), fw.z);
+  float fade = 1.0 - smoothstep(0.035, 0.11, dens);
+  vec3 dbg = (fillCol * (0.5 + 0.55 * dif + 0.3 * hemi) + wireCol * e * wireA * fade) * vIC * dimK;
+  float km = mode > 1.5 ? k : (mode < 0.5 ? 0.0 : 1.0);
+  vec3 col = mix(game, dbg, km);
+  float f = smoothstep(fogNear, fogFar, distance(vW, cameraPosition));
+  col = mix(col, mix(fogG, fogD, km), f);
+  col += vec3(0.31, 0.84, 0.91) * scanGlow * exp(-abs(vW.x - scan) * 0.7);
+  gl_FragColor = vec4(col, 1.0);
+}`;
+function dmat({ game = '#999999', wire = C.stat, fillK = .14, mode = 2, wireA = 1, width = 1.4, side = THREE.FrontSide, terr = 0, col2 = '#000000', col3 = '#000000' }) {
+  const u = { ...SU, gameCol: { value: new THREE.Color(game) }, wireCol: { value: new THREE.Color(wire) }, fillCol: { value: new THREE.Color(wire).multiplyScalar(fillK) },
+    terr: { value: terr }, col2: { value: new THREE.Color(col2) }, col3: { value: new THREE.Color(col3) },
+    mode: { value: mode }, wireA: { value: wireA }, width: { value: width }, dimK: { value: 1 } };
+  return new THREE.ShaderMaterial({ uniforms: u, vertexShader: VS, fragmentShader: FS, side });
+}
+function wireGeo(g, flat = true, quad = false) {   // non-indexed + barycentric attribute (the triangle wireframe)
+  g = g.index ? g.toNonIndexed() : g;
+  if (flat) g.computeVertexNormals();
+  const P = g.attributes.position, n = P.count, b = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) b[i * 3 + (i % 3)] = 1;
+  if (quad) for (let f = 0; f < n; f += 3) {       // primitives: hide each quad's diagonal (the edge opposite the right angle)
+    const v = [0, 1, 2].map(k => V3(P.getX(f + k), P.getY(f + k), P.getZ(f + k)));
+    const L = [v[1].distanceToSquared(v[2]), v[0].distanceToSquared(v[2]), v[0].distanceToSquared(v[1])];
+    const m = L.indexOf(Math.max(...L)), o = L.reduce((a, c) => a + c, 0) - L[m];
+    if (L[m] > .8 * o && L[m] > 1e-8) for (let k = 0; k < 3; k++) b[(f + k) * 3 + m] = 1;
+  }
+  g.setAttribute('bary', new THREE.BufferAttribute(b, 3)); return g;
+}
+function merge(geos) {
+  const pos = [], nor = [];
+  for (const g of geos) { const q = g.index ? g.toNonIndexed() : g; pos.push(...q.attributes.position.array); nor.push(...q.attributes.normal.array); }
+  const m = new THREE.BufferGeometry(); m.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); m.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); return m;
+}
+function mesh(parent, geo, mat, x = 0, y = 0, z = 0) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; }
+const _o = new THREE.Object3D(), _c = new THREE.Color();
+function inst(geo, mat, n) {
+  const im = new THREE.InstancedMesh(geo, mat, n);
+  for (let i = 0; i < n; i++) { im.setMatrixAt(i, new THREE.Matrix4()); im.setColorAt(i, _c.set('#ffffff')); }
+  im.count = 0; im.frustumCulled = false; scene.add(im); return im;
+}
+function setI(im, i, x, y, z, sx, sy, sz, col, ry = 0) {
+  _o.position.set(x, y, z); _o.rotation.set(0, ry, 0); _o.scale.set(Math.max(1e-4, sx), Math.max(1e-4, sy), Math.max(1e-4, sz)); _o.updateMatrix();
+  im.setMatrixAt(i, _o.matrix); if (col !== undefined) im.setColorAt(i, typeof col === 'string' ? _c.set(col) : col);
+}
+function done(im, n) { im.count = n; im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; }
+
+// sky dome: daylight sky (game) → graphite viewport (debug)
+const SKY = { mix: { value: 0 } };
+{
+  const m = new THREE.ShaderMaterial({ uniforms: { mixK: SKY.mix }, side: THREE.BackSide, depthWrite: false,
+    vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `uniform float mixK; varying vec3 vD;
+      void main(){ float y = clamp(vD.y, -0.2, 1.0);
+        vec3 g = mix(vec3(0.62, 0.72, 0.79), vec3(0.20, 0.40, 0.62), smoothstep(0.0, 0.6, y));
+        vec3 d = mix(vec3(0.0065, 0.0085, 0.012), vec3(0.016, 0.021, 0.03), smoothstep(-0.1, 0.7, y));
+        gl_FragColor = vec4(mix(g, d, mixK), 1.0); }` });
+  const s = new THREE.Mesh(new THREE.SphereGeometry(900, 32, 16), m); s.frustumCulled = false; s.renderOrder = -1; scene.add(s); SKY.mesh = s;
+}
+
+// ═════ terrain ═══════════════════════════════════════════════
+{
+  const g = new THREE.PlaneGeometry(150, 130, 36, 31); g.rotateX(-Math.PI / 2); g.translate(0, 0, -5);
+  const pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i++) pos.setY(i, terrH(pos.getX(i), pos.getZ(i)));
+  const m = mesh(scene, wireGeo(g), dmat({ game: '#7d9858', col2: '#cbbf9f', col3: '#8f8a7c', terr: 1, wire: C.terr, fillK: .2, width: 1.1, wireA: .85 }));
+  m.renderOrder = 0;
+}
+// ═════ client static meshes ══════════════════════════════════
+const STAT = [];
+{
+  const stone = dmat({ game: '#c4bba8', wire: C.stat, fillK: .16, width: 1.5 });
+  const build = dmat({ game: '#d1b98f', wire: C.stat, fillK: .16, width: 1.5 });
+  const rockM = dmat({ game: '#9a948a', wire: C.stat, fillK: .16, width: 1.5 });
+  BOXES.forEach(([x, z, w, h, d, ry, by], i) => {
+    const y0 = by !== undefined ? by : terrH(x, z) - .3;
+    const m = mesh(scene, wireGeo(new THREE.BoxGeometry(w, h, d)), i === 5 || i === 9 ? build : stone, x, y0 + h / 2, z);
+    m.rotation.y = ry; STAT.push({ x, z, top: y0 + h, hw: Math.max(w, d) / 2 });
+  });
+  ROCKS.forEach(([x, z, r], i) => {
+    const g = new THREE.DodecahedronGeometry(r, 0);
+    const m = mesh(scene, wireGeo(g), rockM, x, terrH(x, z) + r * .45, z);
+    m.rotation.set(i * .7, i * 1.3, i * .4); m.scale.y = .8; STAT.push({ x, z, top: terrH(x, z) + r * .45 + r * .8, hw: r });
+  });
+}
+// ═════ characters ════════════════════════════════════════════
+const FIG = merge([new THREE.CylinderGeometry(.26, .34, 1.15, 10).translate(0, .62, 0), new THREE.SphereGeometry(.24, 12, 8).translate(0, 1.48, 0), new THREE.BoxGeometry(.8, .24, .32).translate(0, 1.12, 0)]);
+const FIGG = wireGeo(FIG, false);
+const CAPG = wireGeo(new THREE.CapsuleGeometry(R, 1.8 - 2 * R, 3, 10).translate(0, .9, 0), true, true);
+const FIG_PC = inst(FIGG, dmat({ game: '#4f7fd0', mode: 0 }), 40);
+const FIG_NPC = inst(FIGG, dmat({ game: '#a14c34', mode: 0 }), 40);
+const CAP_PC = inst(CAPG, dmat({ wire: C.pc, mode: 1, fillK: .2, width: 1.5 }), 40);
+const CAP_NPC = inst(CAPG, dmat({ wire: C.npc, mode: 1, fillK: .2, width: 1.5 }), 40);
+// glider: wing + rider (game) and a capsule (debug)
+const GLIDER = new THREE.Group(); scene.add(GLIDER);
+{
+  const wg = new THREE.BufferGeometry();
+  wg.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 1.6, -2.6, -.1, -.9, 0, .25, -.5, 0, 0, 1.6, 0, .25, -.5, 2.6, -.1, -.9], 3));
+  mesh(GLIDER, wireGeo(wg), dmat({ game: '#e8dcc0', mode: 0, side: THREE.DoubleSide }), 0, 1.9, 0);
+  mesh(GLIDER, FIGG, dmat({ game: '#4f7fd0', mode: 0 }), 0, 0, 0);
+  mesh(GLIDER, CAPG, dmat({ wire: C.pc, mode: 1, fillK: .2, width: 1.5 }), 0, 0, 0);
+  GLIDER.scale.setScalar(1.6);
+}
+// ═════ 03 · height columns (precomputed per-cell max height, for sight rays) ═════
+const HC = { x0: -54, z0: -42, n: 18, m: 14, s: 6 };
+const COLS = [];
+{
+  for (let j = 0; j < HC.m; j++) for (let i = 0; i < HC.n; i++) {
+    const x0 = HC.x0 + i * HC.s, z0 = HC.z0 + j * HC.s;
+    let h = -1e3;
+    for (let a = 0; a <= 4; a++) for (let b = 0; b <= 4; b++) h = Math.max(h, terrH(x0 + a * HC.s / 4, z0 + b * HC.s / 4));
+    for (const s of STAT) if (s.x + s.hw > x0 && s.x - s.hw < x0 + HC.s && s.z + s.hw > z0 && s.z - s.hw < z0 + HC.s) h = Math.max(h, s.top);
+    COLS.push({ i, j, x: x0 + HC.s / 2, z: z0 + HC.s / 2, h: Math.max(.3, h), d: Math.hypot(x0, z0) });
+  }
+}
+const colAt = (x, z) => { const i = Math.floor((x - HC.x0) / HC.s), j = Math.floor((z - HC.z0) / HC.s); return i >= 0 && j >= 0 && i < HC.n && j < HC.m ? COLS[j * HC.n + i] : null; };
+const COLG = wireGeo(new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0), true, true);
+const COLM = inst(COLG, dmat({ wire: C.sight, mode: 1, fillK: .08, width: 1.3, wireA: .6 }), COLS.length);
+// sight rays tested against the columns: [from, to]
+const HRAYS = [[V3(-4, 1.6, 2), V3(36, 1.6, -15)], [V3(-4, 1.6, 2), V3(-31, 1.6, 27)]];
+HRAYS.forEach(r => { r[0].y += terrH(r[0].x, r[0].z); r[1].y += terrH(r[1].x, r[1].z); });
+function rayCells(A, B) {                    // walk the ray in small steps; each cell is clear or blocked
+  const out = [], seen = new Set(); let hit = null;
+  for (let s = 0; s <= 1.0001; s += .004) {
+    const x = lerp(A.x, B.x, s), z = lerp(A.z, B.z, s), y = lerp(A.y, B.y, s), c = colAt(x, z); if (!c) continue;
+    const key = c.j * HC.n + c.i;
+    if (!seen.has(key)) { seen.add(key); out.push({ c, s, ok: true }); }
+    if (y < c.h && !hit) { hit = { s, x, y, z }; out[out.length - 1].ok = false; break; }
+  }
+  return { cells: out, hit };
+}
+const HR = HRAYS.map(([A, B]) => ({ A, B, ...rayCells(A, B) }));
+// ═════ 04 · agents ═══════════════════════════════════════════
+const AGG = wireGeo(new THREE.CylinderGeometry(.45, .45, 1.8, 6, 1).translate(0, .9, 0), true, true);
+const AG_PC = inst(AGG, dmat({ wire: C.pc, mode: 1, fillK: .45, width: 1.2 }), AG.length);
+const AG_NPC = inst(AGG, dmat({ wire: C.npc, mode: 1, fillK: .45, width: 1.2 }), AG.length);
+
+// ── kd-tree over the static shapes + plaza characters (fixed snapshot) ──
+const KDB = [-56, -40, 56, 40];
+const KD = [];
+{
+  const pts = [...STAT.map(s => [s.x, s.z]), ...CHAR.map(c => charPos(c, 19)), ...AG.filter((_, i) => i % 9 === 0).map(a => [a.x, a.z])].filter(([x, z]) => x > KDB[0] && x < KDB[2] && z > KDB[1] && z < KDB[3]);
+  (function build(P, b, d) {
+    if (d >= 5 || P.length < 2) return;
+    const ax = d % 2; P.sort((u, v) => u[ax] - v[ax]);
+    const m = P[Math.floor(P.length / 2)][ax];
+    KD.push({ d, ax, v: m, b: b.slice() });
+    build(P.filter(q => q[ax] < m), ax ? [b[0], b[1], b[2], m] : [b[0], b[1], m, b[3]], d + 1);
+    build(P.filter(q => q[ax] >= m), ax ? [b[0], m, b[2], b[3]] : [m, b[1], b[2], b[3]], d + 1);
+  })(pts, KDB, 0);
+}
+function kdLeaf(x, z, depth) {                // the cell containing (x, z) after `depth` splits
+  let b = KDB.slice();
+  for (let d = 0; d < depth; d++) {
+    const n = KD.find(k => k.d === d && k.b[0] === b[0] && k.b[1] === b[1] && k.b[2] === b[2] && k.b[3] === b[3]); if (!n) break;
+    if (n.ax === 0) b = x < n.v ? [b[0], b[1], n.v, b[3]] : [n.v, b[1], b[2], b[3]]; else b = z < n.v ? [b[0], b[1], b[2], n.v] : [b[0], n.v, b[2], b[3]];
+  }
+  return b;
+}
+
+// ── camera path ──────────────────────────────────────────────
+// [t, target, distance, yaw, pitch, vertical fov, view offset x, view offset y]
+const KW = [
+  [0.0, [3, 3, -8], 84, .42, .33, 34, -60, -40],
+  [1.6, [3, 3, -8], 82, .38, .34, 34, -60, -40],
+  [4.6, [3, 3, -8], 80, .3, .38, 34, -60, -40],
+  [6.6, [3, 2, -5], 76, .26, .42, 34, -60, -40],
+  [7.8, [3, 1.4, 13], 22, .1, .36, 34, 0, -40],
+  [10.5, [3, 1.4, 13], 21, .06, .38, 34, 0, -40],
+  [11.4, [-19.5, 1.5, 14], 15.5, .03, .12, 34, 0, -40],
+  [13.4, [-19.5, 1.5, 14], 15, -.02, .12, 34, 0, -40],
+  [14.6, [18, 6, -2], 64, -.35, .3, 34, 0, -60],
+  [16.5, [18, 6, -2], 62, -.3, .31, 34, 0, -60],
+  [17.5, [0, 0, 0], 110, .0, 1.2, 34, 0, -60],
+  [20.2, [0, 0, 0], 108, .0, 1.22, 34, 0, -60],
+  [21.2, [4, 0, -4], 98, .4, .9, 34, 0, -60],
+  [23.4, [4, 0, -4], 96, .44, .92, 34, 0, -60],
+  [24.4, [0, 0, 0], 128, .0, 1.1, 34, 0, -60],
+  [25.2, [0, 0, 0], 128, .0, 1.1, 34, 0, -60],
+  [26.0, [-10, 0, 6], 44, .0, 1.15, 34, 0, -60],
+  [27.6, [-10, 0, 6], 43, .0, 1.15, 34, 0, -60],
+  [28.6, [0, 0, 0], 128, .0, 1.12, 34, 0, -60],
+  [30.4, [0, 0, 0], 126, .0, 1.12, 34, 0, -60],
+  [31.4, [0, 0, 0], 122, .0, 1.06, 34, -420, -20],
+  [34.0, [0, 0, 0], 120, .0, 1.06, 34, -420, -20],
+];
+const KT = [
+  [0.0, [5, 3, -8], 86, .42, .36, 44, 0, -110],
+  [1.6, [5, 3, -8], 85, .38, .37, 44, 0, -110],
+  [4.6, [5, 3, -8], 84, .3, .4, 44, 0, -110],
+  [6.6, [4, 2, -5], 82, .26, .44, 44, 0, -110],
+  [7.8, [3, 1.4, 13], 33, .08, .4, 44, 0, -80],
+  [10.5, [3, 1.4, 13], 32, .05, .42, 44, 0, -80],
+  [11.4, [-19.5, 1.5, 14], 20, .03, .14, 44, 0, -80],
+  [13.4, [-19.5, 1.5, 14], 19.5, -.02, .14, 44, 0, -80],
+  [14.6, [18, 6, -2], 72, -.35, .34, 44, 0, -100],
+  [16.5, [18, 6, -2], 70, -.3, .35, 44, 0, -100],
+  [17.5, [0, 0, 0], 112, .0, 1.25, 44, 0, -70],
+  [20.2, [0, 0, 0], 110, .0, 1.27, 44, 0, -70],
+  [21.2, [4, 0, -4], 110, .4, .95, 44, 0, -80],
+  [23.4, [4, 0, -4], 108, .44, .97, 44, 0, -80],
+  [24.4, [0, 0, 0], 126, .0, 1.15, 44, 0, -40],
+  [25.2, [0, 0, 0], 126, .0, 1.15, 44, 0, -40],
+  [26.0, [-10, 0, 6], 46, .0, 1.2, 44, 0, -60],
+  [27.6, [-10, 0, 6], 45, .0, 1.2, 44, 0, -60],
+  [28.6, [0, 0, 0], 126, .0, 1.17, 44, 0, -40],
+  [30.4, [0, 0, 0], 124, .0, 1.17, 44, 0, -40],
+  [31.4, [0, 0, 0], 120, .0, 1.2, 44, 0, -20],
+  [34.0, [0, 0, 0], 118, .0, 1.2, 44, 0, -20],
+];
+const K = (TALL ? KT : KW).map(([t, Tg, d, yaw, pitch, fov, ox, oy]) => ({ t, T: V3(...Tg), d, fov, ox, oy, yaw, pitch }));
+function camAt(t) {
+  let i = 0; while (i < K.length - 2 && t >= K[i + 1].t) i++;
+  const a = K[i], b = K[i + 1], u = ss(p(t, a.t, b.t - a.t));
+  const d = Math.exp(lerp(Math.log(a.d), Math.log(b.d), u));
+  return { T: a.T.clone().lerp(b.T, u), d, yaw: lerp(a.yaw, b.yaw, u), pitch: lerp(a.pitch, b.pitch, u), fov: lerp(a.fov, b.fov, u), ox: lerp(a.ox, b.ox, u), oy: lerp(a.oy, b.oy, u) };
+}
+
+// ── state (pure in t) ────────────────────────────────────────
+const scanX = t => lerp(-95, 95, eio(p(t, SCAN0, SCAN1 - SCAN0)));
+const crowdK = (a, t) => eo(p(t, CROWD0 + a.ord * 1.3, .35));
+const tickOf = t => Math.floor(Math.max(0, t - TICK0) / .55) % 4;        // which update group runs on this tick (예시: 4 groups)
+
+function animate(t) {
+  const sx = scanX(t);
+  SU.scan.value = t < SCAN0 ? -1e3 : t > SCAN1 + .05 ? 1e3 : sx;
+  SU.scanGlow.value = win(t, SCAN0, SCAN1 + .1, .3);
+  SKY.mix.value = eio(p(t, SCAN0 + .4, SCAN1 - SCAN0 - .2));
+
+  // plaza characters: figure (game) + capsule (debug); the plaza group dims while 03/04 focus elsewhere
+  let np = 0, nn = 0;
+  const away = win(t, 23.9, 40, .8);
+  CHAR.forEach((c, i) => {
+    const [x, z] = charPos(c, t), y = terrH(x, z);
+    const face = c.kind === 'pair' ? (c.side < 0 ? Math.PI / 2 : -Math.PI / 2) : c.kind === 'wnpc' ? Math.PI / 2 : (c.ph + t * .2);
+    const s = 1 - away;
+    if (c.npc) { setI(FIG_NPC, nn, x, y, z, s, s, s, undefined, face); setI(CAP_NPC, nn++, x, y, z, s, s, s, undefined, face); }
+    else { setI(FIG_PC, np, x, y, z, s, s, s, undefined, face); setI(CAP_PC, np++, x, y, z, s, s, s, undefined, face); }
+  });
+  done(FIG_PC, np); done(CAP_PC, np); done(FIG_NPC, nn); done(CAP_NPC, nn);
+
+  // glider
+  const G = gliderPos(t), gv = 1 - eio(p(t, 16.6, .6));
+  GLIDER.visible = gv > .01; GLIDER.position.copy(G); GLIDER.scale.setScalar(2 * Math.max(gv, .01));
+  GLIDER.rotation.set(.08, Math.atan2(G1.x - G0.x, G1.z - G0.z), .1 * Math.sin(t * .8));
+
+  // height columns
+  const hk = win(t, HGT0, 23.75, .5);
+  let n = 0;
+  if (hk > 0) {
+    const lit = new Map();
+    HR.forEach((r, ri) => { const go = p(t, HGT0 + 1.0 + ri * .5, .8); r.cells.forEach(cc => { if (cc.s <= go * (r.hit ? r.hit.s : 1) + .02) lit.set(cc.c, cc.ok ? 1 : 2); }); });
+    COLS.forEach(c => {
+      const g = eo(p(t, HGT0 + c.d / 90, .5)) * hk;
+      if (g < .01) return;
+      const L = lit.get(c);
+      const col = L === 2 ? _c.set('#ff6070').multiplyScalar(2.2) : L === 1 ? _c.set('#ffffff').multiplyScalar(2.2) : _c.set('#ffffff').multiplyScalar(.42);
+      setI(COLM, n++, c.x, 0, c.z, HC.s * .9, c.h * g, HC.s * .9, col.clone());
+    });
+  }
+  done(COLM, n);
+
+  // agents (04 →)
+  let a1 = 0, a2 = 0;
+  const tk = win(t, TICK0, 99, .4), cur = tickOf(t);
+  if (t > CROWD0 - .1) {
+    AG.forEach(a => {
+      const k = crowdK(a, t); if (k < .01) return;
+      const [x, z] = agPos(a, t), y = terrH(x, z);
+      const grp = a.cl % 4, on = grp === cur;
+      const b = lerp(1, on ? 1.9 : .26, tk);
+      _c.setRGB(b, b, b);
+      if (a.npc) setI(AG_NPC, a2++, x, y, z, k, k, k, _c); else setI(AG_PC, a1++, x, y, z, k, k, k, _c);
+    });
+  }
+  done(AG_PC, a1); done(AG_NPC, a2);
+  // the static level recedes a little while the crowd is the subject
+  const dimS = 1 - .35 * win(t, CROWD0, 99, .8) - .3 * win(t, GRID0 - .2, HGT0 + .1, .5);
+  scene.traverse(o => { if (o.material && o.material.uniforms && o.material.uniforms.mode && o.material.uniforms.mode.value === 2) o.material.uniforms.dimK.value = dimS; });
+}
+
+// ── 2D overlay ───────────────────────────────────────────────
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function font(sz, wt = 500, mono = false) { ctx.font = `${wt} ${sz}px ${mono ? MONO : SANS}`; }
+function tw(s, size, weight = 600, mono = false) { font(size, weight, mono); return ctx.measureText(s).width; }
+function txt(s, x, y, o = {}) {
+  const { size = T.lab, weight = 600, color = C.text, align = 'left', mono = false, alpha = 1, shadow = false } = o;
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; font(size, weight, mono);
+  ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  if (shadow) { ctx.shadowColor = 'rgba(0,0,0,.95)'; ctx.shadowBlur = 10; }
+  ctx.fillText(s, x, y); ctx.restore();
+}
+function runs(parts, x, y, size, weight, o = {}) {
+  const { align = 'left', alpha = 1 } = o;
+  const ws = parts.map(([s, , m, sz]) => tw(s, sz || size, weight, m)); const tot = ws.reduce((a, b) => a + b, 0);
+  let xx = align === 'center' ? x - tot / 2 : align === 'right' ? x - tot : x;
+  parts.forEach(([s, c, m, sz], i) => { txt(s, xx, y, { size: sz || size, weight, color: c || C.text, mono: m, alpha }); xx += ws[i]; });
+  return tot;
+}
+// debug-draw chip: dark box, coloured outline + square marker
+function chip(label, x, y, color, o = {}) {
+  const { alpha = 1, size = T.lab, align = 'left', mono = false } = o;
+  if (alpha <= 0) return 0;
+  font(size, 700, mono);
+  const w = ctx.measureText(label).width + size * 1.5, h = size * 1.55;
+  const X = align === 'right' ? x - w : align === 'center' ? x - w / 2 : x;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  rr(X, y - h / 2, w, h, 4); ctx.fillStyle = 'rgba(12,15,19,.9)'; ctx.fill(); ctx.strokeStyle = rgba(color, .85); ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = color; ctx.fillRect(X + size * .32, y - size * .17, size * .34, size * .34);
+  ctx.fillStyle = C.text; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(label, X + size * .9, y + 2); ctx.restore();
+  return w;
+}
+const _v = new THREE.Vector3();
+function project(pt) {
+  if (pt.isVector3) _v.copy(pt); else _v.set(pt[0], pt[1], pt[2]);
+  _v.project(camera);
+  return { x: (_v.x + 1) / 2 * W, y: (1 - _v.y) / 2 * H, ok: _v.z < 1 && _v.z > -1 && Math.abs(_v.x) < 1.3 && Math.abs(_v.y) < 1.3 };
+}
+// label with a leader line to a point in the scene
+function tag(pt, title, col, a, o = {}) {
+  if (a <= 0) return null; const q = project(pt); if (!q.ok) return null;
+  const { dx = 0, dy = -90, size = T.lab, sub = null } = o;
+  const subSize = Math.round(size * .86);
+  const w = Math.max(tw(title, size, 700), sub ? tw(sub, subSize, 500) : 0) + size * 1.2;
+  const h = sub ? size * 2.55 + 12 : size * 1.7;
+  let bx = q.x + dx - w / 2, by = q.y + dy - h / 2;
+  bx = clamp(bx, 16, W - 16 - w); by = clamp(by, 16, H - 16 - h);
+  ctx.save(); ctx.globalAlpha *= a;
+  const ex = clamp(q.x, bx, bx + w), ey = q.y < by ? by : q.y > by + h ? by + h : by + h / 2;
+  ctx.strokeStyle = rgba(col, .9); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(ex, ey); ctx.stroke();
+  ctx.fillStyle = col; ctx.fillRect(q.x - 6, q.y - 6, 12, 12);
+  rr(bx, by, w, h, 4); ctx.fillStyle = 'rgba(12,15,19,.92)'; ctx.fill(); ctx.strokeStyle = rgba(col, .6); ctx.lineWidth = 2; ctx.stroke();
+  txt(title, bx + size * .6, by + size * 1.2, { size, weight: 700, color: col });
+  if (sub) txt(sub, bx + size * .6, by + size * 1.2 + subSize + 12, { size: subSize, weight: 500, color: C.dim });
+  ctx.restore();
+  return q;
+}
+// a debug line in the world, drawn on top (no depth test, like a debug-draw call)
+function line3(A, B, col, a, o = {}) {
+  if (a <= 0) return;
+  const { w = 5, dash = null, glow = 10 } = o;
+  const qa = project(A), qb = project(B); if (!qa.ok && !qb.ok) return;
+  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round';
+  if (dash) ctx.setLineDash(dash); if (glow) { ctx.shadowColor = col; ctx.shadowBlur = glow; }
+  ctx.beginPath(); ctx.moveTo(qa.x, qa.y); ctx.lineTo(qb.x, qb.y); ctx.stroke(); ctx.restore();
+}
+function arrow3(A, B, col, a) {
+  if (a <= 0) return; const qa = project(A), qb = project(B); if (!qa.ok || !qb.ok) return;
+  const an = Math.atan2(qb.y - qa.y, qb.x - qa.x), hs = 16;
+  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(qa.x, qa.y); ctx.lineTo(qb.x - Math.cos(an) * hs, qb.y - Math.sin(an) * hs); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(qb.x, qb.y); ctx.lineTo(qb.x - Math.cos(an - .5) * hs * 1.5, qb.y - Math.sin(an - .5) * hs * 1.5); ctx.lineTo(qb.x - Math.cos(an + .5) * hs * 1.5, qb.y - Math.sin(an + .5) * hs * 1.5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function hitMark(P, a, s = 18) {
+  if (a <= 0) return; const q = project(P); if (!q.ok) return;
+  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = C.hit; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.shadowColor = C.hit; ctx.shadowBlur = 14;
+  ctx.beginPath(); ctx.moveTo(q.x - s, q.y - s); ctx.lineTo(q.x + s, q.y + s); ctx.moveTo(q.x + s, q.y - s); ctx.lineTo(q.x - s, q.y + s); ctx.stroke();
+  ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(q.x, q.y, s * 1.7, 0, 7); ctx.stroke(); ctx.restore();
+}
+function ringXZ(x, y, z, r, col, a, o = {}) {      // a circle lying on the ground
+  if (a <= 0) return;
+  const { w = 3, fill = 0 } = o;
+  ctx.save(); ctx.globalAlpha *= a; ctx.beginPath();
+  for (let k = 0; k <= 28; k++) { const an = k / 28 * Math.PI * 2, q = project([x + Math.cos(an) * r, y, z + Math.sin(an) * r]); k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); }
+  if (fill) { ctx.fillStyle = rgba(col, fill); ctx.fill(); }
+  ctx.strokeStyle = col; ctx.lineWidth = w; ctx.stroke(); ctx.restore();
+}
+function quadXZ(x0, z0, x1, z1, y, col, a, o = {}) {
+  if (a <= 0) return;
+  const { w = 3, fill = 0 } = o;
+  const P = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([x, z]) => project([x, y, z]));
+  ctx.save(); ctx.globalAlpha *= a; ctx.beginPath(); P.forEach((q, k) => k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.closePath();
+  if (fill) { ctx.fillStyle = rgba(col, fill); ctx.fill(); }
+  if (w) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.stroke(); }
+  ctx.restore();
+}
+function wrap(s, size, weight, maxW) {
+  const words = s.split(' '); const lines = []; let cur = '';
+  for (const w of words) { const nx = cur ? cur + ' ' + w : w; if (tw(nx, size, weight) > maxW && cur) { lines.push(cur); cur = w; } else cur = nx; }
+  if (cur) lines.push(cur); return lines;
+}
+function vignette(t) {
+  const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .5, W / 2, H / 2, Math.max(W, H) * .78);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(0,0,0,${lerp(.18, .5, SKY.mix.value)})`); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+// header: chapter number in a mono box, title, subtitle; the kicker sits above it in 01
+function headers(t) {
+  for (const [s, e, n, title, sub] of HEAD.slice(0, 4)) {
+    const a = s === 0 ? 1 - eio(p(t, e - .45 + .1, .45)) : win(t, s + .1, e + .1, .45); if (a <= 0) continue;
+    const k = s === 0 ? 1 : eo(p(t, s + .1, .6));
+    ctx.save(); ctx.globalAlpha = a;
+    const gh = TALL ? 330 : 270;
+    const g = ctx.createLinearGradient(0, 0, 0, gh); g.addColorStop(0, `rgba(10,12,16,${lerp(.78, .9, SKY.mix.value)})`); g.addColorStop(1, 'rgba(10,12,16,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, gh);
+    const x = T.pad - (1 - k) * 30, y0 = TALL ? 82 : 78;
+    txt('AION2 · 서버 캐릭터 충돌 처리', x, y0, { size: T.kick, weight: 600, color: C.dim });
+    const y = y0 + (TALL ? 92 : 80), bs = TALL ? 64 : 58;
+    rr(x, y - bs + 8, bs + 12, bs, 4); ctx.fillStyle = 'rgba(79,214,232,.14)'; ctx.fill(); ctx.strokeStyle = C.stat; ctx.lineWidth = 2.5; ctx.stroke();
+    txt(n, x + (bs + 12) / 2, y - 10, { size: TALL ? 36 : 32, weight: 700, mono: true, color: C.stat, align: 'center' });
+    txt(title, x + bs + 36, y, { size: T.head, weight: 800 });
+    const lines = wrap(sub, T.kick, 500, W - T.pad * 2);
+    lines.forEach((l, i) => txt(l, T.pad, y + (TALL ? 70 : 62) + i * (T.kick + 12), { size: T.kick, weight: 500, color: C.text, alpha: .82 }));
+    ctx.restore();
+  }
+}
+// bottom console line: left bar in the step's colour
+function bottomLine(t, t0, t1, parts, col = C.stat) {
+  const a = win(t, t0, t1, .4); if (a <= 0) return;
+  const size = T.body, maxW = W - T.pad * 2;
+  const y = H - (TALL ? 64 : 60);
+  const total = parts.reduce((s, [x]) => s + tw(x, size, 700), 0);
+  const two = total > maxW - 40 || (TALL && parts.some(q => q[3] === 'br'));
+  const split = two ? parts.findIndex(q => q[3] === 'br') : -1;
+  const L = two ? [parts.slice(0, split > 0 ? split : 1), parts.slice(split > 0 ? split : 1)] : [parts];
+  const gh = two ? 250 : 190;
+  ctx.save(); ctx.globalAlpha = a;
+  const g = ctx.createLinearGradient(0, H - gh, 0, H); g.addColorStop(0, 'rgba(10,12,16,0)'); g.addColorStop(.45, 'rgba(10,12,16,.82)'); g.addColorStop(1, 'rgba(10,12,16,.92)'); ctx.fillStyle = g; ctx.fillRect(0, H - gh, W, gh);
+  const lh = size + 16, top = y - (L.length - 1) * lh;
+  ctx.fillStyle = col; ctx.fillRect(T.pad - 26, top - size + 2, 7, (L.length - 1) * lh + size + 6);
+  ctx.restore();
+  L.forEach((ln, i) => runs(ln.map(q => q.slice(0, 3)), T.pad, top + i * lh, size, 700, { alpha: a }));
+}
+// top-right status (wide) / under the header (tall): which view and the 개념도 note
+function status(t) {
+  const game = 1 - p(t, SCAN0, .3);
+  const a = 1 - eo(p(t, RES - .2, .5));
+  if (a <= 0) return;
+  const x = W - T.pad, y = TALL ? 82 : 78;
+  if (game > 0) chip('클라이언트 화면', x, y - 12, '#ffd59a', { align: 'right', alpha: game * a, size: TALL ? 40 : 34 });
+  const dk = p(t, SCAN1 - .3, .4) * a;
+  if (dk > 0) {
+    chip('서버 충돌 뷰', x, y - 12, C.stat, { align: 'right', alpha: dk, size: TALL ? 40 : 34 });
+    if (!TALL) txt('모양 · 크기 · 개수는 개념도', x, y + 52, { size: 30, weight: 500, color: C.faint, align: 'right', alpha: dk });
+  }
+}
+
+// ── 01 · game view → the server's collision world ───────────
+function ov01(t) {
+  // the scan line: the same moment re-drawn as the server sees it
+  const sk = win(t, SCAN0 - .1, SCAN1 + .2, .25);
+  if (sk > 0) {
+    const sx = scanX(t);
+    const qa = project([sx, 0, 40]), qb = project([sx, 0, -70]);
+    ctx.save(); ctx.globalAlpha = sk; ctx.strokeStyle = C.stat; ctx.lineWidth = 5; ctx.shadowColor = C.stat; ctx.shadowBlur = 18;
+    ctx.beginPath(); ctx.moveTo(qa.x, qa.y); ctx.lineTo(qb.x, qb.y); ctx.stroke(); ctx.restore();
+  }
+  const sm = win(t, SCAN0 + .6, 4.75, .35);
+  tag([BOXES[5][0] - 3, 6.5, BOXES[5][1] + 3], '스태틱 메시 → 서버 충돌 메시', C.stat, sm * p(t, SCAN0 + 1.2, .3), { dy: TALL ? -170 : -150, dx: TALL ? -60 : 120 });
+  const ch = win(t, SCAN1 - .2, 7.0, .4);
+  const c0 = CHAR[CROWD_IDX[5]], [cx, cz] = charPos(c0, t);
+  tag([cx, 2, cz], '캐릭터 → 충돌체', C.pc, ch, { dy: TALL ? 190 : 170, dx: TALL ? -120 : -260 });
+  const G = gliderPos(t);
+  tag([G.x, G.y + 3, G.z], '활강', '#ffd59a', win(t, .2, SCAN1 + .3, .4) * (1 - p(t, SCAN0 + 2.0, .3)), { dy: TALL ? 120 : 90, dx: TALL ? 150 : 200 });
+  // architecture panel: the three parts that were designed
+  const ar = win(t, 4.6, 7.1, .45);
+  if (ar > 0) {
+    const items = [['PhysicsWorld', C.stat], ['PhysicsSystem', C.stat], ['CollisionShapes', C.stat]];
+    const sz = TALL ? 44 : 38;
+    ctx.save(); ctx.globalAlpha = ar;
+    if (!TALL) {
+      const x = W - T.pad - 560, y = 250, w = 560, h = 380;
+      rr(x, y, w, h, 6); ctx.fillStyle = 'rgba(12,15,19,.9)'; ctx.fill(); ctx.strokeStyle = rgba(C.stat, .5); ctx.lineWidth = 2; ctx.stroke();
+      txt('서버 충돌 아키텍처 설계', x + 30, y + 58, { size: 36, weight: 700, color: C.dim });
+      items.forEach(([s, c], i) => { const kk = eo(p(t, 4.8 + i * .2, .4)); txt('▸ ' + s, x + 30, y + 132 + i * 66, { size: sz, weight: 700, mono: true, color: c, alpha: kk }); });
+      txt('UE4 데이터 익스포트 · 리서치', x + 30, y + h - 34, { size: 32, weight: 500, color: C.dim, alpha: eo(p(t, 5.5, .4)) });
+    } else {
+      const x = T.pad, y = 340, w = W - 2 * T.pad, h = 300;
+      rr(x, y, w, h, 6); ctx.fillStyle = 'rgba(12,15,19,.9)'; ctx.fill(); ctx.strokeStyle = rgba(C.stat, .5); ctx.lineWidth = 2; ctx.stroke();
+      txt('서버 충돌 아키텍처 설계', x + 30, y + 62, { size: 44, weight: 700, color: C.dim });
+      items.forEach(([s, c], i) => { const kk = eo(p(t, 4.8 + i * .2, .4)); txt('▸ ' + s, x + 30, y + 130 + i * 56, { size: sz, weight: 700, mono: true, color: c, alpha: kk }); });
+    }
+    ctx.restore();
+  }
+  bottomLine(t, -1, SCAN0 + .2, [['플레이어가 보는 화면: ', C.dim], ['캐릭터가 붐비고, 활강한다', C.text]], '#ffd59a');
+  bottomLine(t, SCAN0 + .3, 4.6, [['같은 순간을 ', C.dim], ['서버의 충돌 월드', C.stat], ['로 본다', C.dim]]);
+  bottomLine(t, 4.7, 7.0, TALL
+    ? [['클라 스태틱 메시를 서버에서 충돌 가능하게', C.text], [' · UE4 익스포트 리서치', C.dim, false, 'br']]
+    : [['클라이언트 스태틱 메시를 ', C.text], ['서버에서 충돌 가능하게', C.stat]]);
+}
+
+// ── 02 · shapes & rays ──────────────────────────────────────
+function ov02(t) {
+  // a · pairs
+  const pa = win(t, 7.4, 10.9, .4);
+  if (pa > 0) PAIRS.forEach(P => {
+    const sep = pairSep(P, t), touch = eo(p(t, P.s + 1.35, .3));
+    const ca = rgba(P.a ? C.npc : C.pc, 1), cb = P.b ? C.npc : C.pc;
+    const y = terrH(P.x, P.z) + .9;
+    if (touch > 0) {
+      const flash = 1 + 1.2 * (1 - p(t, P.s + 1.35, .6));
+      ringXZ(P.x, y - .9 + .03, P.z, .5 * flash, C.hit, pa * touch, { w: 4, fill: .25 });
+      // contact normal: push apart
+      const L = .9 + .3 * Math.sin(t * 4);
+      arrow3(V3(P.x - .5, y + 1.25, P.z), V3(P.x - .5 - L, y + 1.25, P.z), C.hit, pa * touch);
+      arrow3(V3(P.x + .5, y + 1.25, P.z), V3(P.x + .5 + L, y + 1.25, P.z), C.hit, pa * touch);
+    }
+    const q = project([P.x, terrH(P.x, P.z), P.z + .8]);
+    if (q.ok) {
+      const parts = P.label.split(' vs ');
+      font(T.lab, 700); const w = tw(P.label, T.lab, 700) + T.lab * 1.2, yy = q.y + (TALL ? 90 : 80);
+      ctx.save(); ctx.globalAlpha = pa * eo(p(t, P.s, .4)); rr(q.x - w / 2, yy - T.lab * 1.15, w, T.lab * 1.65, 4); ctx.fillStyle = 'rgba(12,15,19,.9)'; ctx.fill(); ctx.restore();
+      runs([[parts[0], P.a ? C.npc : C.pc], [' vs ', C.dim], [parts[1], cb]], q.x, yy, T.lab, 700, { align: 'center', alpha: pa * eo(p(t, P.s, .4)) });
+    }
+  });
+  bottomLine(t, 7.4, 10.9, [['캐릭터끼리 ', C.dim], ['겹치지 않게', C.text], [' 충돌 판정', C.dim]], C.pc);
+
+  // b · sight ray vs move ray at the low wall
+  const wa = win(t, WALL0 + .2, 13.7, .4);
+  if (wa > 0) {
+    const npc = CHAR.find(c => c.kind === 'wnpc'), [nx, nz] = charPos(npc, t);
+    const ny = terrH(nx, nz), py = terrH(WPC.x, WPC.z);
+    const E = V3(nx, ny + 1.55, nz), Pe = V3(WPC.x, py + 1.55, WPC.z);
+    const sg = eo(p(t, WALL0 + .4, .7));
+    line3(E, E.clone().lerp(Pe, sg), C.sight, wa, { w: 6 });
+    const wallX = WALL[0] - WALL[2] / 2;
+    const F = V3(nx + R, ny + .45, nz), Hp = V3(wallX, ny + .45, nz);
+    const mg = eo(p(t, WALL0 + 1.0, .5));
+    line3(F, F.clone().lerp(Hp, mg), C.move, wa, { w: 6 });
+    hitMark(Hp, wa * eo(p(t, WALL0 + 1.4, .3)), 14);
+    tag([lerp(E.x, Pe.x, .7), E.y + .1, E.z], '시야 Ray · 담 너머가 보인다', C.sight, wa * sg, { dy: TALL ? -150 : -130, dx: TALL ? -60 : 0 });
+    tag([lerp(F.x, Hp.x, .4), F.y, F.z], '이동 Ray · 담에 막힌다', C.move, wa * mg, { dy: TALL ? 210 : 170, dx: TALL ? 60 : -40 });
+    tag([WALL[0], WALL[3] + terrH(WALL[0], WALL[1]), WALL[1] - 3], '낮은 담 (예시)', C.stat, wa * .9 * (1 - p(t, WALL0 + 1.0, .3)), { dy: TALL ? 260 : 230, dx: TALL ? 120 : 260 });
+  }
+  bottomLine(t, WALL0 + .2, 13.7, TALL
+    ? [['시야 Ray와 이동 Ray는 ', C.dim], ['다른 판정', C.text], ['같은 담에서도 결과가 다르다', C.dim, false, 'br']]
+    : [['시야 Ray', C.sight], ['와 ', C.dim], ['이동 Ray', C.move], ['는 같은 담에서도 결과가 다르다', C.dim]], C.sight);
+
+  // c · terrain: glide + line of sight
+  const ta = win(t, TERR0 + .3, 16.7, .4);
+  if (ta > 0) {
+    const G = gliderPos(t), Gb = V3(G.x, G.y + .9 * 2, G.z);
+    const gh = terrH(G.x, G.z);
+    const dk = eo(p(t, TERR0 + .4, .6));
+    line3(Gb, V3(G.x, lerp(Gb.y, gh, dk), G.z), C.move, ta, { w: 5 });
+    if (dk > .95) { ringXZ(G.x, gh + .05, G.z, 1.6, C.move, ta, { w: 4, fill: .2 }); }
+    const A = CHAR[CROWD_IDX[2]], [ax, az] = charPos(A, t), Ae = V3(ax, terrH(ax, az) + 1.5, az);
+    const Be = V3(LOSB.x, terrH(LOSB.x, LOSB.z) + 1.5, LOSB.z);
+    const la = eo(p(t, TERR0 + .8, .5)), lb = eo(p(t, TERR0 + 1.1, .5));
+    line3(Gb, Gb.clone().lerp(Ae, la), C.sight, ta, { w: 5 });
+    // B: blocked by the hill; find the first hit
+    let hs = 1; for (let s = 0; s <= 1; s += .005) { const q = Gb.clone().lerp(Be, s); if (q.y < terrH(q.x, q.z)) { hs = s; break; } }
+    line3(Gb, Gb.clone().lerp(Be, Math.min(lb, hs)), C.sight, ta, { w: 5 });
+    if (lb > hs) { line3(Gb.clone().lerp(Be, hs), Be, C.hit, ta * .6, { w: 3, dash: [10, 10], glow: 0 }); hitMark(Gb.clone().lerp(Be, hs), ta, 16); }
+    tag([G.x, gh, G.z], '활강 · 지형 높이', C.move, ta * dk, { dy: TALL ? 120 : 110, dx: TALL ? -60 : -220 });
+    const Hm = Gb.clone().lerp(Be, hs);
+    tag([Hm.x, Hm.y, Hm.z], 'line of sight · 지형에 가림', C.hit, ta * p(lb, hs, .05), { dy: TALL ? -260 : -230, dx: TALL ? -80 : 60 });
+  }
+  bottomLine(t, TERR0 + .3, 16.7, [['지형 충돌: ', C.dim], ['활강', C.move], [' · ', C.dim], ['line of sight', C.sight]], C.move);
+}
+
+// ── 03 · performance research ───────────────────────────────
+function ov03(t) {
+  const q = CHAR[QUERY], [qx, qz] = charPos(q, t);
+  // a · uniform grid: only the cells around the query
+  const ga = win(t, GRID0, KD0 + .2, .45);
+  if (ga > 0) {
+    const S = 8, x0 = -56, x1 = 56, z0 = -40, z1 = 40;
+    for (let x = x0; x <= x1 + .01; x += S) line3(V3(x, .1, z0), V3(x, .1, z1), C.grid, ga * .55, { w: 2, glow: 0 });
+    for (let z = z0; z <= z1 + .01; z += S) line3(V3(x0, .1, z), V3(x1, .1, z), C.grid, ga * .55, { w: 2, glow: 0 });
+    const ci = Math.floor((qx - x0) / S), cj = Math.floor((qz - z0) / S);
+    const hk = eo(p(t, GRID0 + .6, .5));
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) quadXZ(x0 + (ci + a) * S, z0 + (cj + b) * S, x0 + (ci + a + 1) * S, z0 + (cj + b + 1) * S, .1, C.stat, ga * hk, { w: 0, fill: a === 0 && b === 0 ? .32 : .16 });
+    quadXZ(x0 + (ci - 1) * S, z0 + (cj - 1) * S, x0 + (ci + 2) * S, z0 + (cj + 2) * S, .1, C.stat, ga * hk, { w: 4 });
+    tag([x0 + (ci + 2) * S, 0, z0 + (cj - 1) * S], '주변 셀만 검사', C.stat, ga * hk, { dy: TALL ? -120 : -90, dx: TALL ? 60 : 200 });
+  }
+  // b · kd-tree: split the space, descend to the query's leaf
+  const ka = win(t, KD0, HGT0 + .2, .45);
+  if (ka > 0) {
+    const depthNow = 1 + 4 * eio(p(t, KD0 + .2, 1.3));
+    KD.forEach(n => {
+      const v = clamp(depthNow - n.d); if (v <= 0) return;
+      const [bx0, bz0, bx1, bz1] = n.b, w = n.d === 0 ? 6 : n.d === 1 ? 4.5 : 3;
+      const col = n.d < 2 ? C.stat : C.grid;
+      if (n.ax === 0) line3(V3(n.v, .1, bz0), V3(n.v, .1, lerp(bz0, bz1, v)), col, ka * (n.d < 2 ? 1 : .7), { w, glow: n.d < 2 ? 8 : 0 });
+      else line3(V3(bx0, .1, n.v), V3(lerp(bx0, bx1, v), .1, n.v), col, ka * (n.d < 2 ? 1 : .7), { w, glow: n.d < 2 ? 8 : 0 });
+    });
+    const lk = eo(p(t, KD0 + 1.4, .4));
+    const b = kdLeaf(qx, qz, 5);
+    quadXZ(b[0], b[1], b[2], b[3], .1, C.stat, ka * lk, { w: 5, fill: .28 });
+    tag([b[2], 0, b[1]], '나눈 공간 안의 후보만', C.stat, ka * lk, { dy: TALL ? -120 : -90, dx: TALL ? 40 : 220 });
+  }
+  if (ga > 0 || ka > 0) {
+    const y = terrH(qx, qz) + .9;
+    ringXZ(qx, .1, qz, 1.4, C.pc, Math.max(ga, ka), { w: 5, fill: .3 });
+  }
+  bottomLine(t, GRID0, KD0, [['grid', C.stat, true], [' — 공간을 셀로 나눠 ', C.dim], ['주변 셀만', C.text], [' 검사', C.dim]]);
+  bottomLine(t, KD0 + .1, HGT0, [['kd-tree', C.stat, true], [' — 공간을 반씩 나눠 ', C.dim], ['후보를 줄인다', C.text]]);
+  // c · height-based precomputed data for sight rays
+  const ha = win(t, HGT0 + .2, 23.7, .4);
+  if (ha > 0) {
+    HR.forEach((r, ri) => {
+      const go = eo(p(t, HGT0 + 1.0 + ri * .5, .8));
+      const end = r.hit ? r.hit.s : 1;
+      line3(r.A, r.A.clone().lerp(r.B, go * end), r.hit ? C.sight : C.pc, ha, { w: 6 });
+      if (r.hit && go > .98) { hitMark(V3(r.hit.x, r.hit.y, r.hit.z), ha, 16); line3(V3(r.hit.x, r.hit.y, r.hit.z), r.B, C.hit, ha * .5, { w: 3, dash: [10, 10], glow: 0 }); }
+    });
+    { const cc = colAt(-30, -24); tag([cc.x, cc.h, cc.z], '셀별 최대 높이 (전처리)', C.sight, ha * eo(p(t, HGT0 + .5, .5)), { dy: TALL ? 170 : 150, dx: TALL ? 80 : 60 }); }
+    const r0 = HR[0];
+    if (r0.hit) tag([r0.hit.x, r0.hit.y, r0.hit.z], '높이보다 낮으면 가림', C.hit, ha * eo(p(t, HGT0 + 1.9, .4)), { dy: TALL ? 220 : 190, dx: TALL ? -40 : 120 });
+  }
+  bottomLine(t, HGT0 + .2, 23.7, TALL
+    ? [['시야 ray', C.sight], [' — 메시 대신', C.dim], ['높이 기반 전처리 데이터로 판정', C.text, false, 'br']]
+    : [['시야 ray', C.sight], [' — 메시 대신 ', C.dim], ['높이 기반 전처리 데이터', C.text], ['로 판정', C.dim]], C.sight);
+}
+
+// ── 04 · large-scale agents ─────────────────────────────────
+const ZOOM = { x: -10, z: 6, r: 15 };
+const ZAG = AG.map((a, i) => i).filter(i => Math.hypot(AG[i].x - ZOOM.x, AG[i].z - ZOOM.z) < ZOOM.r);
+function ov04(t) {
+  bottomLine(t, CROWD0 + .1, SPLIT0, TALL
+    ? [['서버에서 ', C.dim], ['20,000개 Agent 이동 충돌', C.text], ['네비게이션·길찾기 Agent 재구현', C.dim, false, 'br']]
+    : [['서버에서 ', C.dim], ['20,000개 Agent 이동 충돌', C.text], [' · 네비게이션·길찾기 Agent 재구현', C.dim]]);
+  // b · split by move range: only agents whose ranges overlap are checked together
+  const sa = win(t, SPLIT0 + .4, TICK0 + .2, .45);
+  if (sa > 0) {
+    const pos = ZAG.map(i => { const [x, z] = agPos(AG[i], t); return [x, terrH(x, z) + .1, z, AG[i].cl]; });
+    const rk = eo(p(t, SPLIT0 + .6, .5)), lk = eo(p(t, SPLIT0 + 1.2, .5));
+    pos.forEach(([x, y, z, cl]) => ringXZ(x, y, z, 1.25, HUE[cl % HUE.length], sa * rk, { w: 2.5, fill: .1 }));
+    if (lk > 0) for (let i = 0; i < pos.length; i++) for (let j = i + 1; j < pos.length; j++) {
+      const A = pos[i], B = pos[j]; if (A[3] !== B[3]) continue;
+      if (Math.hypot(A[0] - B[0], A[2] - B[2]) < 2.5) line3(V3(A[0], A[1], A[2]), V3(B[0], B[1], B[2]), HUE[A[3] % HUE.length], sa * lk * .9, { w: 3, glow: 0 });
+    }
+    tag([ZOOM.x - 1, 0, ZOOM.z + 1], '이동 범위가 겹치는 Agent끼리만', C.stat, sa * lk, { dy: TALL ? 200 : 150, dx: TALL ? 0 : -420 });
+  }
+  bottomLine(t, SPLIT0 + .4, TICK0 + .1, [['이동 범위 기반 ', C.dim], ['충돌 분산', C.text], [TALL ? '묶음별로 나눠 처리 (예시)' : ' — 묶음별로 나눠 처리 (예시)', C.dim, false, 'br']]);
+  // c · tick split
+  const ka = win(t, TICK0 + .2, RES + .05, .45);
+  tickStrip(t, ka);
+  bottomLine(t, TICK0 + .2, RES, [['업데이트 tick 분할', C.text], [TALL ? 'tick마다 일부 묶음만 갱신 (예시)' : ' — tick마다 일부 묶음만 갱신 (예시)', C.dim, false, 'br']]);
+  // a · the count
+  const ca = win(t, CROWD0 + .1, RES + .1, .45);
+  if (ca > 0) {
+    const n = Math.round(20000 * eio(p(t, CROWD0 + .2, 1.5)) / 10) * 10;
+    const s = n.toLocaleString('en-US');
+    ctx.save(); ctx.globalAlpha = ca;
+    if (!TALL) {
+      const x = W - T.pad, y = 236, w = 560, h = 236;
+      rr(x - w, y - 20, w, h, 6); ctx.fillStyle = 'rgba(12,15,19,.9)'; ctx.fill(); ctx.strokeStyle = rgba(C.stat, .45); ctx.lineWidth = 2; ctx.stroke();
+      runs([['PC', C.pc], [' vs ', C.dim], ['NPC', C.npc], [' Agent', C.dim]], x - w + 30, y + 30, 34, 700);
+      txt(s, x - 30, y + 150, { size: 120, weight: 800, mono: true, color: C.text, align: 'right' });
+      txt('이동 충돌 테스트 · 점은 개념도', x - w + 30, y + 196, { size: 28, weight: 500, color: C.dim });
+    } else {
+      const x = T.pad, y = 340, w = W - 2 * T.pad, h = 214;
+      rr(x, y, w, h, 6); ctx.fillStyle = 'rgba(12,15,19,.9)'; ctx.fill(); ctx.strokeStyle = rgba(C.stat, .45); ctx.lineWidth = 2; ctx.stroke();
+      runs([['PC', C.pc], [' vs ', C.dim], ['NPC', C.npc]], x + 30, y + 62, 46, 700);
+      txt('이동 충돌 테스트', x + 30, y + 120, { size: 40, weight: 500, color: C.dim });
+      txt('점은 개념도', x + 30, y + 176, { size: 38, weight: 500, color: C.faint });
+      txt(s, x + w - 30, y + 160, { size: 130, weight: 800, mono: true, color: C.text, align: 'right' });
+    }
+    ctx.restore();
+  }
+}
+function tickStrip(t, a) {
+  if (a <= 0) return;
+  const cur = tickOf(t);
+  const n = 4, cw = TALL ? 210 : 170, ch = TALL ? 82 : 70, gap = 14;
+  const tot = n * cw + (n - 1) * gap;
+  const x0 = TALL ? (W - tot) / 2 : W - T.pad - tot, y0 = TALL ? H - 300 : H - 250;
+  ctx.save(); ctx.globalAlpha = a;
+  const sz = TALL ? 40 : 32;
+  txt('update tick', x0, y0 - 18, { size: sz, weight: 600, mono: true, color: C.dim });
+  for (let k = 0; k < n; k++) {
+    const x = x0 + k * (cw + gap), on = k === cur;
+    rr(x, y0, cw, ch, 4); ctx.fillStyle = on ? 'rgba(79,214,232,.28)' : 'rgba(12,15,19,.88)'; ctx.fill();
+    ctx.strokeStyle = on ? C.stat : C.line; ctx.lineWidth = on ? 3 : 2; ctx.stroke();
+    txt(k ? `N+${k}` : 'N', x + cw / 2, y0 + ch / 2 + sz * .36, { size: sz, weight: 700, mono: true, color: on ? C.text : C.faint, align: 'center' });
+  }
+  ctx.restore();
+}
+
+// ── 05 · result ──────────────────────────────────────────────
+const SUM = [['PhysicsWorld · PhysicsSystem · CollisionShapes', C.stat], ['PC·NPC 충돌 · 시야 Ray · 이동 Ray · 지형', C.sight], ['grid · kd-tree · 높이 전처리 (리서치)', C.grid], ['충돌 분산 · tick 분할 (리서치)', C.pc]];
+function ov05(t) {
+  const a = eo(p(t, RES, .8)); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  if (!TALL) {
+    const g = ctx.createLinearGradient(0, 0, 1180, 0); g.addColorStop(0, 'rgba(10,12,16,.96)'); g.addColorStop(.72, 'rgba(10,12,16,.78)'); g.addColorStop(1, 'rgba(10,12,16,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, 1180, H);
+    const x = T.pad;
+    txt('NCSOFT · AION2 · 2016 – 2021', x, 130, { size: T.kick, weight: 600, color: C.dim });
+    txt('서버 캐릭터 충돌 처리', x, 216, { size: 64, weight: 800 });
+    txt('20,000', x - 6, 410, { size: T.num, weight: 800, mono: true, color: C.text });
+    runs([['PC', C.pc], [' vs ', C.dim], ['NPC', C.npc], [' 이동 충돌 테스트 · 리서치', C.dim]], x, 480, 38, 700);
+    SUM.forEach(([s, c, m], i) => {
+      const kk = eo(p(t, RES + .5 + i * .15, .5)), y = 640 + i * 92;
+      ctx.save(); ctx.globalAlpha *= kk; ctx.fillStyle = c; ctx.fillRect(x, y - 30, 8, 40); ctx.restore();
+      txt(s, x + 30, y, { size: m ? 34 : 36, weight: 700, mono: m, color: C.text, alpha: kk });
+    });
+  } else {
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(10,12,16,.95)'); g.addColorStop(.36, 'rgba(10,12,16,.8)'); g.addColorStop(.55, 'rgba(10,12,16,.3)'); g.addColorStop(1, 'rgba(10,12,16,.94)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const x = T.pad;
+    txt('NCSOFT · AION2 · 2016 – 2021', x, 92, { size: 42, weight: 600, color: C.dim });
+    txt('서버 캐릭터 충돌 처리', x, 180, { size: 70, weight: 800 });
+    txt('20,000', x - 8, 370, { size: T.num, weight: 800, mono: true, color: C.text });
+    runs([['PC', C.pc], [' vs ', C.dim], ['NPC', C.npc], [' 이동 충돌 테스트', C.dim]], x, 450, 46, 700);
+    txt('리서치', x, 512, { size: 42, weight: 600, color: C.dim });
+    const SUMT = [['PhysicsWorld · PhysicsSystem', C.stat, true], ['· CollisionShapes', C.stat, true], ['시야 Ray · 이동 Ray · 지형', C.sight], ['grid · kd-tree · 높이 전처리', C.grid], ['충돌 분산 · tick 분할', C.pc]];
+    SUMT.forEach(([s, c, m], i) => {
+      const kk = eo(p(t, RES + .5 + i * .12, .5)), y = 980 + i * 70;
+      if (i !== 1) { ctx.save(); ctx.globalAlpha *= kk; ctx.fillStyle = c; ctx.fillRect(x, y - 34, 8, 44); ctx.restore(); }
+      txt(s, x + 30, y, { size: m ? 40 : 46, weight: 700, mono: m, color: C.text, alpha: kk });
+    });
+  }
+  ctx.restore();
+}
+
+// ── frame ────────────────────────────────────────────────────
+function renderAt(t) {
+  t = clamp(+t || 0, 0, DURATION);
+  const c = camAt(t);
+  const dir = V3(Math.sin(c.yaw) * Math.cos(c.pitch), Math.sin(c.pitch), Math.cos(c.yaw) * Math.cos(c.pitch));
+  camera.fov = c.fov; camera.near = c.d * .04; camera.far = c.d * 12;
+  camera.setViewOffset(W, H, c.ox, c.oy, W, H);
+  camera.position.copy(c.T).addScaledVector(dir, c.d); camera.up.set(0, 1, 0); camera.lookAt(c.T); camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+  SKY.mesh.position.copy(camera.position);
+  SU.fogNear.value = c.d * 1.1; SU.fogFar.value = c.d * 3.2;
+  animate(t);
+  composer.render();
+  ctx.setTransform(QUAL, 0, 0, QUAL, 0, 0); ctx.globalAlpha = 1;
+  ctx.drawImage(renderer.domElement, 0, 0, W, H);
+  vignette(t);
+  ov01(t); ov02(t); ov03(t); ov04(t); ov05(t);
+  headers(t); status(t);
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) {
+    try { document.fonts.add(await new FontFace(family, `url(../assets/fonts/${file})`, { weight }).load()); } catch (e) { /* fall back to system fonts */ }
+  }
+  await document.fonts.ready;
+  renderAt(0);
+})();
+
+// ── player (standalone only) ─────────────────────────────────
+if (!EMBED && !RENDER) {
+  const $ = id => document.getElementById(id);
+  $('alt').href = TALL ? './' : '?layout=tall'; $('alt').textContent = TALL ? '가로 화면' : '세로 화면';
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CHAPTERS = HEAD.map(h => [h[0], h[2], h[3]]);
+  let t = 0, playing = false, started = false, last = 0;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button');
+    b.innerHTML = `<span>${n}</span>` + label;
+    b.addEventListener('click', () => { seek(s + .01); play(); });
+    $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing;
+    $('big').innerHTML = ended ? ICON.replay : ICON.play;
+    $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur && started));
+  }
+  function draw() { renderAt(Math.min(t, DURATION)); }
+  function play() { if (t >= DURATION) t = 0; started = true; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+  // slow machines (software GL): leave the main thread idle between frames so input stays responsive
+  let cost = 0, lastDraw = 0;
+  function frame(now) {
+    if (playing) {
+      t += (now - last) / 1000 * rate; last = now; if (t >= DURATION) { t = DURATION; playing = false; }
+      if (now - lastDraw >= cost * 1.5 || !playing) { const a = performance.now(); draw(); cost = performance.now() - a; lastDraw = performance.now(); }
+      ui();
+    }
+    requestAnimationFrame(frame);
+  }
+  const RATES = [1, .75, .5];
+  let rate = 1;
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) {
+    rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`);
+    try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ }
+  }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('play').addEventListener('click', toggle);
+  $('fs').addEventListener('click', () => { const el = $('stage'); if (document.fullscreenElement) document.exitFullscreen?.(); else el.requestFullscreen?.().catch(() => {}); });
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+  });
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frame);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,990 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D 비행 네비게이션</title>
+<style>
+  /* One stage (16:9, or 4:5 with ?layout=tall), a slim transport bar, chapter chips, a short note. Graphite map-view look. */
+  :root {
+    --bg: #121519; --surface: #1a1e24; --line: #2c333d; --fg: #eef1f4; --dim: #9aa4b1; --text2: #c5ccd5;
+    --accent: #38d3f2; --warm: #ffb547;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding-block: 16px; padding-inline: 16px; box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  body.tall .player { width: min(100%, calc((100vh - 170px) * 4 / 5)); }
+  .stage { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  body.tall .stage { aspect-ratio: 4 / 5; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); height: auto; aspect-ratio: 1; border-radius: 50%;
+    border: 1.5px solid var(--accent); background: rgba(18,21,25,.8); color: var(--fg); display: grid; place-items: center; cursor: pointer; transition: transform .15s; }
+  .big[hidden] { display: none; }
+  .big:hover { transform: scale(1.06); }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 14px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--accent); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(56,211,242,.25); }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 6px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(56,211,242,.1); }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 6px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  .notes { width: min(100%, 760px); margin-top: 40px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes h2 { font-size: 20px; line-height: 1.4; margin: 0 0 12px; text-wrap: balance; }
+  .notes p { color: var(--text2); margin: 0 0 14px; }
+  .notes b { color: var(--fg); }
+  .notes .fine { font-size: 13px; color: var(--dim); }
+  /* #poster: canvas only, loops (gallery thumbnails) */
+  body.poster { padding: 0; }
+  body.poster .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .big, body.poster .notes, body.poster .set { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+  /* ?embed: the résumé drives renderAt(t); canvas only */
+  body.embed { margin: 0; padding: 0; display: block; overflow: hidden; height: 100vh; }
+  body.embed .player { width: 100%; height: 100%; gap: 0; }
+  body.embed .bar, body.embed .chapters, body.embed .big, body.embed .notes, body.embed .set { display: none; }
+  body.embed .stage { border: 0; border-radius: 0; width: 100%; height: 100%; aspect-ratio: auto; cursor: default; }
+  body.embed canvas { object-fit: contain; }
+</style>
+
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="높이 하나만 저장하는 2.5D 셀 지형이 다리 밑을 벽으로 메우는 문제, 3D 복셀로 바꿔 다리 밑 1층과 다리 위 2층, 공중을 함께 담는 구조, 빈 복셀을 잇는 비행 길찾기, 진행 방향 원뿔로 레이를 쏘아 막힌 방향을 배제하고 열린 방향으로 조향하는 장애물 회피, 10K × 10K 필드로의 확장을 서버 3D 맵뷰처럼 보여주는 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="33" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:33</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+    <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="이동"><a href="../../interactive.html">← 이력서로</a></nav>
+</div>
+<section class="notes" id="notes">
+  <h2>3D 공간 비행 네비게이션 <span class="fine">NCSOFT · AION2 · 2016 – 2021</span></h2>
+  <article data-ch="01"><p><b>문제.</b> 기존 필드는 <b>2.5D 셀</b> 기반이라 칸 하나에 높이 하나만 담습니다. 다리 밑 길, 2층, 공중처럼 같은 자리에 높이가 여러 개인 공간은 표현할 수 없고, 비행체가 3차원으로 움직이며 길을 찾을 수도 없습니다.</p></article>
+  <article data-ch="02"><p><b>접근.</b> 필드를 <b>3D 복셀</b> 기반으로 전환해 높이 방향도 칸으로 나눴습니다. 같은 자리 위에 1층·2층·빈 공중이 함께 담기도록 복셀 지형 데이터 구조를 설계하고, 복층이 되도록 길찾기·객체 이동 로직을 고쳤습니다. 비행 중 장애물 회피는 <b>레이 샘플링 조향(컨텍스트 스티어링)</b>입니다. 진행 방향 원뿔로 레이를 샘플링해 막힌 방향을 배제하고 열린 방향으로 조향합니다. 이 과정을 확인하려고 서버에 OpenGL 3D 맵뷰도 직접 만들었습니다.</p></article>
+  <article data-ch="05"><p><b>결과.</b> 필드를 <b>10K × 10K(10km)</b>로 확장하고 2.5D에서 3D로 전환해 복층·비행 네비게이션이 가능해졌습니다.</p></article>
+  <p class="fine">화면 속 복셀 크기와 개수, 지형, 다리, 길찾기 경로, 레이 개수(17개)와 원뿔 각도(30°)는 이해를 돕기 위한 개념도·예시입니다. 수치는 10K × 10K(10km)만 실제 이력 기준입니다.</p>
+</section>
+<script type="importmap">
+{ "imports": { "three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/" } }
+</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  Raycast — 3D 공간 비행 네비게이션 (AION2). 분해해 들어가기 + 게임 화면 재현.
+//  Look: the server-side 3D map view itself: a graphite viewport, a voxel diorama with height-ramp colours and crisp
+//  voxel edges, debug-draw colours (red = blocked, green = open ray, cyan = flight / chosen direction).
+//  Story: a 2.5D cell map stores one height per cell, so the space under a bridge becomes a wall → 3D voxels hold
+//  1층 · 2층 · open air → a flyer paths through empty voxels (real A* on the voxel grid) → while flying it samples
+//  rays in a forward cone, drops the blocked ones and steers to an open one (a real steering sim, precomputed) →
+//  the field grows to 10K × 10K (10km).
+//  Every frame is a pure function of t (all simulation is precomputed into tables at load).
+// ─────────────────────────────────────────────────────────────
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const QS = new URLSearchParams(location.search);
+const EMBED = QS.has('embed'), RENDER = QS.has('render'), TALL = QS.get('layout') === 'tall';
+const W = TALL ? 1080 : 1920, H = TALL ? 1350 : 1080, DURATION = 33;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const Q = EMBED ? clamp(+(QS.get('q') || 1) || 1, .4, 1) : 1;
+if (EMBED) document.body.classList.add('embed');
+if (TALL) document.body.classList.add('tall');
+const cv = document.getElementById('c');
+cv.width = Math.round(W * Q); cv.height = Math.round(H * Q);
+const ctx = cv.getContext('2d');
+const SANS = 'Pretendard, "WenQuanYi Zen Hei", "DejaVu Sans", sans-serif';
+const MONO = '"JetBrains Mono", Pretendard, "DejaVu Sans Mono", monospace';
+// Roles: cyan = flight / 3D / chosen direction · green = open ray · red = blocked / 2.5D loss · amber = 1층 · pink = 2층
+const C = {
+  bg: '#13161a', text: '#eef1f4', dim: '#a3adba', faint: '#6f7a88', line: '#2c333d',
+  cyan: '#38d3f2', green: '#62e08a', red: '#ff5b57', amber: '#ffb547', pink: '#ff7ac0', plate: 'rgba(14,17,21,.9)',
+};
+
+// ── math / easing ────────────────────────────────────────────
+const lerp = (a, b, t) => a + (b - a) * t;
+const p = (t, s, d) => clamp((t - s) / d);
+const eo = t => 1 - Math.pow(1 - t, 3);
+const eio = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const ss = u => u * u * (3 - 2 * u);
+// fade window; a window that starts at 0 is fully on at t = 0 (thumbnail)
+const win = (t, s, e, f = .45) => Math.min(s <= 0 ? 1 : eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+function hash2(x, z) { let h = Math.imul(x | 0, 374761393) + Math.imul(z | 0, 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+function vnoise(x, z) {
+  const xi = Math.floor(x), zi = Math.floor(z), xf = x - xi, zf = z - zi, u = ss(xf), v = ss(zf);
+  return lerp(lerp(hash2(xi, zi), hash2(xi + 1, zi), u), lerp(hash2(xi, zi + 1), hash2(xi + 1, zi + 1), u), v);
+}
+const fbm = (x, z) => vnoise(x, z) * .55 + vnoise(x * 2.1 + 17, z * 2.1 + 5) * .3 + vnoise(x * 4.3 + 3, z * 4.3 + 41) * .15;
+
+// ── timeline ─────────────────────────────────────────────────
+const HEAD = [
+  [0.0, 6.5, '01', '2.5D 셀: 칸마다 높이 하나', 'cell(x, z) → h'],
+  [6.5, 13.0, '02', '3D 복셀: 높이도 칸으로', 'voxel(x, y, z) → 막힘 | 빈칸'],
+  [13.0, 20.5, '03', '비행 길찾기', '빈 복셀을 이어 3D 경로'],
+  [20.5, 28.0, '04', '레이 샘플링 조향', '컨텍스트 스티어링 · 장애물 회피'],
+  [28.0, 33.0, '05', '결과', '10K × 10K 3D 필드'],
+];
+
+// ── the voxel world (1 unit = 1 voxel; sizes are 개념도) ─────
+const NX = 64, NY = 26, NZ = 44;
+const SOL = new Uint8Array(NX * NY * NZ);
+const I = (x, y, z) => x + NX * (z + NZ * y);
+const inb = (x, y, z) => x >= 0 && x < NX && y >= 0 && y < NY && z >= 0 && z < NZ;
+const solid = (x, y, z) => y < 0 ? true : inb(x, y, z) ? SOL[I(x, y, z)] === 1 : false;
+const cxz = z => 32 + 1.6 * Math.sin(z * .16 + .5);              // canyon centre line
+const hwz = z => lerp(5.0, 8.6, ss(clamp((z - 18) / 7)));          // canyon half width (narrow south, wide north)
+function colH(x, z) {
+  const xc = x + .5, zc = z + .5;
+  let pl = 10 + Math.round((fbm(xc * .11, zc * .11) - .5) * 3.2);
+  if (xc > cxz(zc)) pl += Math.round(10 * Math.exp(-((xc - 54) ** 2 + (zc - 31) ** 2) / 120));
+  else pl += Math.round(2.5 * Math.exp(-((xc - 9) ** 2 + (zc - 33) ** 2) / 60));
+  const d = Math.abs(xc - cxz(zc)), hw = hwz(zc);
+  if (d < hw) return 2 + (d > hw - 1.3 ? 1 : 0);
+  if (d < hw + 3) return Math.round(lerp(3, pl, (d - hw) / 3));
+  return pl;
+}
+const HT = []; for (let z = 0; z < NZ; z++) for (let x = 0; x < NX; x++) HT[x + z * NX] = colH(x, z);
+for (let z = 0; z < NZ; z++) for (let x = 0; x < NX; x++) for (let y = 0; y < HT[x + z * NX]; y++) SOL[I(x, y, z)] = 1;
+// stone bridge across the canyon: arch underside, deck top at y = 9 (walk on 10), low rails
+const BZ0 = 11, BZ1 = 14, BCX = cxz(12.5), BHW = hwz(12.5);
+const BX0 = Math.floor(BCX - BHW - 2), BX1 = Math.ceil(BCX + BHW + 1);
+const BRIDGE = new Set();
+for (let x = BX0; x <= BX1; x++) {
+  const u = (x + .5 - BCX) / (BHW + 1.2), bot = Math.min(8, Math.floor(6.4 + 3 * (1 - u * u)));
+  for (let z = BZ0; z <= BZ1; z++) {
+    for (let y = bot; y <= 9; y++) if (!SOL[I(x, y, z)]) { SOL[I(x, y, z)] = 1; BRIDGE.add(I(x, y, z)); }
+    if (z === BZ0 || z === BZ1) { SOL[I(x, 10, z)] = 1; BRIDGE.add(I(x, 10, z)); }
+  }
+}
+// rock spires in the wide north canyon (obstacles for beat 4)
+const SPIRES = [[cxz(30.5) + .3, 30.5, 1.9, 13], [cxz(37) + 4.6, 37, 1.5, 11], [cxz(25) - 5.0, 25, 1.4, 10], [cxz(41.5) - 3.2, 41.5, 1.6, 12], [cxz(34) - 5.6, 34, 1.3, 9]];
+const SPIRE = new Set();
+for (const [sx, sz, r, h] of SPIRES) for (let y = 0; y < h; y++) {
+  const re = r * (1 - .38 * y / h);
+  for (let z = Math.floor(sz - r - 1); z <= sz + r + 1; z++) for (let x = Math.floor(sx - r - 1); x <= sx + r + 1; x++)
+    if (inb(x, y, z) && (x + .5 - sx) ** 2 + (z + .5 - sz) ** 2 < re * re && !SOL[I(x, y, z)]) { SOL[I(x, y, z)] = 1; SPIRE.add(I(x, y, z)); }
+}
+
+// ── colours: a height ramp like a map-view debug shader ──────
+const RAMP = [[0, '#2f5f5b'], [2, '#3f7262'], [4, '#5a875c'], [7, '#7f9a5a'], [10, '#a8a56b'], [13, '#c2ad7d'], [16, '#d0c09d'], [19, '#e6ded0']];
+const RC = RAMP.map(([y, h]) => [y, new THREE.Color(h)]);
+function ramp(y, out) {
+  let i = 0; while (i < RC.length - 2 && y >= RC[i + 1][0]) i++;
+  const [y0, c0] = RC[i], [y1, c1] = RC[i + 1];
+  return out.copy(c0).lerp(c1, clamp((y - y0) / (y1 - y0)));
+}
+
+// ── three.js setup ───────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(Math.round(W * Q), Math.round(H * Q), false);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.0;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(C.bg);
+const camera = new THREE.PerspectiveCamera(34, W / H, .1, 5000);
+scene.add(camera);
+scene.add(new THREE.HemisphereLight('#c9d6e8', '#3a3a3a', 1.5));
+const sunL = new THREE.DirectionalLight('#fff1dc', 2.0); sunL.position.set(-30, 60, -10); scene.add(sunL);
+const rt = new THREE.WebGLRenderTarget(Math.round(W * Q), Math.round(H * Q), { type: THREE.HalfFloatType, samples: 4 });
+const composer = new EffectComposer(renderer, rt);
+composer.setPixelRatio(1); composer.setSize(Math.round(W * Q), Math.round(H * Q));
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(W * Q / 2, H * Q / 2), .55, .4, .82);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+// shared voxel material: lambert-ish light, crisp voxel edges, 2.5D mode hides horizontal seams, red hatch for the 2.5D fill
+const col3 = h => new THREE.Color(h);
+const SU = {
+  uSun: { value: V3(-.45, .8, -.38).normalize() }, uSunCol: { value: col3('#fff0dc').multiplyScalar(.85) },
+  uSky: { value: col3('#c6d3e6').multiplyScalar(.55) }, uGnd: { value: col3('#4a4540').multiplyScalar(.5) },
+  uFog: { value: col3(C.bg) }, uFogN: { value: 200 }, uFogF: { value: 600 },
+  uSeam: { value: 1 }, uF1: { value: col3(C.amber) }, uF2: { value: col3(C.pink) }, uF1K: { value: 0 }, uF2K: { value: 0 },
+  uRed: { value: col3(C.red) },
+};
+const VOX_VS = `
+attribute vec3 aCol; attribute vec2 aInfo;
+uniform float uMode, uProg;
+varying vec3 vCol, vN, vNo, vLocal, vW; varying float vFlag;
+void main() {
+  vec3 pos = position;
+  float s = 1.;
+  if (uMode > .5 && uMode < 1.5) { s = 1. - smoothstep(aInfo.x, aInfo.x + .22, uProg); pos *= s; }
+  else if (uMode > 1.5) { s = smoothstep(aInfo.x, aInfo.x + .3, uProg); pos.y = (pos.y + .5) * max(s, .001) - .5; }
+  mat4 im = modelMatrix * instanceMatrix;
+  vec4 wp = im * vec4(pos, 1.);
+  vN = normalize(mat3(im) * normal); vNo = normal;
+  vLocal = position + .5; vCol = aCol; vFlag = aInfo.y; vW = wp.xyz;
+  gl_Position = projectionMatrix * viewMatrix * wp;
+  if (s < .002) gl_Position = vec4(2., 2., 2., 1.);
+}`;
+const VOX_FS = `
+uniform vec3 uSun, uSunCol, uSky, uGnd, uFog, uF1, uF2, uRed;
+uniform float uFogN, uFogF, uSeam, uF1K, uF2K, uHatch, uEdgeK, uDim;
+varying vec3 vCol, vN, vNo, vLocal, vW; varying float vFlag;
+void main() {
+  vec3 n = normalize(vN);
+  float dif = max(dot(n, uSun), 0.);
+  vec3 light = mix(uGnd, uSky, .5 + .5 * n.y) + uSunCol * dif;
+  vec3 base = vCol;
+  if (vFlag > .5 && vFlag < 1.5) base = mix(base, uF1, uF1K);
+  if (vFlag > 1.5 && vFlag < 2.5) base = mix(base, uF2, uF2K);
+  vec3 col = base * light;
+  if (vFlag > .5 && vFlag < 2.5) col += (vFlag < 1.5 ? uF1 * uF1K : uF2 * uF2K) * .25;
+  vec2 uv; bool side = abs(vNo.y) < .5;
+  if (!side) uv = vLocal.xz; else if (abs(vNo.x) > .5) uv = vLocal.zy; else uv = vLocal.xy;
+  vec2 ed = min(uv, 1. - uv);
+  float ey = side ? mix(1., ed.y, uSeam) : ed.y;
+  vec2 fw = fwidth(uv);
+  float lx = 1. - smoothstep(fw.x * .7, fw.x * 1.7, ed.x);
+  float ly = side ? (1. - smoothstep(fw.y * .7, fw.y * 1.7, ey)) * step(ey, .99) : 1. - smoothstep(fw.y * .7, fw.y * 1.7, ed.y);
+  float line = max(lx, ly) * (1. - smoothstep(.12, .35, max(fw.x, fw.y)));
+  col = mix(col, col * .38, line * uEdgeK);
+  if (uHatch > 0.) {
+    float st = step(.5, fract((vW.x + vW.y - vW.z) * .9));
+    col = mix(col, uRed * mix(.42, .85, st), uHatch * .78);
+  }
+  col *= uDim;
+  float dist = length(vW - cameraPosition);
+  col = mix(col, uFog, smoothstep(uFogN, uFogF, dist));
+  gl_FragColor = vec4(col, 1.);
+}`;
+function voxMat(mode, extra = {}) {
+  return new THREE.ShaderMaterial({
+    vertexShader: VOX_VS, fragmentShader: VOX_FS,
+    uniforms: { ...SU, uMode: { value: mode }, uProg: { value: 0 }, uHatch: { value: 0 }, uEdgeK: { value: .85 }, uDim: { value: 1 }, ...extra },
+  });
+}
+const BOX = new THREE.BoxGeometry(1, 1, 1);
+const _o = new THREE.Object3D(), _c = new THREE.Color();
+function instAttrs(mesh, n) {
+  mesh.geometry = BOX.clone();
+  mesh.geometry.setAttribute('aCol', new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3));
+  mesh.geometry.setAttribute('aInfo', new THREE.InstancedBufferAttribute(new Float32Array(n * 2), 2));
+  mesh.frustumCulled = false;
+  return [mesh.geometry.attributes.aCol.array, mesh.geometry.attributes.aInfo.array];
+}
+
+// terrain voxels: only voxels with an exposed face
+const TERR = [];
+for (let y = 0; y < NY; y++) for (let z = 0; z < NZ; z++) for (let x = 0; x < NX; x++) {
+  if (!SOL[I(x, y, z)]) continue;
+  const open = !solid(x + 1, y, z) || !solid(x - 1, y, z) || !solid(x, y + 1, z) || !solid(x, y, z + 1) || !solid(x, y, z - 1);
+  if (open) TERR.push([x, y, z]);
+}
+const terrMat = voxMat(0);
+const terrain = new THREE.InstancedMesh(BOX, terrMat, TERR.length);
+{
+  const [ac, ai] = instAttrs(terrain, TERR.length);
+  TERR.forEach(([x, y, z], i) => {
+    _o.position.set(x + .5, y + .5, z + .5); _o.updateMatrix(); terrain.setMatrixAt(i, _o.matrix);
+    const k = I(x, y, z), top = !solid(x, y + 1, z);
+    if (BRIDGE.has(k)) _c.set('#9ea4ad');
+    else if (SPIRE.has(k)) _c.set('#8a7b6c').lerp(col3('#b3a48f'), y / 13);
+    else { ramp(y + (top ? 0 : -1.2), _c); if (!top) _c.multiplyScalar(.8); }
+    const j = .94 + hash2(x * 7 + y, z * 13 - y) * .1; _c.multiplyScalar(j);
+    // road along the canyon floor
+    if (!BRIDGE.has(k) && !SPIRE.has(k) && top && y === 1 && Math.abs(x + .5 - cxz(z + .5)) < 1.6) _c.set('#b49a72').multiplyScalar(j * .92);
+    ac.set([_c.r, _c.g, _c.b], i * 3);
+    // flags: 1 = 1층 floor near the bridge, 2 = bridge deck top
+    let flag = 0;
+    if (top && y === 1 && z >= 5 && z <= 21 && Math.abs(x + .5 - cxz(z + .5)) < hwz(z + .5) - 1.3) flag = 1;
+    if (top && BRIDGE.has(k) && y === 9) flag = 2;
+    ai[i * 2 + 1] = flag;
+  });
+}
+scene.add(terrain);
+
+// 2.5D fill: every empty voxel below a column's top (the space under the bridge) — shrinks away in beat 2
+const FILL = [];
+for (let z = 0; z < NZ; z++) for (let x = 0; x < NX; x++) {
+  let top = -1; for (let y = NY - 1; y >= 0; y--) if (SOL[I(x, y, z)]) { top = y; break; }
+  for (let y = 0; y < top; y++) if (!SOL[I(x, y, z)]) FILL.push([x, y, z, top]);
+}
+const fillMat = voxMat(1, { uHatch: { value: 1 } });
+const fill = new THREE.InstancedMesh(BOX, fillMat, FILL.length);
+{
+  const [ac, ai] = instAttrs(fill, FILL.length);
+  FILL.forEach(([x, y, z, top], i) => {
+    _o.position.set(x + .5, y + .5, z + .5); _o.updateMatrix(); fill.setMatrixAt(i, _o.matrix);
+    ramp(y, _c).multiplyScalar(.8); ac.set([_c.r, _c.g, _c.b], i * 3);
+    ai[i * 2] = .05 + (1 - (y - 2) / 7) * .55 + hash2(x, z * 3 + y) * .12;   // vanish bottom-up... top-down order
+  });
+}
+scene.add(fill);
+
+// ground grid of the map view (y = 0), fades out with distance
+const grid = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000), new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false,
+  uniforms: { uC: { value: V3(32, 0, 22) }, uK: { value: 1 }, uFar: { value: 220 } },
+  vertexShader: `varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position,1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+  fragmentShader: `uniform vec3 uC; uniform float uK, uFar; varying vec3 vW;
+    float gl(vec2 p, float s){ vec2 g = abs(fract(p / s - .5) - .5) / fwidth(p / s); return 1. - min(min(g.x, g.y), 1.); }
+    void main(){ float d = length(vW.xz - uC.xz); float f = 1. - smoothstep(uFar * .25, uFar, d);
+      float a = gl(vW.xz, 1.) * .1 + gl(vW.xz, 8.) * .22;
+      gl_FragColor = vec4(vec3(.62, .7, .8), a * f * uK); }`,
+}));
+grid.rotation.x = -Math.PI / 2; grid.position.y = -.01; scene.add(grid);
+
+// ── A* through empty voxels (26-neighbour, clearance cost) — the flight path of beat 3 ──
+const NEAR = new Uint8Array(NX * NY * NZ);
+for (let y = 0; y < NY; y++) for (let z = 0; z < NZ; z++) for (let x = 0; x < NX; x++) {
+  let n = 0; for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (solid(x + dx, y + dy, z + dz)) n++;
+  NEAR[I(x, y, z)] = n;
+}
+function astar(a, b) {
+  const N = NX * NY * NZ, g = new Float32Array(N).fill(1e9), from = new Int32Array(N).fill(-1), closed = new Uint8Array(N);
+  const heap = []; const push = (f, k) => { heap.push([f, k]); let i = heap.length - 1; while (i > 0) { const pp = (i - 1) >> 1; if (heap[pp][0] <= heap[i][0]) break; [heap[pp], heap[i]] = [heap[i], heap[pp]]; i = pp; } };
+  const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === i) break; [heap[m], heap[i]] = [heap[i], heap[m]]; i = m; } } return top; };
+  const hgt = (x, y, z) => Math.hypot(x - b[0], y - b[1], z - b[2]);
+  const ka = I(...a), kb = I(...b); g[ka] = 0; push(hgt(...a), ka);
+  while (heap.length) {
+    const [, k] = pop(); if (closed[k]) continue; closed[k] = 1; if (k === kb) break;
+    const x = k % NX, z = Math.floor(k / NX) % NZ, y = Math.floor(k / (NX * NZ));
+    for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy && !dz) continue; const X = x + dx, Y = y + dy, Z = z + dz;
+      if (!inb(X, Y, Z) || SOL[I(X, Y, Z)] || Y < 1) continue;
+      const k2 = I(X, Y, Z); if (closed[k2]) continue;
+      const c = g[k] + Math.hypot(dx, dy, dz) * (1 + (NEAR[k2] ? 1.6 : 0));
+      if (c < g[k2]) { g[k2] = c; from[k2] = k; push(c + hgt(X, Y, Z), k2); }
+    }
+  }
+  const out = []; for (let k = kb; k >= 0; k = from[k]) { out.push([k % NX, Math.floor(k / (NX * NZ)), Math.floor(k / NX) % NZ]); if (k === ka) break; }
+  return out.reverse();
+}
+const WP = [[9, 14, 4], [Math.round(cxz(6)) - 1, 5, 6], [Math.round(cxz(19)), 5, 19], [54, 22, 31]];
+const PATH = [];
+for (let i = 0; i < WP.length - 1; i++) { const leg = astar(WP[i], WP[i + 1]); PATH.push(...(i ? leg.slice(1) : leg)); }
+// smooth flight line through the voxel chain (Chaikin), arc-length table
+function chaikin(pts, it) { for (let n = 0; n < it; n++) { const o = [pts[0]]; for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1]; o.push(a.clone().lerp(b, .25), a.clone().lerp(b, .75)); } o.push(pts[pts.length - 1]); pts = o; } return pts; }
+function arcTable(pts) { const L = [0]; for (let i = 1; i < pts.length; i++) L.push(L[i - 1] + pts[i].distanceTo(pts[i - 1])); return { pts, L, len: L[L.length - 1] }; }
+function along(tb, s) {
+  s = clamp(s, 0, tb.len); let lo = 0, hi = tb.L.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (tb.L[m] <= s) lo = m; else hi = m; }
+  const f = (s - tb.L[lo]) / Math.max(1e-6, tb.L[hi] - tb.L[lo]); return tb.pts[lo].clone().lerp(tb.pts[hi], f);
+}
+const FLY3 = arcTable(chaikin(PATH.map(([x, y, z]) => V3(x + .5, y + .5, z + .5)), 3));
+
+// ── ray-sampling steering (context steering) — precomputed sim for beat 4 ──
+const RAYL = 7, CONE = 30 * Math.PI / 180;
+const RAYS = [[0, 0]];                                   // (polar angle, azimuth) in the heading frame: 1 + 6 + 10 = 17 rays
+for (let i = 0; i < 6; i++) RAYS.push([CONE * .48, i / 6 * Math.PI * 2 + .3]);
+for (let i = 0; i < 10; i++) RAYS.push([CONE, i / 10 * Math.PI * 2]);
+function frame3(h) { const up = Math.abs(h.y) > .95 ? V3(1, 0, 0) : V3(0, 1, 0); const r = new THREE.Vector3().crossVectors(h, up).normalize(); const u = new THREE.Vector3().crossVectors(r, h).normalize(); return [r, u]; }
+function rayDirs(h) {
+  const [r, u] = frame3(h);
+  return RAYS.map(([th, az]) => h.clone().multiplyScalar(Math.cos(th)).addScaledVector(r, Math.sin(th) * Math.cos(az)).addScaledVector(u, Math.sin(th) * Math.sin(az)).normalize());
+}
+function cast(o, d) {                                     // march through the voxel grid; distance to first solid voxel or RAYL
+  for (let s = .15; s <= RAYL; s += .12) { const x = o.x + d.x * s, y = o.y + d.y * s, z = o.z + d.z * s; if (solid(Math.floor(x), Math.floor(y), Math.floor(z))) return s; }
+  return RAYL;
+}
+const GOAL4 = V3(cxz(47) + .5, 6.5, 47);
+function steer(pos, h) {
+  const dirs = rayDirs(h), hits = dirs.map(d => cast(pos, d)), g = GOAL4.clone().sub(pos).normalize();
+  let best = -1, bs = -1e9;
+  dirs.forEach((d, i) => { if (hits[i] < RAYL) return; const s = d.dot(g) + .45 * d.dot(h); if (s > bs) { bs = s; best = i; } });
+  if (best < 0) hits.forEach((v, i) => { if (v > bs) { bs = v; best = i; } });
+  return { dirs, hits, best };
+}
+const SIM = [];
+{
+  const pos = V3(cxz(22) + .2, 5.6, 21.5), h = V3(0, 0, 1); const dt = .02, SPD = 4.6, TURN = 2.4;
+  for (let n = 0; n < 1400 && pos.z < 46; n++) {
+    SIM.push({ p: pos.clone(), h: h.clone() });
+    const { dirs, best } = steer(pos, h), want = dirs[best];
+    const ang = Math.acos(clamp(h.dot(want), -1, 1)), k = Math.min(1, TURN * dt / Math.max(ang, 1e-4));
+    h.lerp(want, k); h.y = clamp(h.y, -.25, .25); h.normalize();
+    pos.addScaledVector(h, SPD * dt);
+  }
+}
+const SIMT = arcTable(SIM.map(s => s.p));
+function simAt(f) {                                       // f in 0..1 → interpolated pos + smoothed heading
+  const x = f * (SIM.length - 1), i = Math.floor(x), j = Math.min(SIM.length - 1, i + 1), u = x - i;
+  const pos = SIM[i].p.clone().lerp(SIM[j].p, u);
+  const h = V3(0, 0, 0); for (let k = -6; k <= 6; k++) { const m = clamp(Math.round(x) + k, 0, SIM.length - 1); h.addScaledVector(SIM[m].h, 1 - Math.abs(k) / 7); }
+  const hRaw = SIM[i].h.clone().lerp(SIM[j].h, u).normalize();
+  return { pos, h: h.normalize(), hRaw };
+}
+
+// ── dynamic objects ──────────────────────────────────────────
+const basic = (c, k = 1, o = {}) => new THREE.MeshBasicMaterial({ color: col3(c).multiplyScalar(k), ...o });
+// path voxels (beat 3)
+const pathMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(.62, .62, .62), basic(C.cyan, 1.25, { transparent: true, opacity: .9 }), PATH.length);
+pathMesh.frustumCulled = false; scene.add(pathMesh);
+// empty-voxel lattice (beat 2–3): air in the canyon, drawn as small dots
+const AIR = [];
+for (let y = 2; y < 13; y++) for (let z = 7; z < 20; z++) for (let x = 0; x < NX; x++) {
+  if (SOL[I(x, y, z)]) continue;
+  if (Math.abs(x + .5 - cxz(z + .5)) > hwz(z + .5) + .5) continue;
+  AIR.push([x, y, z]);
+}
+const airMat = basic(C.cyan, .85, { transparent: true, opacity: 0, depthWrite: false });
+const air = new THREE.InstancedMesh(new THREE.BoxGeometry(.16, .16, .16), airMat, AIR.length);
+AIR.forEach(([x, y, z], i) => { _o.position.set(x + .5, y + .5, z + .5); _o.updateMatrix(); air.setMatrixAt(i, _o.matrix); });
+air.frustumCulled = false; scene.add(air);
+// flyer: a small delta glider
+const flyGeo = new THREE.BufferGeometry();
+{
+  const v = [0, 0, 1.1, -1.05, 0, -.55, 0, .18, -.3, 0, 0, 1.1, 0, .18, -.3, 1.05, 0, -.55, 0, 0, 1.1, 1.05, 0, -.55, 0, -.14, -.3, 0, 0, 1.1, 0, -.14, -.3, -1.05, 0, -.55, -1.05, 0, -.55, 0, -.14, -.3, 0, .18, -.3, 0, .18, -.3, 0, -.14, -.3, 1.05, 0, -.55];
+  flyGeo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); flyGeo.computeVertexNormals();
+}
+const flyer = new THREE.Mesh(flyGeo, new THREE.MeshLambertMaterial({ color: '#f2f6fa', emissive: col3(C.cyan).multiplyScalar(.35), side: THREE.DoubleSide }));
+flyer.scale.setScalar(1.15); scene.add(flyer);
+const trail = new THREE.InstancedMesh(new THREE.SphereGeometry(.16, 8, 6), basic(C.cyan, 1.6, { transparent: true, opacity: .85 }), 46);
+trail.frustumCulled = false; scene.add(trail);
+// walkers (beat 2): 1층 on the canyon road, 2층 on the bridge deck
+const capG = new THREE.CapsuleGeometry(.34, .75, 4, 10);
+const walk1 = new THREE.Mesh(capG, new THREE.MeshLambertMaterial({ color: C.amber, emissive: col3(C.amber).multiplyScalar(.5) }));
+const walk2 = new THREE.Mesh(capG, new THREE.MeshLambertMaterial({ color: C.pink, emissive: col3(C.pink).multiplyScalar(.5) }));
+scene.add(walk1, walk2);
+// steering cone (beat 4)
+const coneGeo = new THREE.ConeGeometry(RAYL * Math.tan(CONE), RAYL, 40, 1, true); coneGeo.translate(0, -RAYL / 2, 0); coneGeo.rotateX(-Math.PI / 2);
+const cone = new THREE.Mesh(coneGeo, basic(C.cyan, .6, { transparent: true, opacity: .07, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }));
+scene.add(cone);
+// goal beacon (beat 4)
+const beacon = new THREE.Mesh(new THREE.CylinderGeometry(.18, .18, 14, 10, 1, true), basic(C.cyan, 1.4, { transparent: true, opacity: .7, depthWrite: false }));
+beacon.position.copy(GOAL4).setY(GOAL4.y + 3); scene.add(beacon);
+
+// far field (beat 5): coarse voxel columns all around the diorama, rising outward = the field grows to 10K × 10K
+const FC = 6, FN = 120, FCX = 32, FCZ = 22, FHALF = FC * FN / 2;
+const FAR = [];
+for (let j = 0; j < FN; j++) for (let i = 0; i < FN; i++) {
+  const x0 = FCX - FHALF + i * FC, z0 = FCZ - FHALF + j * FC;
+  if (x0 + FC > -2 && x0 < NX + 2 && z0 + FC > -2 && z0 < NZ + 2) continue;
+  const xc = x0 + FC / 2, zc = z0 + FC / 2;
+  const n = fbm(xc * .009 + 3, zc * .009 + 7), r = vnoise(xc * .004 + 11, zc * .004 + 2);
+  let h = 3 + n * 13 + Math.max(0, r - .45) * 34 + (fbm(xc * .03, zc * .03) - .5) * 4;
+  const riv = Math.abs(Math.sin(xc * .006 + zc * .004) * 90 + (zc - FCZ) * .2 - (xc - FCX) * .5);
+  if (riv < 10) h = Math.min(h, 2.5);
+  FAR.push([x0, z0, Math.max(1, Math.round(h)), Math.hypot(xc - FCX, zc - FCZ)]);
+}
+const farMat = voxMat(2, { uEdgeK: { value: .55 } });
+const far = new THREE.InstancedMesh(BOX, farMat, FAR.length);
+{
+  const [ac, ai] = instAttrs(far, FAR.length);
+  FAR.forEach(([x0, z0, h, d], i) => {
+    _o.position.set(x0 + FC / 2, h / 2, z0 + FC / 2); _o.scale.set(FC, h, FC); _o.updateMatrix(); far.setMatrixAt(i, _o.matrix);
+    ramp(h * .95, _c).multiplyScalar(.92 + hash2(i, 3) * .1); ac.set([_c.r, _c.g, _c.b], i * 3);
+    ai[i * 2] = d / (FHALF * 1.42) * .72;
+  });
+}
+scene.add(far);
+
+// ── camera: states (target, distance, yaw, pitch, fov); distance interpolates in log space ──
+const S = (T, d, yaw, pitch, fov = 34, ox = 0, oy = 0) => ({ T: V3(...T), d, yaw, pitch, fov, ox, oy });
+const CW = {
+  b1: S([33, 5.5, 14], 60, 196, 21, 34, 0, -40),
+  b2: S([33, 5, 14], 50, 206, 17, 34, 0, -30),
+  b2b: S([33, 6, 18], 64, 212, 27, 34, 0, -30),
+  b3: S([34, 9, 21], 92, 216, 37, 34, 70, -10),
+  b5: S([32, 0, 22], 1450, 208, 46, 34, -400, -10),
+};
+const CT = {
+  b1: S([33, 5.5, 14], 74, 198, 22, 40, 0, -40),
+  b2: S([33, 5, 14], 62, 206, 18, 40, 0, -30),
+  b2b: S([33, 6, 18], 80, 212, 28, 40, 0, -20),
+  b3: S([34, 9, 21], 118, 216, 40, 40, 0, -40),
+  b5: S([32, 0, 22], 2150, 208, 52, 38, 0, 0),
+};
+const CK = TALL ? CT : CW;
+function mixS(a, b, k) {
+  let dy = b.yaw - a.yaw; dy = ((dy + 540) % 360) - 180;
+  return { T: a.T.clone().lerp(b.T, k), d: Math.exp(lerp(Math.log(a.d), Math.log(b.d), k)), yaw: a.yaw + dy * k, pitch: lerp(a.pitch, b.pitch, k), fov: lerp(a.fov, b.fov, k), ox: lerp(a.ox, b.ox, k), oy: lerp(a.oy, b.oy, k) };
+}
+const T4A = 21.0, T4B = 27.6;                            // beat 4 flight window
+const sim4 = t => eio(p(t, T4A - .6, T4B - T4A + .6)) * .02 + p(t, T4A, T4B - T4A) * .98;
+function chaseS(t) {
+  const { pos, h } = simAt(sim4(t));
+  const hf = V3(h.x, 0, h.z).normalize();
+  const T = pos.clone().addScaledVector(hf, TALL ? 4.5 : 4.5);
+  const yaw = Math.atan2(-hf.x, -hf.z) * 180 / Math.PI;
+  return S([T.x, T.y, T.z], TALL ? 27 : 24, yaw, TALL ? 42 : 39, TALL ? 42 : 40, TALL ? 0 : -230, TALL ? 120 : 10);
+}
+function camAt(t) {
+  let s;
+  if (t < 6.6) s = CK.b1;
+  else if (t < 10.4) s = mixS(CK.b1, CK.b2, eio(p(t, 6.6, 1.6)));
+  else if (t < 13.0) s = mixS(CK.b2, CK.b2b, eio(p(t, 10.4, 1.4)));
+  else if (t < 20.4) s = mixS(CK.b2b, CK.b3, eio(p(t, 13.0, 1.5)));
+  else if (t < 27.9) s = mixS(CK.b3, chaseS(t), eio(p(t, 20.4, 1.4)));
+  else s = mixS(chaseS(t), CK.b5, eo(p(t, 27.9, 2.3)));
+  const yaw = s.yaw + .8 * Math.sin(t * .21), pitch = s.pitch + .4 * Math.sin(t * .17);
+  const yr = yaw * Math.PI / 180, pr = pitch * Math.PI / 180;
+  return { ...s, dir: V3(Math.sin(yr) * Math.cos(pr), Math.sin(pr), Math.cos(yr) * Math.cos(pr)) };
+}
+const _v = new THREE.Vector3();
+function proj(x, y, z) { if (Array.isArray(x)) [x, y, z] = x; else if (x.isVector3) ({ x, y, z } = x); _v.set(x, y, z).project(camera); return { x: (_v.x + 1) / 2 * W, y: (1 - _v.y) / 2 * H, ok: _v.z < 1 && Math.abs(_v.x) < 1.4 && Math.abs(_v.y) < 1.4 }; }
+
+// ── per-frame scene state ────────────────────────────────────
+function flyer3S(t) { return eio(p(t, 15.9, 4.4)) * FLY3.len; }
+function poseFlyer(pos, h, bank) {
+  flyer.position.copy(pos);
+  const m = new THREE.Matrix4().lookAt(V3(0, 0, 0), h.clone().negate(), V3(0, 1, 0));
+  flyer.quaternion.setFromRotationMatrix(m);
+  flyer.rotateZ(bank);
+}
+function animate(t) {
+  // 2.5D → 3D
+  const k3d = eio(p(t, 6.8, 1.0));
+  SU.uSeam.value = k3d;
+  fillMat.uniforms.uProg.value = p(t, 7.0, 1.7) * 1.05;
+  fill.visible = t < 8.9;
+  SU.uF1K.value = .62 * win(t, 8.4, 13.4, .5);
+  SU.uF2K.value = .62 * win(t, 8.4, 13.4, .5);
+  // terrain dims a little behind the flight beats so the debug draw reads
+  terrMat.uniforms.uDim.value = 1 - .12 * win(t, 13.2, 28.2, .8);
+  // air lattice
+  airMat.opacity = .75 * win(t, 10.4, 15.0, .7) + .0;
+  air.visible = airMat.opacity > .01;
+  // path voxels
+  const reveal = clamp((t - 13.6) / 2.2) * PATH.length, kp = win(t, 13.4, 20.9, .5);
+  let n = 0;
+  if (kp > 0) PATH.forEach(([x, y, z], i) => {
+    const s = clamp(reveal - i, 0, 1) * kp; if (s <= 0) return;
+    _o.position.set(x + .5, y + .5, z + .5); _o.scale.setScalar(s); _o.rotation.set(0, 0, 0); _o.updateMatrix(); pathMesh.setMatrixAt(n++, _o.matrix);
+  });
+  pathMesh.count = n; pathMesh.instanceMatrix.needsUpdate = true; pathMesh.visible = n > 0;
+  // walkers
+  const kw = win(t, 7.4, 13.4, .5);
+  walk1.visible = walk2.visible = kw > 0;
+  if (kw > 0) {
+    const u1 = .5 - .5 * Math.cos((t - 7.4) * .55), z1 = lerp(6.5, 19.5, u1);
+    walk1.position.set(cxz(z1), 2 + .72, z1); walk1.scale.setScalar(kw * 1.5);
+    const u2 = .5 - .5 * Math.cos((t - 7.4) * .6 + 1.2), x2 = lerp(BCX - 6, BCX + 6, u2);
+    walk2.position.set(x2, 10 + .72, 12.9); walk2.scale.setScalar(kw * 1.5);
+  }
+  // flyer: beat 3 along the A* path, beat 4 in the steering sim
+  let fpos = null, fh = null, bank = 0;
+  const k3 = win(t, 15.6, 20.7, .3), k4 = win(t, 20.5, 28.4, .4);
+  if (t < 20.6 && k3 > 0) {
+    const s = flyer3S(t); fpos = along(FLY3, s); const a = along(FLY3, s + .6), b = along(FLY3, s - .6);
+    fh = a.sub(b).normalize();
+    const a2 = along(FLY3, s + 2), b2 = along(FLY3, s - 2), turn = V3(0, 1, 0).dot(new THREE.Vector3().crossVectors(b2.sub(fpos).normalize().negate(), a2.sub(fpos).normalize()));
+    bank = clamp(-turn * 1.2, -.7, .7);
+  } else if (k4 > 0 && t >= 20.6) {
+    const st = simAt(sim4(t)); fpos = st.pos; fh = st.hRaw;
+    const ahead = simAt(Math.min(1, sim4(t) + .02)).hRaw; bank = clamp(-(new THREE.Vector3().crossVectors(fh, ahead).y) * 18, -.75, .75);
+  }
+  flyer.visible = !!fpos;
+  if (fpos) { poseFlyer(fpos, fh, bank); flyer.scale.setScalar(1.15 * (t < 20.6 ? Math.max(k3, .001) : Math.max(k4, .001)) * (TALL ? 1.1 : 1)); }
+  // trail
+  n = 0;
+  if (fpos) for (let i = 1; i <= 45; i++) {
+    let q;
+    if (t < 20.6) { const s = flyer3S(t) - i * .35; if (s <= 0) break; q = along(FLY3, s); }
+    else { const f = sim4(t) - i * .0045; if (f <= 0) break; q = simAt(f).pos; }
+    _o.position.copy(q); _o.scale.setScalar((1 - i / 46) * (t < 20.6 ? k3 : k4)); _o.updateMatrix(); trail.setMatrixAt(n++, _o.matrix);
+  }
+  trail.count = n; trail.instanceMatrix.needsUpdate = true; trail.visible = n > 0;
+  // cone + beacon
+  const kc = win(t, 21.5, 28.0, .5);
+  cone.visible = kc > 0 && !!fpos;
+  if (cone.visible) { cone.position.copy(fpos); cone.quaternion.setFromRotationMatrix(new THREE.Matrix4().lookAt(V3(0, 0, 0), fh.clone().negate(), V3(0, 1, 0))); cone.material.opacity = .08 * kc; }
+  const kb = win(t, 21.0, 28.0, .5);
+  beacon.visible = kb > 0; beacon.material.opacity = .7 * kb;
+  // far field rises
+  const k5 = p(t, 28.3, 2.3);
+  farMat.uniforms.uProg.value = k5 * 1.05; far.visible = k5 > 0;
+  grid.material.uniforms.uK.value = 1 - .7 * k5;
+  return { fpos, fh };
+}
+
+// ── 2D overlay helpers ───────────────────────────────────────
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function font(sz, wt = 500, mono = false) { ctx.font = `${wt} ${sz}px ${mono ? MONO : SANS}`; }
+function tw(s, size, weight = 500, mono = false) { font(size, weight, mono); return ctx.measureText(s).width; }
+function txt(s, x, y, o = {}) {
+  const { size = 36, weight = 600, color = C.text, align = 'left', mono = false, alpha = 1, shadow = true } = o;
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; font(size, weight, mono); ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  if (shadow) { ctx.shadowColor = 'rgba(8,10,13,.95)'; ctx.shadowBlur = size * .4; }
+  ctx.fillText(s, x, y); ctx.restore();
+}
+function runs(parts, x, y, size, weight, o = {}) {
+  const { align = 'left', alpha = 1 } = o;
+  const ws = parts.map(([s, , m, sz]) => tw(s, sz || size, weight, m)); const tot = ws.reduce((a, b) => a + b, 0);
+  let xx = align === 'center' ? x - tot / 2 : align === 'right' ? x - tot : x;
+  parts.forEach(([s, c, m, sz], i) => { txt(s, xx, y, { size: sz || size, weight, color: c || C.text, mono: m, alpha }); xx += ws[i]; });
+  return tot;
+}
+// in-scene label in map-view style: ring on the anchor, an elbow leader, a square-cornered plate with a colour square
+function tag(pt, title, col, a, o = {}) {
+  if (a <= 0) return null; const q = proj(pt); if (!q.ok) return null;
+  const { dx = 0, dy = -100, size = TALL ? 46 : 36, sub = '', subSize = TALL ? 40 : 30 } = o;
+  const pad = size * .5, sq = size * .42;
+  const w = Math.max(tw(title, size, 800) + sq + pad * .6, sub ? tw(sub, subSize, 600) : 0) + pad * 2;
+  const h = sub ? size + subSize + size * .95 : size * 1.7;
+  let bx = q.x + dx - w / 2, by = q.y + dy - h / 2;
+  bx = clamp(bx, 24, W - 24 - w); by = clamp(by, 24, H - 24 - h);
+  ctx.save(); ctx.globalAlpha *= a;
+  const ex = clamp(q.x, bx + 10, bx + w - 10), ey = q.y < by ? by : q.y > by + h ? by + h : by + h / 2;
+  ctx.strokeStyle = rgba(col, .9); ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(ex, ey); ctx.stroke();
+  ctx.beginPath(); ctx.arc(q.x, q.y, 9, 0, 7); ctx.stroke(); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(q.x, q.y, 3.5, 0, 7); ctx.fill();
+  rr(bx, by, w, h, 3); ctx.fillStyle = C.plate; ctx.fill(); ctx.strokeStyle = rgba(col, .65); ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = col; ctx.fillRect(bx + pad, by + size * 1.18 - size * .62, sq, sq);
+  txt(title, bx + pad + sq + pad * .6, by + size * 1.18, { size, weight: 800, shadow: false });
+  if (sub) txt(sub, bx + pad, by + size * 1.18 + subSize * 1.3, { size: subSize, weight: 600, color: C.dim, shadow: false });
+  ctx.restore();
+  return q;
+}
+function shade(a, y0, y1, dark = .9) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; const g = ctx.createLinearGradient(0, y0, 0, y1);
+  g.addColorStop(0, `rgba(12,14,17,${dark})`); g.addColorStop(1, 'rgba(12,14,17,0)'); ctx.fillStyle = g;
+  ctx.fillRect(0, Math.min(y0, y1), W, Math.abs(y1 - y0)); ctx.restore();
+}
+function sideShade(a, w) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; const g = ctx.createLinearGradient(0, 0, w, 0);
+  g.addColorStop(0, 'rgba(12,14,17,.92)'); g.addColorStop(.65, 'rgba(12,14,17,.6)'); g.addColorStop(1, 'rgba(12,14,17,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, H); ctx.restore();
+}
+const L = TALL
+  ? { mx: 60, ny: 84, hy: 160, hs: 64, sy: 226, ss: 44, lab: 46 }
+  : { mx: 92, ny: 78, hy: 150, hs: 58, sy: 212, ss: 38, lab: 36 };
+
+// viewport chrome: corner brackets and an axis gizmo, like the server map view (drawn every frame)
+function chrome() {
+  ctx.save(); ctx.strokeStyle = 'rgba(160,175,195,.35)'; ctx.lineWidth = 2; const m = 22, l = 34;
+  for (const [x, y, sx, sy] of [[m, m, 1, 1], [W - m, m, -1, 1], [m, H - m, 1, -1], [W - m, H - m, -1, -1]]) {
+    ctx.beginPath(); ctx.moveTo(x, y + sy * l); ctx.lineTo(x, y); ctx.lineTo(x + sx * l, y); ctx.stroke();
+  }
+  ctx.restore();
+}
+function gizmo(a) {
+  if (a <= 0) return;
+  const cx = TALL ? W - 92 : W - 100, cy = TALL ? 330 : 300, r = 42;
+  const axes = [[V3(1, 0, 0), '#ff6b6b', 'X'], [V3(0, 1, 0), '#7be38f', 'Y'], [V3(0, 0, 1), '#5aa7ff', 'Z']];
+  const m = camera.matrixWorldInverse;
+  ctx.save(); ctx.globalAlpha = a * .85;
+  axes.map(([v, c, n]) => { const d = v.clone().transformDirection(m); return [d, c, n]; }).sort((A, B) => A[0].z - B[0].z).forEach(([d, c, n]) => {
+    const x = cx + d.x * r, y = cy - d.y * r;
+    ctx.strokeStyle = c; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke();
+    ctx.fillStyle = c; font(22, 700, true); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(n, cx + d.x * (r + 16), cy - d.y * (r + 16));
+  });
+  ctx.restore();
+}
+
+// header for beats 01–04: step number, title, mono sub-line
+function header(t) {
+  for (const [s, e, n, title, sub] of HEAD.slice(0, 4)) {
+    const a = win(t, s, e, .45); if (a <= 0) continue;
+    shade(a, 0, TALL ? 400 : 290);
+    const k = s <= 0 ? 1 : eo(p(t, s, .6)), x = L.mx - (1 - k) * 24;
+    ctx.save(); ctx.globalAlpha = a;
+    txt(n, L.mx, L.ny - 4, { size: TALL ? 34 : 28, weight: 700, color: C.cyan, mono: true });
+    txt('/ 05', L.mx + tw(n, TALL ? 34 : 28, 700, true) + 10, L.ny - 4, { size: TALL ? 34 : 28, weight: 500, color: C.faint, mono: true });
+    txt(title, x, L.hy, { size: L.hs, weight: 800 });
+    txt(sub, L.mx, L.sy, { size: L.ss, weight: 500, color: C.dim, mono: /[()|→]/.test(sub) });
+    ctx.restore();
+  }
+}
+// map-view mode toggle: 2.5D 셀 | 3D 복셀
+function modeToggle(t) {
+  const a = win(t, 0, 28.2, .5); if (a <= 0) return;
+  const k = eio(p(t, 6.8, .7)), size = TALL ? 40 : 32;
+  const labels = ['2.5D 셀', '3D 복셀'], ws = labels.map(s => tw(s, size, 700) + size * 1.2), h = size * 1.7, tot = ws[0] + ws[1];
+  const x0 = TALL ? W - 60 - tot : W - 92 - tot, y0 = TALL ? L.ny - 50 : L.ny - 48;
+  ctx.save(); ctx.globalAlpha = a;
+  rr(x0, y0, tot, h, 4); ctx.fillStyle = C.plate; ctx.fill(); ctx.strokeStyle = rgba('#8a96a6', .55); ctx.lineWidth = 1.5; ctx.stroke();
+  const sx = lerp(x0, x0 + ws[0], k), sw = lerp(ws[0], ws[1], k);
+  rr(sx + 3, y0 + 3, sw - 6, h - 6, 3); ctx.fillStyle = k < .5 ? rgba(C.red, .25) : rgba(C.cyan, .25); ctx.fill();
+  ctx.strokeStyle = k < .5 ? C.red : C.cyan; ctx.lineWidth = 2; ctx.stroke();
+  ctx.restore();
+  txt(labels[0], x0 + ws[0] / 2, y0 + h * .66, { size, weight: 700, align: 'center', color: k < .5 ? C.text : C.faint, alpha: a, shadow: false });
+  txt(labels[1], x0 + ws[0] + ws[1] / 2, y0 + h * .66, { size, weight: 700, align: 'center', color: k >= .5 ? C.text : C.faint, alpha: a, shadow: false });
+}
+function bottomLine(parts, a) {
+  if (a <= 0) return;
+  if (TALL) {
+    shade(a, H, H - 300);
+    parts.forEach((line, i) => runs(line, L.mx, H - 150 + i * 66 - (parts.length - 1) * 33 + 20, 48, 800, { alpha: a }));
+  } else {
+    shade(a, H, H - 230);
+    runs(parts.flat(), W / 2, H - 92, 42, 800, { align: 'center', alpha: a });
+  }
+}
+function footnote(t) {
+  const a = win(t, 0, 33, .5); if (a <= 0) return;
+  const s = t < 28 ? '* 복셀 크기·지형·경로·레이 수와 각도는 개념도 · 예시' : '* 10K × 10K(10km)만 실제 수치, 지형은 개념도';
+  txt(s, W - (TALL ? 40 : 56), H - (TALL ? 30 : 36), { size: TALL ? 28 : 26, weight: 500, color: C.faint, align: 'right', alpha: a * .95 });
+}
+
+// ── 01 · 2.5D: one height per cell ───────────────────────────
+function ov01(t) {
+  const a = win(t, 0, 6.9, .5); if (a <= 0) return;
+  const af = 1 - eio(p(t, 6.6, .5));
+  if (!TALL) txt('AION2 · 서버 네비게이션', L.mx + 150, L.ny - 4, { size: 28, weight: 600, color: C.faint, alpha: a });
+  tag([BCX, 4.5, BZ0], '다리 밑이 벽으로 메워짐', C.red, a * af, TALL ? { dx: -120, dy: 300, sub: '칸마다 높이 하나뿐이라' } : { dx: -470, dy: 150, sub: '칸마다 높이 하나뿐이라 아래가 채워진다' });
+  tag([BCX + 1, 15, 22], '공중 경로 = 없음', C.red, a * af, TALL ? { dx: 160, dy: -150 } : { dx: 330, dy: -40 });
+  bottomLine(TALL ? [[['다리 밑 · 2층 · 공중을', C.text]], [['담을 수 없다', C.red]]] : [[['다리 밑 · 2층 · 공중을 ', C.text], ['담을 수 없다', C.red]]], a * af);
+}
+// ── 02 · 3D voxels ───────────────────────────────────────────
+function ov02(t) {
+  if (t < 6.5 || t > 13.6) return;
+  tag([BCX - .5, 10.2, 12.5], '2층 · 다리 위', C.pink, win(t, 8.6, 13.2, .4), TALL ? { dx: 260, dy: -180 } : { dx: -400, dy: -170 });
+  tag([cxz(8), 2.1, 8], '1층 · 다리 밑 길', C.amber, win(t, 8.6, 13.2, .4), TALL ? { dx: -60, dy: 170 } : { dx: -360, dy: 70 });
+  tag([cxz(24) + 2, 9.5, 24], '빈 복셀 = 날 수 있는 공간', C.cyan, win(t, 10.8, 13.2, .4), TALL ? { dx: -60, dy: -260 } : { dx: 380, dy: -110 });
+  bottomLine(TALL ? [[['같은 (x, z) 위에', C.text]], [['1층 · 2층 · 공중', C.cyan], ['이 함께', C.text]]] : [[['같은 (x, z) 위에 ', C.text], ['1층 · 2층 · 공중', C.cyan], ['이 함께 담긴다', C.text]]], win(t, 9.4, 13.2, .5));
+}
+// ── 03 · flight path through empty voxels ────────────────────
+function ov03(t) {
+  if (t < 13 || t > 21) return;
+  const a = win(t, 13.8, 20.6, .4);
+  const [s0, , , g] = WP;
+  tag([s0[0] + .5, s0[1] + .5, s0[2] + .5], '출발', C.cyan, a, TALL ? { dx: -40, dy: -170 } : { dx: -40, dy: -130 });
+  tag([BCX, 5, BZ0 - .5], '다리 밑 통과', C.cyan, win(t, 14.6, 20.6, .4), TALL ? { dx: 40, dy: 220 } : { dx: 60, dy: 170 });
+  tag([g[0] + .5, g[1] + .5, g[2] + .5], '도착', C.cyan, win(t, 15.4, 20.6, .4), TALL ? { dx: -170, dy: 40 } : { dx: 80, dy: -110 });
+  bottomLine(TALL ? [[['지면이 아닌 ', C.text], ['3D 공간', C.cyan], ['을', C.text]], [['서버가 길찾기', C.text]]] : [[['지면이 아닌 ', C.text], ['3D 공간', C.cyan], ['을 서버가 길찾기', C.text]]], win(t, 14.4, 20.6, .5));
+}
+// ── 04 · ray sampling steering ───────────────────────────────
+const STEPS = [['진행 방향 원뿔로 레이 샘플링', C.text, 21.7], ['막힌 레이 배제', C.red, 22.9], ['열린 방향으로 조향', C.cyan, 24.0]];
+function ov04(t, fpos, fh) {
+  const a = win(t, 20.8, 28.0, .45); if (a <= 0) return;
+  // rays (live: cast against the voxel grid from the flyer's pose)
+  if (fpos && t > 21.4) {
+    const st = steer(fpos, fh), kr = win(t, 21.5, 28.0, .5), kRed = eo(p(t, 22.9, .5)), kSel = eo(p(t, 24.0, .5));
+    const o = proj(fpos);
+    st.dirs.forEach((d, i) => {
+      const blocked = st.hits[i] < RAYL, e = proj(fpos.clone().addScaledVector(d, st.hits[i]));
+      if (!o.ok || !e.ok) return;
+      const col = blocked ? (kRed > 0 ? C.red : '#c9d2dc') : (kRed > 0 ? C.green : '#c9d2dc');
+      ctx.save(); ctx.globalAlpha = kr * (blocked ? 1 : lerp(.85, .7, kRed)); ctx.strokeStyle = col; ctx.lineWidth = blocked ? 3.5 : 2.5;
+      if (i === st.best && kSel > 0) ctx.globalAlpha *= 1 - kSel * .7;
+      ctx.shadowColor = col; ctx.shadowBlur = kRed > 0 ? 10 : 0;
+      ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(e.x, e.y); ctx.stroke();
+      if (blocked && kRed > 0) { ctx.globalAlpha = kr * kRed; ctx.lineWidth = 4; const r = 9; ctx.beginPath(); ctx.moveTo(e.x - r, e.y - r); ctx.lineTo(e.x + r, e.y + r); ctx.moveTo(e.x + r, e.y - r); ctx.lineTo(e.x - r, e.y + r); ctx.stroke(); }
+      else { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(e.x, e.y, 4, 0, 7); ctx.fill(); }
+      ctx.restore();
+    });
+    if (kSel > 0 && o.ok) {
+      const d = st.dirs[st.best], e = proj(fpos.clone().addScaledVector(d, RAYL * 1.05));
+      if (e.ok) {
+        const ang = Math.atan2(e.y - o.y, e.x - o.x), len = Math.hypot(e.x - o.x, e.y - o.y);
+        ctx.save(); ctx.globalAlpha = kr * kSel; ctx.strokeStyle = C.cyan; ctx.fillStyle = C.cyan; ctx.lineWidth = 8; ctx.lineCap = 'round';
+        ctx.shadowColor = C.cyan; ctx.shadowBlur = 22;
+        ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(o.x + Math.cos(ang) * (len - 20), o.y + Math.sin(ang) * (len - 20)); ctx.stroke();
+        ctx.translate(e.x, e.y); ctx.rotate(ang); ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-28, -17); ctx.lineTo(-28, 17); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+    }
+  }
+  tag(GOAL4.clone().setY(GOAL4.y + (TALL ? 4 : 8)), '목표', C.cyan, win(t, 21.4, 27.8, .4), TALL ? { dx: 190, dy: 0 } : { dx: 0, dy: -80 });
+  // the three steps
+  const size = TALL ? 46 : 38, gap = TALL ? 70 : 62;
+  let x = L.mx, y = TALL ? H - 300 : 330;
+  if (TALL) shade(a, H, H - 380); else sideShade(a, 900);
+  STEPS.forEach(([s, col, ts], i) => {
+    const k = eo(p(t, ts, .5)), on = t >= ts ? 1 : 0;
+    ctx.save(); ctx.globalAlpha = a * lerp(.4, 1, k);
+    ctx.strokeStyle = col === C.text ? '#c9d2dc' : col; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x + size * .42, y - size * .34, size * .42, 0, 7); ctx.stroke();
+    if (on) { ctx.fillStyle = rgba(col === C.text ? '#c9d2dc' : col, .25); ctx.fill(); }
+    ctx.restore();
+    txt(String(i + 1), x + size * .42, y - size * .34 + size * .2, { size: size * .58, weight: 800, align: 'center', mono: true, alpha: a * lerp(.4, 1, k), shadow: false });
+    txt(s, x + size * 1.2, y, { size, weight: 800, color: col, alpha: a * lerp(.4, 1, k) });
+    y += gap;
+  });
+  txt('레이 17개 · 원뿔 30° (예시)', x + size * 1.2, y + (TALL ? -6 : 0), { size: TALL ? 34 : 30, weight: 600, color: C.faint, alpha: a * eo(p(t, 21.9, .5)) });
+}
+// ── 05 · result ──────────────────────────────────────────────
+function ov05(t) {
+  const a = eo(p(t, 29.0, .9)); if (a <= 0) return;
+  const k2 = eo(p(t, 29.6, .8)), k3 = eo(p(t, 30.2, .8));
+  // field outline (10km)
+  const ko = eo(p(t, 29.4, 1.0));
+  if (ko > 0) {
+    const c = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([sx, sz]) => proj(FCX + sx * FHALF, 0, FCZ + sz * FHALF));
+    ctx.save(); ctx.globalAlpha = ko * .9; ctx.strokeStyle = C.cyan; ctx.lineWidth = 3; ctx.setLineDash([16, 10]);
+    ctx.beginPath(); c.forEach((q, i) => i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.closePath(); ctx.stroke(); ctx.restore();
+    const cx = c.reduce((m, q) => m + q.x, 0) / 4, cy = c.reduce((m, q) => m + q.y, 0) / 4;
+    const mids = c.map((q, i) => { const r = c[(i + 1) % 4]; return { x: (q.x + r.x) / 2, y: (q.y + r.y) / 2 }; });
+    const front = mids.reduce((m, q) => q.y > m.y ? q : m), right = mids.reduce((m, q) => q.x > m.x ? q : m);
+    for (const m of TALL ? [right] : [front, right]) {
+      const dx = m.x - cx, dy = m.y - cy, l = Math.hypot(dx, dy) || 1, x = m.x + dx / l * 60, y = m.y + dy / l * 60;
+      txt('10km', clamp(x, 140, W - 110), clamp(y, 80, H - 90) + 14, { size: TALL ? 46 : 40, weight: 800, color: C.cyan, align: 'center', alpha: ko, mono: true });
+    }
+    // the diorama we flew through, for scale
+    const pc = [[0, 0], [NX, 0], [NX, NZ], [0, NZ]].map(([x, z]) => proj(x, 12, z));
+    ctx.save(); ctx.globalAlpha = ko; ctx.strokeStyle = C.text; ctx.lineWidth = 2.5;
+    ctx.beginPath(); pc.forEach((q, i) => i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.closePath(); ctx.stroke(); ctx.restore();
+    const pr = pc.reduce((m, q) => q.x > m.x ? q : m);
+    txt('앞에서 본 구역', pr.x + 18, pr.y + 12, { size: TALL ? 40 : 34, weight: 700, color: C.text, alpha: ko });
+  }
+  ctx.save(); ctx.globalAlpha = a;
+  if (!TALL) {
+    sideShade(1, 1050);
+    txt('필드 크기 확장', 100, 290, { size: 40, weight: 700, color: C.dim });
+    runs([['10K', C.text, false, 150], [' × ', C.cyan, false, 110], ['10K', C.text, false, 150]], 92, 450, 150, 800);
+    txt('2.5D 셀 → 3D 복셀', 100, 560, { size: 44, weight: 800, alpha: k2 });
+    let x = 100;
+    [['복층', C.amber], ['비행 네비게이션', C.cyan], ['서버 OpenGL 3D 맵뷰', '#c9d2dc']].forEach(([s, c], i) => {
+      const kk = eo(p(t, 30.0 + i * .2, .5)); if (kk <= 0) return;
+      const w = tw(s, 36, 700) + 40;
+      ctx.save(); ctx.globalAlpha = a * kk; rr(x, 622, w, 62, 4); ctx.fillStyle = rgba(c, .14); ctx.fill(); ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+      txt(s, x + 20, 665, { size: 36, weight: 700, color: c, alpha: kk, shadow: false });
+      x += w + 16;
+    });
+  } else {
+    shade(1, 0, 600, .92);
+    txt('필드 크기 확장', 60, 110, { size: 46, weight: 700, color: C.dim });
+    runs([['10K', C.text, false, 150], [' × ', C.cyan, false, 110], ['10K', C.text, false, 150]], 54, 268, 150, 800);
+    txt('2.5D 셀 → 3D 복셀', 60, 360, { size: 52, weight: 800, alpha: k2 });
+    shade(1, H, H - 300, .92);
+    let x = 60, y = H - 190;
+    [['복층', C.amber], ['비행 네비게이션', C.cyan]].forEach(([s, c], i) => {
+      const kk = eo(p(t, 30.0 + i * .2, .5)); if (kk <= 0) return;
+      const w = tw(s, 46, 700) + 48;
+      ctx.save(); ctx.globalAlpha = a * kk; rr(x, y - 52, w, 76, 4); ctx.fillStyle = rgba(c, .14); ctx.fill(); ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+      txt(s, x + 24, y + 2, { size: 46, weight: 700, color: c, alpha: kk, shadow: false });
+      x += w + 18;
+    });
+    txt('+ 서버 OpenGL 3D 맵뷰', 60, H - 84, { size: 46, weight: 700, color: '#c9d2dc', alpha: k3 });
+  }
+  ctx.restore();
+}
+
+// ── frame ────────────────────────────────────────────────────
+function renderAt(t) {
+  t = clamp(+t || 0, 0, DURATION);
+  const c = camAt(t);
+  camera.fov = c.fov; camera.aspect = W / H; camera.near = Math.max(.1, c.d * .02); camera.far = c.d * 8 + 400;
+  camera.setViewOffset(W, H, c.ox, c.oy, W, H);
+  camera.position.copy(c.T).addScaledVector(c.dir, c.d); camera.up.set(0, 1, 0); camera.lookAt(c.T); camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+  SU.uFogN.value = c.d * 1.3 + 20; SU.uFogF.value = c.d * 3.8 + 120;
+  grid.material.uniforms.uFar.value = Math.max(220, c.d * 3);
+  const { fpos, fh } = animate(t);
+  composer.render();
+  ctx.setTransform(Q, 0, 0, Q, 0, 0); ctx.globalAlpha = 1;
+  ctx.drawImage(renderer.domElement, 0, 0, W, H);
+  chrome(); gizmo(win(t, 0, 28.3, .5));
+  ov04(t, fpos, fh);
+  ov01(t); ov02(t); ov03(t);
+  header(t); modeToggle(t);
+  ov05(t);
+  footnote(t);
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+window.STATS = { terrain: TERR.length, fill: FILL.length, air: AIR.length, path: PATH.length, sim: SIM.length, far: FAR.length };
+
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) {
+    try { document.fonts.add(await new FontFace(family, `url(../assets/fonts/${file})`, { weight }).load()); } catch (e) { /* fall back */ }
+  }
+  await document.fonts.ready;
+  renderAt(0);
+})();
+
+// ── player (standalone only) ─────────────────────────────────
+if (!EMBED && !RENDER) {
+  const $ = id => document.getElementById(id);
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CHAPTERS = HEAD.map(h => [h[0], h[2], h[3].split(':')[0]]);
+  $('scrub').setAttribute('aria-valuemax', Math.round(DURATION));
+  let t = 0, playing = false, started = false, last = 0;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button');
+    b.innerHTML = `<span>${n}</span>` + label;
+    b.addEventListener('click', () => { seek(s + .01); play(); });
+    $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing;
+    $('big').innerHTML = ended ? ICON.replay : ICON.play;
+    $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur && started));
+  }
+  function draw() { renderAt(Math.min(t, DURATION)); }
+  function play() { if (t >= DURATION) t = 0; started = true; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+  function frame(now) {
+    if (playing) {
+      t += (now - last) / 1000 * rate; last = now;
+      if (t >= DURATION) { t = DURATION; playing = false; }
+      draw(); ui();
+    }
+    requestAnimationFrame(frame);
+  }
+  const RATES = [1, .75, .5];
+  let rate = 1;
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) {
+    rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`);
+    try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ }
+  }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('play').addEventListener('click', toggle);
+  $('fs').addEventListener('click', () => { const el = $('stage'); if (document.fullscreenElement) document.exitFullscreen?.(); else el.requestFullscreen?.().catch(() => {}); });
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+  });
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frame);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+}
+</script>
