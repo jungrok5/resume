@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>proto 단일 소스</title>
+<script>
+  // mode classes before first layout: ?embed (résumé iframe), ?layout=tall, #poster
+  (function () { var q = location.search, c = document.documentElement.classList;
+    if (/[?&]embed/.test(q)) c.add('embed');
+    if (/layout=tall/.test(q)) c.add('tall');
+    if (location.hash === '#poster') c.add('poster'); })();
+</script>
+<style>
+  /* One stage (16:9, or 4:5 with ?layout=tall), a transport bar, chapter chips, a short note. Single dark look:
+     the stage is a navy layout table with paper print-outs of the pipeline's files laid on it. */
+  :root {
+    --bg: #0a1524; --surface: #111f33; --line: #22354f; --fg: #e8eef6; --dim: #8a9ab0; --text2: #c2cedd;
+    --accent: #5b9cff; --ok: #34d399;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    color-scheme: dark;
+  }
+  @font-face { font-family: Pretendard; src: url(../assets/fonts/Pretendard-Variable.woff2) format('woff2'); font-weight: 100 900; font-display: swap; }
+  @font-face { font-family: "JetBrains Mono"; src: url(../assets/fonts/JetBrainsMono.woff2) format('woff2'); font-weight: 100 800; font-display: swap; }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center; padding: 16px; box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  html.tall .player { width: min(100%, calc((100vh - 170px) * 4 / 5)); }
+  .stage { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  html.tall .stage { aspect-ratio: 4 / 5; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--accent);
+    background: rgba(17,31,51,.8); color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .big[hidden] { display: none; }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 12px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--accent); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(91,156,255,.25); }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(91,156,255,.12); }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  .notes { width: min(100%, 760px); margin-top: 40px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes h2 { font-size: 20px; margin: 0 0 12px; }
+  .notes p { color: var(--text2); margin: 0 0 14px; }
+  .notes code { font: 500 .88em var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+  .notes .fine { font-size: 13px; color: var(--dim); }
+  @media (max-width: 600px) { .time { font-size: 12px; } }
+  /* ?embed: the résumé drives renderAt(t); canvas only, fills the iframe */
+  html.embed, html.embed body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
+  html.embed body { display: block; }
+  html.embed .player { width: 100%; height: 100%; gap: 0; }
+  html.embed .stage { width: 100%; height: 100%; aspect-ratio: auto; border: 0; border-radius: 0; cursor: default; }
+  html.embed canvas { width: 100%; height: 100%; object-fit: contain; }
+  html.embed .bar, html.embed .chapters, html.embed .big, html.embed .notes, html.embed .set { display: none; }
+  /* #poster: canvas only, loops */
+  html.poster body { padding: 0; }
+  html.poster .player { width: 100%; }
+  html.poster .bar, html.poster .chapters, html.poster .big, html.poster .notes, html.poster .set { display: none; }
+  html.poster .stage { border: 0; border-radius: 0; }
+</style>
+</head>
+<body>
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="proto 한 파일에서 서버·클라 코드, CSV, 유효성 검증, 스탯 계산 코드를 생성하고, 서버 바이너리 검증 결과(ExitCode)를 CI·퍼포스 트리거에 연결하는 과정을 실제 파일을 테이블 위에 늘어놓아 보여 주는 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="34" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:34</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="이동"><a href="../../interactive.html">← 이력서로</a></nav>
+</div>
+<section class="notes" id="notes">
+  <h2>데이터 파이프라인 단일 소스 표준화</h2>
+  <article data-ch="01"><p>같은 게임 데이터(아이템, 스탯 같은 StaticData)를 서버 코드, 클라 코드, 기획 테이블에서 각각 정의하면, 한쪽을 바꿀 때마다 나머지를 사람이 맞춰야 하고 이름이나 필드가 어긋나기 쉽다. 영상 첫 장면은 이 상태를 그린 개념도다.</p></article>
+  <article data-ch="02"><p>원본을 <code>.proto</code> 한 파일로 모으고, C++로 protoc 플러그인을 직접 구현했다. 플러그인은 필드 타입뿐 아니라 커스텀 필드 옵션(<code>[(max) = 9999]</code> 같은 것)과 주석까지 읽어서 생성물에 넘긴다.</p></article>
+  <article data-ch="03"><p>배치 한 번으로 서버·클라 코드, CSV, 유효성 검증 코드가 함께 생성되고, 스탯 계산 코드도 생성된다. 그래서 새 항목을 추가하는 비용이 proto에 한 줄 쓰는 수준으로 줄었다.</p></article>
+  <article data-ch="04"><p>StaticData 유효성 검증은 서버 바이너리의 검증 모드로 도구화했다. 검증 결과는 ExitCode로 나오고, CI와 퍼포스 트리거가 이 값을 그대로 받아 판정한다. 결과적으로 배치 1회로 서버·클라에 동시에 반영되고, 이 방식이 팀 전체 작업 방식으로 채택됐다.</p>
+  <p class="fine">화면 속 코드·테이블·로그 내용은 설명을 위한 예시이고, 첫 장면은 개념도다.</p></article>
+</section>
+<script type="importmap">
+{ "imports": { "three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/" } }
+</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  proto 단일 소스 — 실물을 공간에 늘어놓기
+//  The look is a layout table: the real files of the pipeline (item.proto, the C++ protoc plugin, the batch,
+//  the generated server/client code, CSV, check and stat code, the server's validate run, the Perforce/CI log)
+//  printed on paper and laid flat on a navy grid mat in pipeline order (top → bottom). Light channels in the mat
+//  connect them; the camera looks down and moves along the table.
+//  Every frame is a pure function of t. ?layout=tall recomposes for 1080×1350. ?embed / ?render / ?q=0.4–1.
+// ─────────────────────────────────────────────────────────────
+import * as THREE from 'three';
+
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const p = (t, s, d) => clamp((t - s) / d);
+const eo = t => 1 - Math.pow(1 - t, 3);
+const eio = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const win = (t, s, e, f = .4) => Math.min(eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+
+const QS = new URLSearchParams(location.search);
+const TALL = QS.get('layout') === 'tall';
+const EMBED = QS.has('embed'), RENDER = QS.has('render');
+const Q = EMBED ? clamp(parseFloat(QS.get('q')) || 1, .4, 1) : 1;
+const W = TALL ? 1080 : 1920, H = TALL ? 1350 : 1080, DURATION = 34;
+const L = (w, t) => TALL ? t : w;      // pick per layout
+const cv = document.getElementById('c');
+cv.width = Math.round(W * Q); cv.height = Math.round(H * Q);
+const ctx = cv.getContext('2d');
+const SANS = 'Pretendard, "Noto Sans KR", "DejaVu Sans", sans-serif';
+const MONO = '"JetBrains Mono", Pretendard, "DejaVu Sans Mono", monospace';
+
+// ── palette: navy layout mat, paper print-outs (light editor colors), dark terminal print-outs ─────
+const K = {
+  bg: '#0a1524', paper: '#f5f3ee', ink: '#1e2733', dimInk: '#7b8594', rule: '#e4e0d6',
+  term: '#101b2b', termHd: '#18263a', termTx: '#d6dee9', termDim: '#7d8ca1',
+  src: '#5b9cff',        // the single source (proto)
+  plug: '#94a3b8',       // the C++ plugin
+  srv: '#14b8a6', cli: '#a78bfa', csv: '#22c55e', chk: '#f59e0b', stat: '#f472b6',
+  opt: '#f97316', com: '#38bdf8', bad: '#ef4444', good: '#22c55e', chan: '#7cc4ff',
+};
+const SY = { kw: '#0b4fbf', type: '#0f766e', str: '#15803d', num: '#1d4ed8', com: '#7b8594', fn: '#7c3aed', punc: '#4b5563', txt: '#1e2733', opt: '#c2410c', mac: '#9333ea' };
+
+// ── beats ────────────────────────────────────────────────────
+const HEAD = [
+  [-1, 4.9, '01', '같은 데이터, 세 곳에 따로', ['서버 코드 · 클라 코드 · 테이블을 각자 손으로 맞춤'], ['서버 코드 · 클라 코드 · 테이블을', '각자 손으로 맞춤']],
+  [4.9, 12.0, '02', 'proto 한 파일이 원본', ['C++ protoc 플러그인 자체 구현 · 커스텀 필드 옵션 · 주석까지 읽음'], ['C++ protoc 플러그인 자체 구현', '커스텀 필드 옵션 · 주석까지 읽음']],
+  [12.0, 15.6, '03', '배치 한 번으로 전부 생성', ['서버 · 클라 코드 · CSV · 유효성 검증 · 스탯 계산 코드'], ['서버 · 클라 코드 · CSV', '유효성 검증 · 스탯 계산 코드']],
+  [15.6, 20.6, '03', '필드 한 줄 추가 → 재생성', ['스탯 계산 코드까지 생성 · 신규 항목 추가 비용 최소화'], ['스탯 계산 코드까지 생성', '신규 항목 추가 비용 최소화']],
+  [20.6, 27.7, '04', 'StaticData 검증을 도구로', ['서버 바이너리 검증 모드의 ExitCode → CI · 퍼포스 트리거'], ['서버 바이너리 검증 모드의 ExitCode', '→ CI · 퍼포스 트리거']],
+];
+const CHAPTERS = [[0, '01', '이전'], [4.9, '02', 'proto · 플러그인'], [12.0, '03', '자동 생성'], [20.6, '04', '검증 · CI'], [27.6, '05', '결과']];
+const OUT0 = 27.6;
+
+// ── three.js ─────────────────────────────────────────────────
+const FOV = 26, TAN = Math.tan(FOV / 2 * Math.PI / 180);
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(Math.round(W * Q), Math.round(H * Q), false);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(K.bg);
+const camera = new THREE.PerspectiveCamera(FOV, W / H, .1, 400);
+
+function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function canvasTex(c) { const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); return t; }
+
+// the mat: navy with a fine grid, soft role-colored light under active sheets, vignette around the focus
+const NPOOL = 14;
+const matMat = new THREE.ShaderMaterial({
+  depthWrite: false,
+  uniforms: { uFocus: { value: new THREE.Vector2() }, uR: { value: 20 }, uA: { value: Array.from({ length: NPOOL }, () => new THREE.Vector4()) }, uB: { value: Array.from({ length: NPOOL }, () => new THREE.Vector4()) } },
+  vertexShader: `varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position,1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+  fragmentShader: `varying vec3 vW; uniform vec2 uFocus; uniform float uR; uniform vec4 uA[${NPOOL}]; uniform vec4 uB[${NPOOL}];
+    float grid(vec2 q){ vec2 g = abs(fract(q - .5) - .5) / max(fwidth(q), vec2(1e-4)); return 1. - min(min(g.x, g.y), 1.); }
+    float sdBox(vec2 p, vec2 b){ vec2 d = abs(p) - b; return length(max(d, 0.)) + min(max(d.x, d.y), 0.); }
+    void main(){
+      vec2 p = vW.xz;
+      vec3 c = vec3(.040, .082, .140);
+      c += vec3(.030, .050, .075) * grid(p) * .55;
+      c += vec3(.050, .085, .125) * grid(p / 5.) * .8;
+      for (int i = 0; i < ${NPOOL}; i++) {
+        vec4 A = uA[i]; vec4 B = uB[i]; if (B.w <= 0.) continue;
+        float d = sdBox(p - A.xy, A.zw);
+        c += B.rgb * exp(-max(d, 0.) / .55) * B.w * .30;
+      }
+      float r = length(p - uFocus) / uR;
+      c *= mix(1., .45, smoothstep(.55, 1.25, r));
+      gl_FragColor = vec4(c, 1.);
+    }`,
+});
+const mat = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), matMat);
+mat.rotation.x = -Math.PI / 2; mat.position.set(0, 0, 18); mat.renderOrder = 0; scene.add(mat);
+
+const shadowTex = (() => { const c = mkCanvas(256, 256), g = c.getContext('2d'); g.filter = 'blur(14px)'; g.fillStyle = 'rgba(0,0,0,0.9)'; g.fillRect(34, 34, 188, 188); return new THREE.CanvasTexture(c); })();
+const glowTex = (() => { const c = mkCanvas(128, 128), g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.25, 'rgba(255,255,255,.7)'); gr.addColorStop(.6, 'rgba(255,255,255,.15)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
+
+// ── canvas kit (design px; 100 design px = 1 world unit) ─────
+const TS = 1.25 * clamp(Q, .65, 1);
+function rr(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
+function gt(g, s, x, y, o = {}) {
+  const { size = 28, weight = 500, color = K.ink, align = 'left', mono = false, alpha = 1, italic = false } = o;
+  if (alpha <= 0) return;
+  g.save(); g.globalAlpha *= alpha; g.font = `${italic ? 'italic ' : ''}${weight} ${size}px ${mono ? MONO : SANS}`;
+  g.fillStyle = color; g.textAlign = align; g.textBaseline = 'alphabetic'; g.fillText(s, x, y); g.restore();
+}
+const MC = mkCanvas(4, 4).getContext('2d');
+function mw(s, size, weight = 500, mono = true) { MC.font = `${weight} ${size}px ${mono ? MONO : SANS}`; return MC.measureText(s).width; }
+function gcheck(g, x, y, s, col, lw = .17) { g.save(); g.strokeStyle = col; g.lineWidth = s * lw; g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath(); g.moveTo(x - s * .36, y); g.lineTo(x - s * .1, y + s * .26); g.lineTo(x + s * .38, y - s * .28); g.stroke(); g.restore(); }
+function gcross(g, x, y, s, col) { g.save(); g.strokeStyle = col; g.lineWidth = s * .17; g.lineCap = 'round'; g.beginPath(); g.moveTo(x - s * .3, y - s * .3); g.lineTo(x + s * .3, y + s * .3); g.moveTo(x + s * .3, y - s * .3); g.lineTo(x - s * .3, y + s * .3); g.stroke(); g.restore(); }
+
+const KW = new Set(['syntax', 'import', 'message', 'int32', 'float', 'bool', 'true', 'public', 'partial', 'class', 'struct', 'int', 'auto', 'for', 'return', 'if', 'const', 'switch', 'case', 'get', 'init']);
+const TYPES = new Set(['Item', 'FItem', 'ItemData', 'FItemData', 'CodeGenerator', 'FileDescriptor', 'SourceLocation', 'Stat', 'Gen']);
+const MAC = new Set(['USTRUCT', 'UPROPERTY', 'GENERATED_BODY']);
+const OPTS = new Set(['key', 'max', 'stat']);
+function tokens(line) {
+  const out = [], re = /(\/\/.*$|\/\*.*?\*\/|"[^"]*"|\s+|\d+(?:\.\d+)?|[A-Za-z_]\w*|::|->|.)/g; let m;
+  while ((m = re.exec(line))) {
+    const s = m[0]; let c = SY.txt;
+    if (s.startsWith('//') || s.startsWith('/*')) c = SY.com;
+    else if (s[0] === '"') c = SY.str;
+    else if (/^\d/.test(s)) c = SY.num;
+    else if (OPTS.has(s) && line[m.index - 1] === '(' && line.includes('[(')) c = SY.opt;
+    else if (KW.has(s)) c = SY.kw;
+    else if (MAC.has(s)) c = SY.mac;
+    else if (TYPES.has(s)) c = SY.type;
+    else if (/^[A-Za-z_]\w*$/.test(s) && line[m.index + s.length] === '(') c = SY.fn;
+    else if (/^[^\w\s]+$/.test(s)) c = SY.punc;
+    out.push([s, c]);
+  }
+  return out;
+}
+function codeLine(g, s, x, y, size, alpha = 1) {
+  g.save(); g.globalAlpha *= alpha; g.font = `500 ${size}px ${MONO}`; g.textBaseline = 'alphabetic'; let xx = x;
+  for (const [tok, c] of tokens(s)) { g.fillStyle = c; g.fillText(tok, xx, y); xx += g.measureText(tok).width; }
+  g.restore();
+}
+const HD = 62;
+// paper print-out (or dark terminal print-out) with a header strip: file name left, role right
+function sheetFrame(g, w, h, o) {
+  g.clearRect(0, 0, w, h);
+  const dark = !!o.dark;
+  rr(g, 3, 3, w - 6, h - 6, 12); g.fillStyle = dark ? K.term : K.paper; g.fill();
+  g.save(); rr(g, 3, 3, w - 6, h - 6, 12); g.clip();
+  g.fillStyle = dark ? K.termHd : rgba(o.col, .13); g.fillRect(0, 0, w, HD);
+  g.fillStyle = o.col; g.fillRect(0, HD - 5, w, 5);
+  g.restore();
+  gt(g, o.file, 26, HD / 2 + 9, { size: 26, mono: true, weight: 700, color: dark ? '#e6edf6' : K.ink });
+  if (o.role && !o.noRole) gt(g, o.role, w - 24, HD / 2 + 10, { size: 27, weight: 800, color: dark ? o.col : shadeCol(o.col), align: 'right' });
+  rr(g, 3, 3, w - 6, h - 6, 12); g.lineWidth = 2; g.strokeStyle = dark ? '#2b3c55' : '#d9d4c8'; g.stroke();
+}
+function shadeCol(hex) { const n = parseInt(hex.slice(1), 16); const f = .72; return `rgb(${(n >> 16 & 255) * f | 0},${(n >> 8 & 255) * f | 0},${(n & 255) * f | 0})`; }
+
+// ═════════════════════════════════════════════════════════════
+//  CODE SHEETS (contents are 예시)
+// ═════════════════════════════════════════════════════════════
+const CODE = {
+  BS: { file: 'ItemData.cs', role: '서버 코드', col: K.srv, w: 620, h: 400, size: 30, lh: 46, x0: 34,
+    lines: ['class ItemData {', '  public int Id;', '  public int Atk;', '  public float Crit;', '}'] },
+  BC: { file: 'ItemData.h', role: '클라 코드', col: K.cli, w: 620, h: 400, size: 30, lh: 46, x0: 34,
+    lines: ['struct FItemData {', '  int32 Id;', '  int32 Attack;', '  float Crit;', '};'] },
+  PR: { file: 'item.proto', role: '단일 소스', col: K.src, w: 880, h: 700, size: 32, lh: 44, x0: 78, gutter: true,
+    lines: ['syntax = "proto3";', 'import "options.proto";', '', '// 아이템 기본 테이블', 'message Item {', '  int32 id = 1 [(key) = true];', '  // 공격력', '  int32 atk = 2 [(max) = 9999];', '  // 치명타 확률', '  float crit = 3 [(stat) = true];', '}'],
+    add: { at: 10, t0: 16.45, lines: ['  // 치명타 피해', '  int32 crit_dmg = 4 [(stat) = true];'] } },
+  PG: { file: 'protoc-gen-staticdata/main.cpp', role: 'C++ 플러그인', col: K.plug, w: 900, h: 720, size: 28, lh: 42, x0: 74, gutter: true,
+    lines: ['// protoc 플러그인 (C++ · 자체 구현)', 'struct Gen : CodeGenerator {', '  bool Generate(const FileDescriptor* f,…) {', '    for (auto* fd : Fields(f)) {', '      int max = fd->options()', '                  .GetExtension(opt::max);', '      SourceLocation loc;', '      fd->GetSourceLocation(&loc);', '      auto doc = loc.leading_comments;', '      EmitAll(fd, doc, max);', '    }', '  }', '};', '// main → PluginMain(argc, argv, &gen)'] },
+  OS: { noRole: true, top: 26, file: 'Item.g.cs', role: '서버 · C#', col: K.srv, w: 640, h: 480, size: 26, lh: 38, x0: 30, print: 13.15,
+    lines: ['public partial class Item {', '  public int Id { get; init; }', '  /// 공격력', '  public int Atk { get; init; }', '  /// 치명타 확률', '  public float Crit { get; init; }', '}'],
+    add: { at: 6, t0: 18.25, lines: ['  /// 치명타 피해', '  public int CritDmg { get; init; }'] } },
+  OC: { noRole: true, top: 26, file: 'Item.g.h', role: '클라 · UE5', col: K.cli, w: 640, h: 480, size: 26, lh: 38, x0: 30, print: 13.3,
+    lines: ['USTRUCT() struct FItem {', '  GENERATED_BODY()', '  UPROPERTY() int32 Id;', '  /** 공격력 */', '  UPROPERTY() int32 Atk;', '  /** 치명타 확률 */', '  UPROPERTY() float Crit;', '};'],
+    add: { at: 7, t0: 18.4, lines: ['  /** 치명타 피해 */', '  UPROPERTY() int32 CritDmg;'] } },
+  OT: { noRole: true, top: 26, file: 'StatCalc.g.cs', role: '스탯 계산', col: K.stat, w: 640, h: 480, size: 26, lh: 40, x0: 30, print: 13.45,
+    lines: ['// (stat) 필드 → 계산 코드', 'switch (stat) {', '  case Stat.Crit:', '    return Sum(s => s.Crit);', '}'],
+    add: { at: 4, t0: 18.55, lines: ['  case Stat.CritDmg:', '    return Sum(s => s.CritDmg);'] } },
+  OK: { noRole: true, top: 26, file: 'ItemCheck.g.cs', role: '유효성 검증', col: K.chk, w: 640, h: 480, size: 26, lh: 40, x0: 30, print: 13.75,
+    lines: ['// (key) → 중복 검사', 'if (!ids.Add(r.Id))', '  Fail(r, "id 중복");', '// (max) → 범위 검사', 'if (r.Atk > 9999)', '  Fail(r, "atk > 9999");'] },
+};
+// row layout of a code sheet at time t (inserted lines push the rest down)
+function rows(S, t) {
+  const y0 = HD + (S.top || 40) + S.size * .9, out = [];
+  const ins = S.add ? eo(p(t, S.add.t0, .45)) : 0, n = S.add ? S.add.lines.length : 0;
+  S.lines.forEach((s, i) => out.push({ s, y: y0 + (i + (S.add && i >= S.add.at ? ins * n : 0)) * S.lh, i, add: false, k: 1 }));
+  if (S.add && ins > 0) S.add.lines.forEach((s, j) => out.push({ s, y: y0 + (S.add.at + j) * S.lh, i: S.add.at + j, add: true, k: ins }));
+  return out;
+}
+function rowOf(S, t, i) { return rows(S, t).find(r => !r.add && r.i === i); }
+// design-px box of a substring on a base line
+function subBox(S, t, i, sub) {
+  const r = rowOf(S, t, i), at = r.s.indexOf(sub);
+  const x = S.x0 + mw(r.s.slice(0, at), S.size), w = mw(sub, S.size);
+  return { x, y: r.y - S.size * .82, w, h: S.size * 1.18, cx: x + w / 2, cy: r.y - S.size * .3 };
+}
+// highlights: [sheet, line, substring, t0, t1, color]
+const MARKS = [
+  ['BS', 2, 'Atk', -1, 4.4, K.bad], ['BC', 2, 'Attack', -1, 4.4, K.bad],
+  ['PR', 7, '[(max) = 9999]', 6.9, 12.2, K.opt], ['PR', 6, '// 공격력', 7.6, 12.2, K.com],
+  ['PG', 5, '.GetExtension(opt::max)', 9.2, 12.2, K.opt], ['PG', 8, 'loc.leading_comments', 9.8, 12.2, K.com],
+  ['PG', 9, 'EmitAll(fd, doc, max);', 10.6, 12.2, K.src],
+];
+function drawCode(id) {
+  const S = CODE[id];
+  return (g, t) => {
+    sheetFrame(g, S.w, S.h, S);
+    const rs = rows(S, t), pr = S.print !== undefined ? p(t, S.print, .9) : 1, n = rs.filter(r => !r.add).length;
+    for (const [sid, li, sub, t0, t1, col] of MARKS) {
+      if (sid !== id) continue; const k = win(t, t0, t1, .3); if (k <= 0) continue;
+      const b = subBox(S, t, li, sub);
+      g.save(); g.globalAlpha = k; rr(g, b.x - 6, b.y, b.w + 12, b.h, 7); g.fillStyle = rgba(col, .2); g.fill(); g.lineWidth = 3; g.strokeStyle = col; g.stroke(); g.restore();
+    }
+    for (const r of rs) {
+      const vis = r.add ? 1 : clamp(pr * n - r.i + .5);
+      if (vis <= 0) continue;
+      if (r.add) {
+        const fl = 1 - .6 * p(t, S.add.t0 + 1.4, 2);
+        g.save(); g.globalAlpha = r.k; g.fillStyle = rgba(K.good, .2 * fl); g.fillRect(6, r.y - S.lh * .75, S.w - 12, S.lh); g.fillStyle = K.good; g.fillRect(6, r.y - S.lh * .75, 6, S.lh); g.restore();
+        if (S.gutter) gt(g, '+', 40, r.y, { size: S.size * .8, mono: true, color: '#15803d', weight: 800, align: 'right', alpha: r.k });
+      } else if (S.gutter) {
+        const num = r.i + 1 + (S.add && r.i >= S.add.at ? Math.round(eo(p(t, S.add.t0, .45)) * S.add.lines.length) : 0);
+        gt(g, String(num), 50, r.y, { size: S.size * .7, mono: true, color: '#a3a9b3', align: 'right', alpha: vis });
+      }
+      codeLine(g, r.s, S.x0, r.y, S.size, r.add ? r.k : vis);
+    }
+    // print head while generating
+    if (pr > 0 && pr < 1) { const y = HD + 30 + pr * (S.h - HD - 40); g.fillStyle = rgba(S.col, .5); g.fillRect(10, y, S.w - 20, 3); }
+    // regenerated badge
+    if (S.add && id[0] === 'O') {
+      const k = eo(p(t, S.add.t0 + .1, .4));
+      if (k > 0) { g.save(); g.globalAlpha = k; g.translate(S.w - 44, S.h - 42); g.beginPath(); g.arc(0, 0, 24, 0, 7); g.fillStyle = rgba(K.good, .2); g.fill(); gcheck(g, 0, 0, 26, '#15803d'); g.restore(); }
+    }
+    if (id === 'OK') {   // no option on the new field → no new check; still regenerated
+      const k = eo(p(t, 18.7, .4));
+      if (k > 0) { g.save(); g.globalAlpha = k; g.translate(S.w - 44, S.h - 42); g.beginPath(); g.arc(0, 0, 24, 0, 7); g.fillStyle = rgba(K.good, .2); g.fill(); gcheck(g, 0, 0, 26, '#15803d'); g.restore(); }
+    }
+  };
+}
+
+// before: the designers' table (no crit column → missing)
+function drawBV(g, t) {
+  const w = 620, h = 400;
+  sheetFrame(g, w, h, { file: 'Item.xlsx', role: '기획 테이블', col: K.csv });
+  const cols = [['id', 150], ['atk', 150], ['?', 230]], x0 = 30, y0 = HD + 34, rh = 62;
+  const rowsV = [['id', 'atk', ''], ['1001', '120', ''], ['1002', '340', '']];
+  rowsV.forEach((r, j) => {
+    let x = x0;
+    cols.forEach(([, cw], i) => {
+      const y = y0 + j * rh;
+      if (i === 2) {
+        g.save(); g.setLineDash([9, 7]); g.strokeStyle = rgba(K.bad, .85); g.lineWidth = 2.5; rr(g, x + 4, y + 4, cw - 8, rh - 8, 6); g.stroke(); g.restore();
+        if (j === 0) gt(g, 'crit ?', x + 18, y + 41, { size: 28, mono: true, weight: 700, color: '#dc2626' });
+      } else {
+        g.fillStyle = j === 0 ? rgba(K.csv, .14) : '#fbfaf7'; g.fillRect(x, y, cw, rh);
+        g.strokeStyle = '#d6d1c6'; g.lineWidth = 1.5; g.strokeRect(x, y, cw, rh);
+        gt(g, r[i], x + 16, y + 41, { size: 28, mono: true, weight: j === 0 ? 700 : 500, color: K.ink });
+      }
+      x += cw;
+    });
+  });
+}
+const BV_MISS = { x: 30 + 300 + 115, y: HD + 34 + 93 };
+
+// generated CSV (header from fields, second row from comments); row 5 holds a bad value until the fix
+function drawOV(g, t) {
+  const w = 640, h = 480;
+  sheetFrame(g, w, h, { file: 'Item.csv', role: 'CSV', col: K.csv, noRole: true });
+  const pr = p(t, 13.6, .9), addK = eo(p(t, 18.7, .45));
+  const cw = [118, 132, 136, 214], x0 = 22, y0 = HD + 26, rh = 64;
+  const fixed = t > 24.1, bad = t > 21.9 && !fixed;
+  const data = [['id', 'atk', 'crit', 'crit_dmg'], ['키', '공격력', '치명타 확률', '치명타 피해'], ['1001', '120', '0.05', ''], ['1002', '340', '0.08', ''], ['1003', fixed ? '1200' : '12000', '0.10', '']];
+  data.forEach((r, j) => {
+    if (clamp(pr * 5 - j + .5) <= 0) return;
+    let x = x0;
+    for (let i = 0; i < 4; i++) {
+      const k = i === 3 ? addK : 1; if (k <= 0) break;
+      const y = y0 + j * rh;
+      g.save(); g.globalAlpha = k;
+      g.fillStyle = j === 0 ? rgba(K.csv, .16) : j === 1 ? '#f0eee7' : '#fbfaf7';
+      if (i === 3) g.fillStyle = rgba(K.good, j < 2 ? .22 : .08);
+      if (j === 4 && i === 1 && (bad || fixed)) g.fillStyle = bad ? rgba(K.bad, .22) : rgba(K.good, .2);
+      g.fillRect(x, y, cw[i], rh); g.strokeStyle = '#d6d1c6'; g.lineWidth = 1.5; g.strokeRect(x, y, cw[i], rh);
+      if (j === 1) gt(g, r[i], x + 12, y + 41, { size: 22, color: '#5d6673', weight: 600 });
+      else gt(g, r[i], x + 12, y + 42, { size: 26, mono: true, weight: j === 0 ? 700 : 500, color: j === 4 && i === 1 && bad ? '#b91c1c' : K.ink });
+      g.restore();
+      x += cw[i];
+    }
+  });
+  gt(g, '1–2행: proto 필드 · 주석에서 생성', x0, h - 26, { size: 22, color: K.dimInk, alpha: pr });
+}
+
+// dark print-outs: the batch, the server's validate run, the Perforce trigger / CI log
+function termRows(g, list, t, x, y0, lh, size) {
+  list.forEach(([tt, s, kind], i) => {
+    if (t < tt) return;
+    const y = y0 + i * lh, k = eo(p(t, tt, .2));
+    const col = kind === 'cmd' ? '#e6edf6' : kind === 'bad' ? '#ff6b6b' : kind === 'ok' ? '#4ade80' : kind === 'note' ? '#8fa3bd' : K.termTx;
+    const weight = kind === 'big' || kind === 'bad' || kind === 'ok' ? 700 : 500;
+    if (kind === 'cmd') gt(g, '>', x, y, { size, mono: true, color: K.src, weight: 800, alpha: k });
+    gt(g, s, x + (kind === 'cmd' ? size * .9 : 0), y, { size, mono: true, color: col, weight, alpha: k });
+  });
+}
+function drawBT(g, t) {
+  const w = 900, h = 250;
+  sheetFrame(g, w, h, { file: 'gen_staticdata.bat', role: '배치', col: K.src, dark: true });
+  const re = t > 17.3;
+  termRows(g, [[-1, 'gen_staticdata.bat', 'cmd'], [12.45, '  protoc --plugin=protoc-gen-staticdata', 'out'], [12.6, '         --staticdata_out=gen  item.proto', 'out'],
+    [12.85, re ? '  ✓ 재생성 · crit_dmg 반영' : '  ✓ 서버 · 클라 · CSV · 검증 · 스탯 생성', 'ok']], t, 26, HD + 44, 42, 26);
+}
+const VT_LINES = [
+  [20.9, 'GameServer --validate-staticdata', 'cmd'],
+  [21.35, '  load   Item.csv · ItemCheck', 'out'],
+  [21.9, '  ✗ Item.csv:5  atk 12000 > max 9999', 'bad'],
+  [22.25, '  ExitCode 1', 'bad'],
+  [23.9, '# Item.csv:5  atk 12000 → 1200', 'note'],
+  [24.25, 'GameServer --validate-staticdata', 'cmd'],
+  [24.7, '  ✓ StaticData OK', 'ok'],
+  [24.95, '  ExitCode 0', 'ok'],
+];
+const VT_Y0 = HD + 50, VT_LH = 50, VT_SIZE = 28;
+function drawVT(g, t) {
+  const w = 900, h = 560;
+  sheetFrame(g, w, h, { file: 'server · 검증 모드', role: '서버 바이너리', col: K.chk, dark: true });
+  termRows(g, VT_LINES, t, 26, VT_Y0, VT_LH, VT_SIZE);
+}
+const P4_LINES = [
+  [22.55, 'p4 submit -c 2741', 'cmd'],
+  [22.8, "  'staticdata-check' validation failed", 'bad'],
+  [25.1, 'p4 submit -c 2741', 'cmd'],
+  [25.35, '  Change 2741 submitted.', 'ok'],
+];
+function drawP4(g, t) {
+  const w = 860, h = 560;
+  sheetFrame(g, w, h, { file: 'p4 trigger · CI', role: '퍼포스 · CI', col: K.src, dark: true });
+  gt(g, 'Perforce · change-submit 트리거', 26, HD + 40, { size: 24, color: K.termDim, weight: 600 });
+  termRows(g, P4_LINES, t, 26, HD + 88, 46, 26);
+  g.fillStyle = '#2b3c55'; g.fillRect(20, HD + 290, w - 40, 2);
+  gt(g, 'CI · staticdata-validate', 26, HD + 334, { size: 24, color: K.termDim, weight: 600 });
+  const ci = [[22.8, '#812', false], [25.35, '#813', true]];
+  ci.forEach(([tt, n, ok], i) => {
+    if (t < tt) return; const y = HD + 384 + i * 54, k = eo(p(t, tt, .25));
+    g.save(); g.globalAlpha = k;
+    rr(g, 22, y - 34, w - 44, 46, 8); g.fillStyle = rgba(ok ? K.good : K.bad, .14); g.fill();
+    gt(g, n, 40, y, { size: 26, mono: true, color: K.termTx, weight: 700 });
+    gt(g, ok ? 'SUCCESS' : 'FAILED', 150, y, { size: 26, mono: true, color: ok ? '#4ade80' : '#ff6b6b', weight: 800 });
+    gt(g, ok ? 'ExitCode 0' : 'ExitCode 1', w - 40, y, { size: 26, mono: true, color: K.termDim, align: 'right' });
+    if (ok) gcheck(g, w - 250, y - 10, 26, '#4ade80'); else gcross(g, w - 250, y - 10, 26, '#ff6b6b');
+    g.restore();
+  });
+}
+
+// ── registry: size, draw, live intervals, position per layout [x, z, yaw] ─────
+const POS = TALL ? {
+  BS: [-1.5, -3.7, .06], BC: [1.3, .35, -.06], BV: [-1.0, 4.4, .07],
+  PR: [0, 0, 0], PG: [0, 7.7, 0], BT: [0, 12.65, 0],
+  OS: [-3.4, 16.7, 0], OC: [3.4, 16.7, 0], OT: [-3.4, 21.6, 0], OV: [3.4, 21.6, 0], OK: [0, 26.5, 0],
+  VT: [0, 32.6, 0], P4: [0, 38.6, 0],
+} : {
+  BS: [-6.5, -.7, .07], BC: [0.1, 1.3, -.05], BV: [6.4, -.9, .08],
+  PR: [-4.8, 0, 0], PG: [4.8, 0, 0], BT: [4.8, 5.05, 0],
+  OS: [-6.8, 9.15, 0], OC: [0, 9.15, 0], OT: [6.8, 9.15, 0], OV: [-3.4, 14.15, 0], OK: [3.4, 14.15, 0],
+  VT: [-4.8, 20.9, 0], P4: [4.8, 20.9, 0],
+};
+const SPEC = {
+  BS: { w: 620, h: 400, draw: drawCode('BS'), live: [], col: K.srv },
+  BC: { w: 620, h: 400, draw: drawCode('BC'), live: [], col: K.cli },
+  BV: { w: 620, h: 400, draw: drawBV, live: [], col: K.csv },
+  PR: { w: 880, h: 700, draw: drawCode('PR'), live: [[6.5, 12.6], [16.3, 17.2]], col: K.src },
+  PG: { w: 900, h: 720, draw: drawCode('PG'), live: [[8.9, 12.6]], col: K.plug },
+  BT: { w: 900, h: 250, draw: drawBT, live: [[12.3, 13.3], [17.2, 17.5]], col: K.src },
+  OS: { w: 640, h: 480, draw: drawCode('OS'), live: [[13.1, 14.2], [18.2, 21]], col: K.srv },
+  OC: { w: 640, h: 480, draw: drawCode('OC'), live: [[13.25, 14.3], [18.35, 21]], col: K.cli },
+  OT: { w: 640, h: 480, draw: drawCode('OT'), live: [[13.4, 14.5], [18.5, 21]], col: K.stat },
+  OV: { w: 640, h: 480, draw: drawOV, live: [[13.55, 14.6], [18.65, 19.3], [21.8, 22.0], [24.0, 24.2]], col: K.csv },
+  OK: { w: 640, h: 480, draw: drawCode('OK'), live: [[13.7, 14.8], [18.6, 19.3]], col: K.chk },
+  VT: { w: 900, h: 560, draw: drawVT, live: [[20.8, 25.3]], col: K.chk },
+  P4: { w: 860, h: 560, draw: drawP4, live: [[22.4, 25.8]], col: K.src },
+};
+const ORDER = Object.keys(SPEC);
+const ART = {};
+for (const id of ORDER) {
+  const s = SPEC[id], ww = s.w / 100, hh = s.h / 100;
+  const c = mkCanvas(Math.round(s.w * TS), Math.round(s.h * TS)), g = c.getContext('2d');
+  const tex = canvasTex(c);
+  const grp = new THREE.Group(); scene.add(grp);
+  const m = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: .02, depthWrite: true });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(ww, hh), m); mesh.rotation.x = -Math.PI / 2; mesh.renderOrder = 5; grp.add(mesh);
+  const shm = new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false, color: 0x000000, opacity: .6 });
+  const sh = new THREE.Mesh(new THREE.PlaneGeometry(ww * 1.36, hh * 1.36 + .5), shm); sh.rotation.x = -Math.PI / 2; sh.renderOrder = 2; scene.add(sh);
+  ART[id] = { id, s, c, g, tex, grp, mesh, m, sh, shm, key: null, pos: POS[id] };
+}
+function liveT(iv, t) { if (!iv.length) return 0; let last = -1; for (const [a, b] of iv) { if (t < a) return last; if (t <= b) return t; last = b; } return last; }
+
+// presence, placement, lift and glow per sheet (pure in t)
+function place(id, t) {
+  const [x0, z0, yaw0] = POS[id]; let x = x0, z = z0, yaw = yaw0, y = .02, k = 1, glow = 0, scale = 1;
+  const app = (t0, d = .55) => eo(p(t, t0, d));
+  switch (id) {
+    case 'BS': case 'BC': case 'BV': {
+      const m = eio(p(t, 4.2, 1.0)), P = POS.PR;
+      x = lerp(x0, P[0], m); z = lerp(z0, P[1], m); yaw = lerp(yaw0, 0, m); scale = lerp(1, .8, m);
+      y = .05 + ({ BS: .02, BC: .04, BV: .06 })[id] + m * .3;
+      k = 1 - p(t, 5.0, .45); glow = .5 * (1 - m); break;
+    }
+    case 'PR': k = app(4.9, .55); y = .02 + (1 - k) * 1.6; glow = win(t, 5.2, 12.2) + win(t, 15.8, 17.4); break;
+    case 'PG': k = app(6.0, .6); if (!TALL) x += (1 - k) * 2; else z += (1 - k) * 2; glow = .9 * win(t, 8.8, 12.2) + .6 * win(t, 12.1, 13.0); break;
+    case 'BT': k = app(12.2, .45); glow = win(t, 12.3, 13.4) + win(t, 17.2, 17.9); break;
+    case 'OS': case 'OC': case 'OT': case 'OV': case 'OK': {
+      const S = CODE[id] || { print: 13.6 }, t0 = id === 'OV' ? 13.6 : S.print;
+      k = app(t0 - .35, .4); glow = .7 * win(t, t0, 15.6) + win(t, 18.2, 20.4) * (id === 'OK' ? .4 : 1) + (id === 'OV' || id === 'OK' ? .6 * win(t, 20.7, 21.6) : 0);
+      if (id === 'OT') glow += .5 * win(t, 19.0, 20.6); break;
+    }
+    case 'VT': k = app(20.6, .5); glow = win(t, 20.8, 27.4); break;
+    case 'P4': k = app(21.1, .5); glow = win(t, 22.4, 27.4); break;
+  }
+  const lift = clamp(glow);
+  return { x, y: y + lift * .12, z, yaw, k, glow: clamp(glow, 0, 1.4), scale };
+}
+// design px on a sheet → world
+function artPt(id, dx, dy) {
+  const a = ART[id]; a.grp.updateMatrixWorld();
+  return a.grp.localToWorld(new THREE.Vector3((dx - a.s.w / 2) / 100, .01, (dy - a.s.h / 2) / 100));
+}
+function edgePt(id, e, f = .5) {
+  const { w, h } = SPEC[id];
+  const [x, z] = POS[id];
+  const dx = e === 'l' ? -w / 200 : e === 'r' ? w / 200 : (f - .5) * w / 100;
+  const dz = e === 't' ? -h / 200 : e === 'b' ? h / 200 : (f - .5) * h / 100;
+  return new THREE.Vector3(x + dx, .006, z + dz);
+}
+
+// ── light channels in the mat (screen-space glowing quads) ───
+const MAXSEG = 1600;
+const lineGeo = new THREE.InstancedBufferGeometry();
+lineGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0, -1, 0, 1, -1, 0, 1, 1, 0, 0, 1, 0]), 3));
+lineGeo.setIndex([0, 1, 2, 0, 2, 3]);
+const iA = new THREE.InstancedBufferAttribute(new Float32Array(MAXSEG * 3), 3), iB = new THREE.InstancedBufferAttribute(new Float32Array(MAXSEG * 3), 3);
+const iC = new THREE.InstancedBufferAttribute(new Float32Array(MAXSEG * 3), 3), iWd = new THREE.InstancedBufferAttribute(new Float32Array(MAXSEG), 1);
+[iA, iB, iC, iWd].forEach(a => a.setUsage(THREE.DynamicDrawUsage));
+lineGeo.setAttribute('iA', iA); lineGeo.setAttribute('iB', iB); lineGeo.setAttribute('iC', iC); lineGeo.setAttribute('iW', iWd);
+const lineMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, depthTest: true, blending: THREE.AdditiveBlending,
+  uniforms: { uRes: { value: new THREE.Vector2(W * Q, H * Q) } },
+  vertexShader: `attribute vec3 iA; attribute vec3 iB; attribute vec3 iC; attribute float iW; uniform vec2 uRes; varying vec3 vC; varying float vS;
+    void main(){
+      vec4 a = projectionMatrix * viewMatrix * vec4(iA, 1.), b = projectionMatrix * viewMatrix * vec4(iB, 1.);
+      vec2 sa = a.xy / a.w * uRes * .5, sb = b.xy / b.w * uRes * .5;
+      vec2 dir = sb - sa; float L = length(dir); dir = L > 1e-4 ? dir / L : vec2(1., 0.);
+      vec2 n = vec2(-dir.y, dir.x);
+      vec4 c = mix(a, b, position.x);
+      vec2 off = (n * position.y + dir * (position.x * 2. - 1.) * .5) * iW;
+      c.xy += off / (uRes * .5) * c.w;
+      gl_Position = c; vC = iC; vS = position.y;
+    }`,
+  fragmentShader: `varying vec3 vC; varying float vS; void main(){ float f = exp(-vS * vS * 4.); gl_FragColor = vec4(vC * f, 1.); }`,
+});
+const lineMesh = new THREE.Mesh(lineGeo, lineMat); lineMesh.frustumCulled = false; lineMesh.renderOrder = 3; scene.add(lineMesh);
+let NS = 0; const _c = new THREE.Color();
+function seg(a, b, col, inten, wd) {
+  if (NS >= MAXSEG || inten <= .003) return;
+  _c.set(col);
+  iA.array.set([a.x, a.y, a.z], NS * 3); iB.array.set([b.x, b.y, b.z], NS * 3);
+  iC.array.set([_c.r * inten, _c.g * inten, _c.b * inten], NS * 3); iWd.array[NS] = wd * Q; NS++;
+}
+function bez(P, u) {
+  const [a, b, c, d] = P, v = 1 - u;
+  return new THREE.Vector3(v * v * v * a.x + 3 * v * v * u * b.x + 3 * v * u * u * c.x + u * u * u * d.x, .006, v * v * v * a.z + 3 * v * v * u * b.z + 3 * v * u * u * c.z + u * u * u * d.z);
+}
+const NRM = { l: [-1, 0], r: [1, 0], t: [0, -1], b: [0, 1] };
+function chanPath(a, ea, b, eb, fa = .5, fb = .5) {
+  const A = edgePt(a, ea, fa), B = edgePt(b, eb, fb), d = A.distanceTo(B) * .45;
+  return [A, new THREE.Vector3(A.x + NRM[ea][0] * d, .006, A.z + NRM[ea][1] * d), new THREE.Vector3(B.x + NRM[eb][0] * d, .006, B.z + NRM[eb][1] * d), B];
+}
+// channels: [from, edge, to, edge, color, shown-from time]
+const OUTS = ['OS', 'OC', 'OT', 'OV', 'OK'];
+const CH = [
+  { id: 'pp', P: TALL ? chanPath('PR', 'b', 'PG', 't') : chanPath('PR', 'r', 'PG', 'l'), col: K.src, t0: 8.6 },
+  { id: 'pb', P: chanPath('PG', 'b', 'BT', 't'), col: K.src, t0: 12.2 },
+  ...OUTS.map((o, i) => ({ id: 'b' + o, P: chanPath('BT', 'b', o, 't', TALL ? .3 + i * .1 : .2 + i * .15), col: SPEC[o].col, t0: 12.75, o })),
+  { id: 'v1', P: chanPath('OV', 'b', 'VT', 't', .5, TALL ? .62 : .55), col: K.csv, t0: 20.7 },
+  { id: 'v2', P: chanPath('OK', 'b', 'VT', 't', .5, TALL ? .5 : .8), col: K.chk, t0: 20.7 },
+  { id: 'vp', P: TALL ? chanPath('VT', 'b', 'P4', 't') : chanPath('VT', 'r', 'P4', 'l'), col: K.chan, t0: 22.35 },
+];
+// pulses: [channel id, start, duration, color]
+const PULSES = [
+  ['pp', 8.6, .7, K.opt], ['pp', 9.2, .7, K.com],
+  ['pb', 12.2, .45, K.src], ...OUTS.map((o, i) => ['b' + o, 12.6 + i * .12, .6, SPEC[o].col]),
+  ['pp', 17.0, .45, K.good], ['pb', 17.4, .4, K.good], ...OUTS.map((o, i) => ['b' + o, 17.75 + i * .12, .5, K.good]),
+  ['v1', 20.75, .6, K.csv], ['v2', 20.85, .6, K.chk], ['vp', 22.3, .4, K.bad], ['vp', 25.0, .4, K.good],
+];
+const PSPR = PULSES.map(([, , , col]) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: new THREE.Color(col).multiplyScalar(1.5), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); s.renderOrder = 4; scene.add(s); return s; });
+// result loop: one batch run walks the whole chain
+const CHAIN = ['pp', 'pb', 'bOS', 'v1', 'vp'];
+const LOOP = Array.from({ length: 7 }, () => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: new THREE.Color(K.chan).multiplyScalar(1.6), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); s.renderOrder = 4; scene.add(s); return s; });
+
+// ── camera: framed poses, monotone-cubic in time ─────────────
+function fr(c, s, sx, sy, pitchDeg = 72, yawDeg = 0) {
+  const yaw = yawDeg * Math.PI / 180, pit = pitchDeg * Math.PI / 180;
+  const dir = new THREE.Vector3(Math.sin(yaw) * Math.cos(pit), -Math.sin(pit), -Math.cos(yaw) * Math.cos(pit));
+  const d = H / (200 * s * TAN), ppu = s * 100;
+  const right = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize();
+  const up = new THREE.Vector3().crossVectors(right, dir).normalize();
+  const C = new THREE.Vector3(c[0], 0, c[1]);
+  const pos = C.clone().addScaledVector(dir, -d).addScaledVector(right, (W / 2 - sx) / ppu).addScaledVector(up, (sy - H / 2) / ppu);
+  return { pos, tgt: pos.clone().addScaledVector(dir, d) };
+}
+const CAM = TALL ? [
+  [0.0, fr([0, .35], .88, 540, 815, 74)],
+  [4.0, fr([0, .35], .89, 540, 815, 74)],
+  [5.6, fr([0, 0], .96, 540, 700, 77)],
+  [8.9, fr([0, .1], .97, 540, 700, 77)],
+  [10.0, fr([0, 7.7], .96, 540, 700, 77)],
+  [12.0, fr([0, 7.7], .97, 540, 700, 77)],
+  [13.3, fr([0, 21.6], .67, 540, 815, 77)],
+  [15.5, fr([0, 21.6], .68, 540, 815, 77)],
+  [16.3, fr([0, 0], .96, 540, 700, 77)],
+  [17.2, fr([0, 0], .96, 540, 700, 77)],
+  [18.2, fr([0, 21.6], .67, 540, 815, 77)],
+  [20.4, fr([0, 21.6], .68, 540, 815, 77)],
+  [21.3, fr([0, 35.6], .84, 540, 825, 77)],
+  [27.4, fr([0, 35.6], .85, 540, 825, 77)],
+  [29.6, fr([0, 26], .40, 540, 1010, 36)],
+  [34.0, fr([0, 26], .405, 540, 1010, 36)],
+] : [
+  [0.0, fr([0, .3], .82, 960, 610, 74)],
+  [4.0, fr([0, .3], .84, 960, 610, 74)],
+  [5.6, fr([0, 0], .76, 960, 520, 77)],
+  [12.0, fr([0, 0], .77, 960, 520, 77)],
+  [13.3, fr([0, 11.65], .80, 960, 640, 77)],
+  [15.5, fr([0, 11.65], .81, 960, 640, 77)],
+  [16.3, fr([-4.8, 0], .90, 960, 600, 77)],
+  [17.2, fr([-4.8, 0], .90, 960, 600, 77)],
+  [18.2, fr([0, 11.65], .80, 960, 640, 77)],
+  [20.4, fr([0, 11.65], .81, 960, 640, 77)],
+  [21.3, fr([0, 20.9], .92, 960, 600, 77)],
+  [27.4, fr([0, 20.9], .93, 960, 600, 77)],
+  [29.6, fr([0, 10.4], .34, 1340, 545, 56, -6)],
+  [34.0, fr([0, 10.4], .345, 1340, 545, 56, -6)],
+];
+const CAM_T = CAM.map(k => k[0]);
+const CAM_C = ['pos', 'tgt'].flatMap(key => ['x', 'y', 'z'].map(ax => {
+  const y = CAM.map(k => k[1][key][ax]), n = y.length, d = [], m = new Array(n).fill(0);
+  for (let i = 0; i < n - 1; i++) d.push((y[i + 1] - y[i]) / (CAM_T[i + 1] - CAM_T[i]));
+  for (let i = 1; i < n - 1; i++) {
+    if (d[i - 1] * d[i] <= 0) continue;
+    const h0 = CAM_T[i] - CAM_T[i - 1], h1 = CAM_T[i + 1] - CAM_T[i], w1 = 2 * h1 + h0, w2 = h1 + 2 * h0;
+    m[i] = (w1 + w2) / (w1 / d[i - 1] + w2 / d[i]);
+  }
+  return { y, m };
+}));
+function camAt(t) {
+  const n = CAM.length; t = clamp(t, CAM_T[0], CAM_T[n - 1]);
+  let i = 0; while (i < n - 2 && t > CAM_T[i + 1]) i++;
+  const h = CAM_T[i + 1] - CAM_T[i], u = (t - CAM_T[i]) / h, u2 = u * u, u3 = u2 * u;
+  const v = CAM_C.map(({ y, m }) => y[i] * (2 * u3 - 3 * u2 + 1) + m[i] * h * (u3 - 2 * u2 + u) + y[i + 1] * (-2 * u3 + 3 * u2) + m[i + 1] * h * (u3 - u2));
+  return { pos: new THREE.Vector3(v[0], v[1], v[2]), tgt: new THREE.Vector3(v[3], v[4], v[5]) };
+}
+
+// ── 2D overlay ───────────────────────────────────────────────
+const FS = TALL ? { title: 66, sub: 44, pill: 46, foot: 40 } : { title: 58, sub: 38, pill: 38, foot: 34 };
+function txt(s, x, y, o = {}) {
+  const { size = 36, weight = 500, color = '#eef3f9', align = 'left', alpha = 1, mono = false, shadow = 0 } = o;
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.font = `${weight} ${size}px ${mono ? MONO : SANS}`;
+  ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  if (shadow) { ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = shadow; }
+  ctx.fillText(s, x, y); ctx.restore();
+}
+function tw(s, size, weight = 500, mono = false) { ctx.font = `${weight} ${size}px ${mono ? MONO : SANS}`; return ctx.measureText(s).width; }
+function proj(v) { const q = v.clone().project(camera); return [(q.x + 1) / 2 * W, (1 - q.y) / 2 * H]; }
+function rectOf(id) {
+  const { w, h } = SPEC[id], pts = [[0, 0], [w, 0], [0, h], [w, h]].map(([x, y]) => proj(artPt(id, x, y)));
+  const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
+  return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys), cx: (Math.min(...xs) + Math.max(...xs)) / 2 };
+}
+// pill: dark, colored border; (x, y) = center
+function pill(s, x, y, col, a, size = FS.pill) {
+  if (a <= 0) return;
+  const w = tw(s, size, 800) + size * 1.5, h = size * 1.62;
+  ctx.save(); ctx.globalAlpha *= a;
+  ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2, w, h, h / 2); ctx.fillStyle = 'rgba(9,18,32,0.94)'; ctx.fill();
+  ctx.lineWidth = 3; ctx.strokeStyle = col; ctx.stroke();
+  ctx.beginPath(); ctx.arc(x - w / 2 + size * .62, y, size * .17, 0, 7); ctx.fillStyle = col; ctx.fill();
+  txt(s, x + size * .2, y + size * .36, { size, weight: 800, color: '#f4f7fb', align: 'center' });
+  ctx.restore();
+  return { w, h };
+}
+function leader(x0, y0, x1, y1, col, a) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.setLineDash([3, 8]); ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(x0, (y0 + y1) / 2, x1, y1); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.arc(x1, y1, 7, 0, 7); ctx.fillStyle = col; ctx.fill(); ctx.restore();
+}
+// callout = pill + leaders to its anchors
+function callout(s, at, anchors, col, a) {
+  if (a <= 0) return;
+  for (const q of anchors) leader(at[0], at[1], q[0], q[1], col, a * .95);
+  pill(s, at[0], at[1], col, a);
+}
+const subPt = (id, li, sub, t, side = 'c') => { const b = subBox(CODE[id], t, li, sub); return proj(artPt(id, side === 'b' ? b.cx : b.cx, side === 'b' ? b.y + b.h + 4 : b.cy)); };
+
+function header(t) {
+  for (const [s, e, n, title, subW, subT] of HEAD) {
+    const a = win(t, s, e, .35); if (a <= 0) continue;
+    const sub = TALL ? subT : subW, x = TALL ? 56 : 64;
+    const k = eo(p(t, s + .05, .5));
+    ctx.save(); ctx.globalAlpha = a;
+    const bh = TALL ? 140 + sub.length * 58 + 40 : 230;
+    const g = ctx.createLinearGradient(0, 0, 0, bh + 50); g.addColorStop(0, 'rgba(8,16,29,0.94)'); g.addColorStop(bh / (bh + 50), 'rgba(8,16,29,0.86)'); g.addColorStop(1, 'rgba(8,16,29,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, bh + 50);
+    const ty = TALL ? 118 : 104;
+    txt(n, x, ty, { size: FS.title * .62, mono: true, weight: 800, color: K.src });
+    const nx = x + tw(n, FS.title * .62, 800, true) + 22;
+    txt(title, nx - (1 - k) * 18, ty, { size: FS.title, weight: 800, color: '#f4f7fb', alpha: k });
+    sub.forEach((l, i) => txt(l, x, ty + (TALL ? 70 : 60) + i * (TALL ? 58 : 48), { size: FS.sub, weight: 500, color: '#b6c3d4', alpha: eo(p(t, s + .25, .5)) }));
+    ctx.restore();
+  }
+}
+function footnote(t) {
+  const before = 1 - p(t, 4.7, .4), ex = clamp(Math.min(p(t, 5.0, .4), 1 - p(t, OUT0 + .2, .5)));
+  const x = W - (TALL ? 40 : 48), y = H - (TALL ? 40 : 40);
+  if (before > 0) {
+    ctx.save(); ctx.globalAlpha = before;
+    const w = tw('개념도', FS.foot, 800) + 36, h = FS.foot * 1.6;
+    ctx.beginPath(); ctx.roundRect(x - w, y - h + 12, w, h, 8); ctx.lineWidth = 3; ctx.strokeStyle = '#94a3b8'; ctx.stroke(); ctx.fillStyle = 'rgba(9,18,32,0.85)'; ctx.fill();
+    txt('개념도', x - 18, y - 4, { size: FS.foot, weight: 800, color: '#cbd5e1', align: 'right' });
+    ctx.restore();
+  }
+  if (ex > 0) { const fw = tw('* 코드 · 데이터 내용은 예시', FS.foot * .92) + 32; ctx.save(); ctx.globalAlpha = ex * .85; ctx.beginPath(); ctx.roundRect(x - fw + 16, y - FS.foot * 1.05, fw, FS.foot * 1.5, 8); ctx.fillStyle = 'rgba(8,16,29,0.9)'; ctx.fill(); ctx.restore(); }
+  if (ex > 0) txt('* 코드 · 데이터 내용은 예시', x, y, { size: FS.foot * .92, color: '#9fb0c6', align: 'right', alpha: ex, shadow: 8 });
+}
+function beat1(t) {
+  const a = 1 - eio(p(t, 4.1, .5)); if (a <= 0) return;
+  const pA = subPt('BS', 2, 'Atk', t, 'b'), pB = subPt('BC', 2, 'Attack', t, 'b');
+  const rv = rectOf('BV'), miss = proj(artPt('BV', BV_MISS.x, BV_MISS.y));
+  if (TALL) {
+    callout('이름 불일치', [220, pB[1] + 150], [pA, pB], K.bad, a);
+    callout('필드 누락', [880, rv.y1 + 70], [miss], K.bad, a);
+  } else {
+    callout('이름 불일치', [(pA[0] + pB[0]) / 2 - 60, rectOf('BC').y1 + 80], [pA, pB], K.bad, a);
+    callout('필드 누락', [miss[0], rv.y1 + 90], [miss], K.bad, a);
+  }
+}
+function beat2(t) {
+  const kA = win(t, 7.0, 12.1), kB = win(t, 7.7, 12.1), kC = win(t, 9.3, 12.1), kD = win(t, 9.9, 12.1);
+  if (Math.max(kA, kB, kC, kD) <= 0) return;
+  const rp = rectOf('PR'), rg = rectOf('PG');
+  const aOpt = subPt('PR', 7, '[(max) = 9999]', t, 'b'), aCom = subPt('PR', 6, '// 공격력', t, 'b');
+  const aExt = subPt('PG', 5, '.GetExtension(opt::max)', t, 'b'), aDoc = subPt('PG', 8, 'loc.leading_comments', t, 'b');
+  if (TALL) {
+    const fP = 1 - p(t, 9.2, .4), fG = p(t, 9.4, .4);
+    callout('커스텀 필드 옵션', [730, rp.y1 - 62], [aOpt], K.opt, kA * fP);
+    callout('주석', [300, rp.y1 - 62], [aCom], K.com, kB * fP);
+    callout('커스텀 옵션 읽기', [700, rg.y1 + 75], [aExt], K.opt, kC * fG);
+    callout('주석 읽기', [280, rg.y1 + 75], [aDoc], K.com, kD * fG);
+  } else {
+    const y = Math.max(rp.y1, rg.y1) + 80;
+    callout('커스텀 필드 옵션', [rp.cx + 150, y], [aOpt], K.opt, kA);
+    callout('주석', [rp.x0 + 150, y], [aCom], K.com, kB);
+    callout('커스텀 옵션 읽기', [rg.cx + 170, y], [aExt], K.opt, kC);
+    callout('주석 읽기', [rg.x0 + 170, y], [aDoc], K.com, kD);
+  }
+}
+const ROLE = { OS: '서버 코드', OC: '클라 코드', OT: '스탯 계산', OV: 'CSV', OK: '유효성 검증' };
+function beat3(t) {
+  const a = Math.min(win(t, 13.2, 15.7, .35), 1) + win(t, 18.0, 20.7, .35); if (a <= 0) return;
+  for (const id of OUTS) {
+    const S = id === 'OV' ? { print: 13.6 } : CODE[id];
+    const k = eo(p(t, S.print, .4)) * clamp(a); if (k <= 0) continue;
+    const r = rectOf(id), s = ROLE[id], w = tw(s, FS.pill, 800) + FS.pill * 1.5;
+    pill(s, r.x1 - w / 2 - 8, r.y0 + 4, SPEC[id].col, k);
+  }
+  const ks = win(t, 18.9, 20.7, .35);
+  if (ks > 0 && !TALL) { const r = rectOf('OT'); callout('스탯 계산 코드도 생성', TALL ? [r.cx, r.y1 - 40] : [r.cx, r.y1 - 56], [], K.stat, ks); }
+}
+function beat4(t) {
+  const k1 = win(t, 22.3, 24.0, .3), k2 = win(t, 25.0, 27.6, .35), k3 = win(t, 22.9, 27.6, .35);
+  const S = { x0: 26 }, rv = rectOf('VT'), rp = rectOf('P4');
+  const ePt = (i, s) => proj(artPt('VT', 26 + mw(s, VT_SIZE) + 16, VT_Y0 + i * VT_LH - 10));
+  const e1 = ePt(3, '  ExitCode 1'), e2 = ePt(7, '  ExitCode 0');
+  if (TALL) {
+    callout('→ 실패', [rv.x1 - 120, e1[1] + 40], [e1], K.bad, k1);
+    callout('→ 통과', [rv.x1 - 120, e2[1] + 30], [e2], K.good, k2);
+    pill('CI · 퍼포스가 ExitCode로 판정', 540, (rv.y1 + rp.y0) / 2, K.chan, k3, FS.pill * .82);
+  } else {
+    const y = rv.y1 + 72;
+    callout('ExitCode 1 → 실패', [rv.cx, y], [e1], K.bad, k1);
+    callout('ExitCode 0 → 통과', [rv.cx, y], [e2], K.good, k2);
+    pill('CI · 퍼포스 트리거가 ExitCode로 판정', rp.cx, y, K.chan, k3);
+  }
+}
+function result(t) {
+  const a = eo(p(t, OUT0 + .9, .8)); if (a <= 0) return;
+  const k1 = eo(p(t, OUT0 + 1.0, .7)), k2 = eo(p(t, OUT0 + 1.4, .7)), k3 = eo(p(t, OUT0 + 1.8, .7));
+  ctx.save(); ctx.globalAlpha = a;
+  if (TALL) {
+    const g = ctx.createLinearGradient(0, 0, 0, 620); g.addColorStop(0, 'rgba(8,16,29,0.95)'); g.addColorStop(.78, 'rgba(8,16,29,0.82)'); g.addColorStop(1, 'rgba(8,16,29,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, 620);
+    txt('proto 단일 소스', 60, 104, { size: 46, weight: 700, color: K.src, alpha: k1 });
+    txt('배치 1회', 52, 268 + (1 - k1) * 20, { size: 172, weight: 900, color: '#f6f9fc', alpha: k1 });
+    txt('서버 · 클라 동시 반영', 60, 360, { size: 62, weight: 800, color: '#f6f9fc', alpha: k2 });
+    txt('팀 전체 작업 방식으로 채택', 60, 446, { size: 50, weight: 700, color: '#4ade80', alpha: k3 });
+    txt('서버 · 클라 코드 · CSV · 검증 · 스탯 계산', 60, 522, { size: 40, color: '#a9b8cb', alpha: k3 });
+  } else {
+    const g = ctx.createLinearGradient(0, 0, 1100, 0); g.addColorStop(0, 'rgba(8,16,29,0.95)'); g.addColorStop(.72, 'rgba(8,16,29,0.85)'); g.addColorStop(1, 'rgba(8,16,29,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 1100, H);
+    txt('proto 단일 소스', 92, 300, { size: 44, weight: 700, color: K.src, alpha: k1 });
+    txt('배치 1회', 84, 460 + (1 - k1) * 20, { size: 156, weight: 900, color: '#f6f9fc', alpha: k1 });
+    txt('서버 · 클라 동시 반영', 92, 560, { size: 60, weight: 800, color: '#f6f9fc', alpha: k2 });
+    txt('팀 전체 작업 방식으로 채택', 92, 650, { size: 46, weight: 700, color: '#4ade80', alpha: k3 });
+    txt('서버 · 클라 코드 · CSV · 유효성 검증 · 스탯 계산', 92, 722, { size: 36, color: '#a9b8cb', alpha: k3 });
+  }
+  ctx.restore();
+}
+function overlay(t) {
+  beat1(t); beat2(t); beat3(t); beat4(t);
+  header(t);
+  result(t);
+  footnote(t);
+}
+
+// ── frame ────────────────────────────────────────────────────
+const frustum = new THREE.Frustum(), _pm = new THREE.Matrix4(), _sph = new THREE.Sphere();
+function renderAt(t) {
+  t = clamp(+t || 0, 0, DURATION);
+  const cam = camAt(t);
+  camera.position.copy(cam.pos); camera.lookAt(cam.tgt); camera.updateMatrixWorld();
+  _pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); frustum.setFromProjectionMatrix(_pm);
+  matMat.uniforms.uFocus.value.set(cam.tgt.x, cam.tgt.z);
+  matMat.uniforms.uR.value = clamp(camera.position.distanceTo(cam.tgt) * .55, 9, 40);
+  const pa = matMat.uniforms.uA.value, pb = matMat.uniforms.uB.value; let pi = 0;
+  for (const id of ORDER) {
+    const a = ART[id], pl = place(id, t), k = pl.k, vis = k > .003;
+    a.grp.visible = vis; a.sh.visible = vis;
+    a.grp.position.set(pl.x, pl.y, pl.z); a.grp.rotation.set(0, pl.yaw, 0); a.grp.scale.setScalar(pl.scale);
+    a.m.opacity = k; a.shm.opacity = .55 * k;
+    a.sh.position.set(pl.x + .06 + pl.y * .3, .004, pl.z + .14 + pl.y * .5); a.sh.rotation.z = pl.yaw; a.sh.scale.setScalar(pl.scale * (1 + pl.y * .08));
+    if (pi < NPOOL && pl.glow > .01 && vis) { _c.set(a.s.col); pa[pi].set(pl.x, pl.z, a.s.w / 200 * pl.scale, a.s.h / 200 * pl.scale); pb[pi].set(_c.r, _c.g, _c.b, pl.glow * k); pi++; }
+    if (vis) {
+      a.grp.updateMatrixWorld(); _sph.set(a.grp.position, Math.hypot(a.s.w, a.s.h) / 200);
+      if (frustum.intersectsSphere(_sph)) {
+        const key = Math.round(liveT(a.s.live, t) * 30);
+        if (a.key !== key) { a.g.setTransform(TS, 0, 0, TS, 0, 0); a.s.draw(a.g, key / 30); a.tex.needsUpdate = true; a.key = key; }
+      }
+    }
+  }
+  for (; pi < NPOOL; pi++) pb[pi].set(0, 0, 0, 0);
+
+  // channels
+  NS = 0;
+  const ov = eo(p(t, OUT0, 1.4));
+  for (const c of CH) {
+    const r = Math.max(eo(p(t, c.t0, .5)), ov); if (r <= 0) continue;
+    const sub = 28;
+    let prev = bez(c.P, 0);
+    for (let i = 1; i <= sub; i++) { const u = r * i / sub, q = bez(c.P, u); seg(prev, q, c.col, .22 + .2 * ov, 3.2); prev = q; }
+  }
+  PULSES.forEach(([cid, t0, dur], i) => {
+    const s = PSPR[i], r = p(t, t0, dur), on = r > 0 && r < 1; s.visible = on; if (!on) return;
+    const c = CH.find(x => x.id === cid), q = bez(c.P, eio(r));
+    s.position.set(q.x, .05, q.z); const sz = .9 + .2 * Math.sin(t * 30); s.scale.set(sz, sz, 1); s.material.opacity = Math.min(1, r * 6, (1 - r) * 6);
+  });
+  // result: a batch run walking the whole chain, repeating
+  LOOP.forEach((s, i) => {
+    const ph = ((t - OUT0 - 1.2) / 2.6 + i / LOOP.length) % 1;
+    s.visible = t > OUT0 + 1.2;
+    if (!s.visible) return;
+    const f = ph * CHAIN.length, ci = Math.floor(f), c = CH.find(x => x.id === CHAIN[ci]);
+    const q = bez(c.P, f - ci); s.position.set(q.x, .05, q.z); s.scale.set(1.3, 1.3, 1); s.material.opacity = .9 * eo(p(t, OUT0 + 1.2, .6));
+  });
+  iA.needsUpdate = iB.needsUpdate = iC.needsUpdate = iWd.needsUpdate = true;
+  lineGeo.instanceCount = Math.max(1, NS); if (!NS) iC.array.fill(0, 0, 3);
+
+  renderer.render(scene, camera);
+  ctx.setTransform(Q, 0, 0, Q, 0, 0); ctx.globalAlpha = 1;
+  ctx.drawImage(renderer.domElement, 0, 0, W, H);
+  overlay(t);
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) {
+    try { document.fonts.add(await new FontFace(family, `url(../assets/fonts/${file})`, { weight }).load()); } catch (e) { /* fallback font */ }
+  }
+  await document.fonts.ready;
+  for (const id of ORDER) ART[id].key = null;
+  renderAt(0);
+})();
+
+// ── player (standalone only) ─────────────────────────────────
+if (!EMBED && !RENDER) {
+  const $ = id => document.getElementById(id);
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  if (TALL) $('c').setAttribute('width', W), $('c').setAttribute('height', H);
+  $('scrub').setAttribute('aria-valuemax', DURATION);
+  let t = 0, playing = false, started = false, last = 0, rate = 1;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button'); b.innerHTML = `<span>${n}</span>${label}`;
+    b.addEventListener('click', () => { seek(s + .01); play(); }); $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`; $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play; $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing; $('big').innerHTML = ended ? ICON.replay : ICON.play; $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', String(i === cur && started)));
+  }
+  const draw = () => renderAt(Math.min(t, DURATION - .001));
+  function play() { if (t >= DURATION) t = 0; started = true; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  const toggle = () => playing ? pause() : play();
+  function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+  function loop(now) {
+    if (playing) { t += Math.min(.1, (now - last) / 1000) * rate; last = now; if (t >= DURATION) { t = DURATION; playing = false; } draw(); ui(); }
+    requestAnimationFrame(loop);
+  }
+  const RATES = [1, .75, .5];
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) { rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`); try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ } }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle); $('play').addEventListener('click', toggle);
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+  });
+  const posterMode = location.hash === '#poster';
+  ui();
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(loop);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+}
+</script>
+</body>
+</html>

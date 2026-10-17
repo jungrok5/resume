@@ -152,7 +152,7 @@ const SWEEP = [6.6, 12.2];  // draw-call replay window
 // ── UI palette (Unreal-ish greys, engine stat colours) ───────
 const C = {
   text: '#f2f3f5', dim: '#a9aeb7', faint: '#6f747d', red: '#ff5252', green: '#4cff7a', blue: '#3d8bff',
-  actor: '#ff8a3d', body: '#3cf0c8', born: '#7dff6a', die: '#ff5a5a', panel: 'rgba(16,17,20,.80)', line: 'rgba(255,255,255,.12)',
+  actor: '#ff8a3d', body: '#3cf0c8', born: '#7dff6a', die: '#ff5a5a', panel: 'rgba(16,17,20,.88)', line: 'rgba(255,255,255,.12)',
 };
 
 // ── three ────────────────────────────────────────────────────
@@ -303,6 +303,7 @@ function crates(R, x0, z0, n) {
     const x0 = OX + i * CS + 3, z0 = OZ + j * CS + 3;
     let kind = R();
     if (i === 4 && j === 4) kind = 'pix';
+    else if (i === 4 && j === 5) kind = 'yard';
     else kind = kind < .62 ? 'house' : kind < .74 ? 'tower' : kind < .84 ? 'pix' : 'park';
     fence(R, x0, z0);
     if (kind === 'house') {
@@ -326,6 +327,9 @@ function crates(R, x0, z0, n) {
       if (i === 4 && j === 4) wallPlot = { x0, x1: x0 + 9, y0: 0, y1: 6, z: zf + .5 };
       for (let n = 0; n < 3; n++) tree(R, x0 + 1.5 + n * 3, z0 + 2 + R() * 2, .8 + R() * .4);
       crates(R, x0, z0, 2);
+    } else if (kind === 'yard') {
+      crates(R, x0, z0, 6);
+      for (let n = 0; n < 4; n++) add('crown', x0 + 1 + R() * 7, .35, z0 + 1 + R() * 7, .55, .45, .55, R() * 6, '#5c9e4a');
     } else {
       for (let n = 0; n < 6; n++) tree(R, x0 + 1 + R() * 7, z0 + 1 + R() * 7, .7 + R() * .6);
       for (let n = 0; n < 5; n++) add('crown', x0 + 1 + R() * 7, .35, z0 + 1 + R() * 7, .55, .45, .55, R() * 6, '#5c9e4a');
@@ -444,11 +448,12 @@ const CAM = {
   g0: { tx: -6, ty: 1, tz: -1, yaw: .66, pitch: .44, dist: 46, fov: 36 },
   g1: { tx: -4, ty: 1, tz: -1, yaw: .46, pitch: .44, dist: 45, fov: 36 },
   d1: { tx: -2, ty: 1, tz: 0, yaw: .38, pitch: .47, dist: 45, fov: 36 },
-  wall: { tx: 1.5, ty: 3, tz: 14, yaw: .16, pitch: .2, dist: 25, fov: 36 },
+  wall: { tx: 1.5, ty: 3.2, tz: 17, yaw: .14, pitch: .3, dist: 25, fov: 36 },
   phys: { tx: 0, ty: 0, tz: ROAD_Z + 2, yaw: .22, pitch: .98, dist: 50, fov: 38 },
   r0: { tx: 2, ty: 1, tz: -1, yaw: -.30, pitch: .42, dist: 46, fov: 36 },
   r1: { tx: 4, ty: 1, tz: -1, yaw: -.42, pitch: .42, dist: 45, fov: 36 },
 };
+if (TALL) { CAM.wall.ty = 5.4; CAM.wall.dist = 27; CAM.phys.tz = ROAD_Z - 3; CAM.phys.dist = 52; }
 const mixC = (a, b, k) => { const o = {}; for (const key in a) o[key] = lerp(a[key], b[key], k); return o; };
 function camAt(t) {
   const follow = x => ({ ...CAM.phys, tx: x + 6 });
@@ -486,14 +491,14 @@ function pick(t, filter, box, n = 1, minGap = 160) {
   for (const c of cand) { if (out.every(o => Math.hypot(o[2] - c[2], o[3] - c[3]) > minGap)) out.push(c); if (out.length >= n) break; }
   return out.map(c => c[1]);
 }
-const BOXW = TALL ? [180, 520, 900, 900] : [520, 300, 1300, 760];
+const BOXW = TALL ? [180, 520, 900, 860] : [420, 300, 1120, 780];
 const FIRST3 = pick(7.4, q => !q.actor && (q.ti === TI.block || q.ti === TI.crate || q.ti === TI.wedge), BOXW, 3, TALL ? 220 : 260);
 { // move them to the front of the draw order
   const swap = (pi, o) => { const other = P.find(q => q.order === o); const old = P[pi].order; other.order = old; P[pi].order = o; };
   FIRST3.forEach((pi, o) => swap(pi, o));
 }
 const TAG_DOOR = pick(13.8, q => q.ti === TI.door, BOXW, 1)[0];
-const TAG_LAMP = pick(13.8, q => q.ti === TI.lamp, TALL ? [140, 460, 940, 920] : [380, 220, 1400, 760], 1)[0];
+const TAG_LAMP = pick(13.8, q => q.ti === TI.lamp, TALL ? [140, 520, 940, 860] : [300, 260, 1150, 760], 1)[0];
 const TAG_ISM = pick(13.8, q => q.ti === TI.block && Math.abs(q.cx - P[TAG_DOOR].cx) + Math.abs(q.cz - P[TAG_DOOR].cz) >= 1, BOXW, 1)[0];
 
 // ═════════════════════════════════════════════════════════════
@@ -506,6 +511,7 @@ const sweepN = u => {      // props drawn so far in the replay (u = 0…1)
   return Math.min(N, 3 + (N - 3) * (Math.exp(a * k) - 1) / (Math.exp(a) - 1));
 };
 const DARK = [.035, .038, .045];
+const SW = { t: -1, n: 0, dn: 0, k0: 0 };   // per-frame sweep values (same t → same result)
 function propColor(q, t, out) {
   const u = q.col, ac = q.actor;
   const lamp = q.ti === TI.lamp ? 1.5 : 1;
@@ -513,9 +519,8 @@ function propColor(q, t, out) {
   let r, g, b;
   if (t < 6.0) { r = user0; g = user1; b = user2; }
   else if (t < 13.0) {
-    const n = sweepN(p(t, SWEEP[0], SWEEP[1] - SWEEP[0]));
-    const dn = (sweepN(p(t + .05, SWEEP[0], SWEEP[1] - SWEEP[0])) - n) / .05;
-    const k0 = eo(p(t, 6.0, .45));
+    if (SW.t !== t) { SW.t = t; SW.n = sweepN(p(t, SWEEP[0], SWEEP[1] - SWEEP[0])); SW.dn = (sweepN(p(t + .05, SWEEP[0], SWEEP[1] - SWEEP[0])) - SW.n) / .05; SW.k0 = eo(p(t, 6.0, .45)); }
+    const n = SW.n, dn = SW.dn, k0 = SW.k0;
     if (q.order < n) {
       const age = n - 1 - q.order, w = Math.max(.7, dn * .1), f = Math.exp(-age / w) * 2.6;
       r = q.hash[0] + f; g = q.hash[1] + f; b = q.hash[2] + f;
@@ -523,14 +528,15 @@ function propColor(q, t, out) {
   } else if (t < 17.2) {
     const kd = eo(p(t, 13.0, .5));
     if (ac) {
-      const pul = 1.25 + .35 * Math.sin(t * 6 + q.order);
+      const pul = 2.0 + .5 * Math.sin(t * 6 + q.order);
       r = lerp(q.hash[0], q.batch[0] * pul, kd); g = lerp(q.hash[1], q.batch[1] * pul, kd); b = lerp(q.hash[2], q.batch[2] * pul, kd);
     } else {
-      const dimk = lerp(1, .26, kd), kb = eio(p(t, 14.6 + q.wx * 1.1, .45));
-      r = lerp(q.hash[0] * dimk, q.batch[0], kb); g = lerp(q.hash[1] * dimk, q.batch[1], kb); b = lerp(q.hash[2] * dimk, q.batch[2], kb);
+      const dimk = lerp(1, .5, kd), kb = eio(p(t, 14.6 + q.wx * 1.1, .45));
+      const gk = .7 * kd, h0 = lerp(q.hash[0], .3, gk) * dimk, h1 = lerp(q.hash[1], .32, gk) * dimk, h2 = lerp(q.hash[2], .36, gk) * dimk;
+      r = lerp(h0, q.batch[0], kb); g = lerp(h1, q.batch[1], kb); b = lerp(h2, q.batch[2], kb);
     }
   } else if (t < 21.0) {
-    const k = eio(p(t, 17.2, .6)), pul = ac ? 1.25 : 1;
+    const k = eio(p(t, 17.2, .6)), pul = ac ? 2.0 : 1;
     r = lerp(q.batch[0] * pul, user0, k); g = lerp(q.batch[1] * pul, user1, k); b = lerp(q.batch[2] * pul, user2, k);
   } else {
     const k = t < 28.3 ? eo(p(t, 21.0, .8)) : 1 - eio(p(t, 28.3, .6));
@@ -652,9 +658,8 @@ function statBlock(t, a) {
   if (!TALL) {
     const x = 1252, y = 44, w = 624, h = 356;
     panel(x, y, w, h, 1, { stroke: pulse > .02 ? `rgba(76,255,122,${.25 + .6 * pulse})` : C.line });
-    txt('stat fps', x + 32, y + 66, { size: 36, mono: true, color: C.dim, weight: 500 });
-    flipText('16.5', '47.4', k, x + w - 140, y + 140, { size: 124, weight: 800, mono: true, align: 'right' }, C.red, C.green);
-    txt('FPS', x + w - 32, y + 140, { size: 44, weight: 800, mono: true, align: 'right', color: k < .5 ? C.red : C.green });
+    txt('FPS', x + 32, y + 140, { size: 38, weight: 700, mono: true, color: C.dim });
+    flipText('16.5', '47.4', k, x + w - 32, y + 146, { size: 124, weight: 800, mono: true, align: 'right' }, C.red, C.green);
     txt('드로우콜', x + 32, y + 270, { size: 38, weight: 700, color: C.dim });
     flipText('20,967', '503', k, x + w - 32, y + 282, { size: 112, weight: 800, mono: true, align: 'right' }, C.text, C.green);
     ctx.fillStyle = C.line; ctx.fillRect(x + 32, y + 304, w - 64, 2);
@@ -678,7 +683,7 @@ function viewChip(t) {
     [21.2, 28.5, '◉  디버그 뷰 · 충돌 바디 (개념도)', C.body],
     [28.5, 99, '▶  플레이 화면 · 재현', C.text],
   ];
-  const size = TALL ? 46 : 36, x = TALL ? 36 : 44, y = TALL ? 384 : 44;
+  const size = TALL ? 46 : 36, x = TALL ? 36 : 44, y = TALL ? (t > 28.8 ? 700 : 384) : 44;
   for (const [s, e, label, c] of segs) {
     const a = win(t, s, e, .25); if (a <= .01) continue;
     const w = tw(label, size, 700) + 48;
@@ -687,7 +692,7 @@ function viewChip(t) {
   }
 }
 function caption(num, title, sub, a, subA = a) {
-  if (a <= .01) return;
+  if (Math.max(a, subA) <= .01) return;
   if (!TALL) {
     const x = 64, y = H - 70;
     txt(num, x, y - 82, { size: 40, weight: 800, mono: true, color: C.blue, alpha: a });
@@ -707,7 +712,7 @@ function worldTag(pi, label, color, a, { dx = 0, dy = -120, size } = {}) {
   size = size || (TALL ? 46 : 36);
   const w = tw(label, size, 700) + 36, h = size + 26;
   let bx = X + dx - w / 2, by = Y + dy - h;
-  bx = clamp(bx, 16, W - w - 16);
+  bx = clamp(bx, 16, (TALL ? W : SIDE.x - 8) - w - 16); by = Math.max(by, TALL ? 470 : 130);
   ctx.save(); ctx.globalAlpha *= a;
   ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X, Y - 6); ctx.lineTo(clamp(X + dx, bx + 12, bx + w - 12), by + h); ctx.stroke();
   ctx.beginPath(); ctx.arc(X, Y - 6, 7, 0, 7); ctx.fillStyle = color; ctx.fill();
@@ -717,7 +722,7 @@ function worldTag(pi, label, color, a, { dx = 0, dy = -120, size } = {}) {
 }
 
 // side panel geometry (wide: right column under the stats; tall: band above the caption)
-const SIDE = TALL ? { x: 36, y: 880, w: 1008 } : { x: 1252, y: 424, w: 624 };
+const SIDE = TALL ? { x: 36, y: 870, w: 1008 } : { x: 1252, y: 424, w: 624 };
 
 function overlay02(t) {
   const a = win(t, 6.0, 13.0, .3); if (a <= .01) return;
@@ -728,7 +733,7 @@ function overlay02(t) {
     worldTag(pi, `Draw #${i + 1}`, C.text, a * on * fade, { dx: (i - 1) * 40, dy: -90 - i * 26 });
   });
   const s = SIDE, size = TALL ? 46 : 36;
-  const h = TALL ? 190 : 200;
+  const h = TALL ? 214 : 200;
   panel(s.x, s.y, s.w, h, a);
   txt('이 프레임을 그리는 순서대로', s.x + 32, s.y + size + 26, { size, weight: 700, alpha: a, sh: 0 });
   const by = s.y + size + 62, bw = s.w - 64;
@@ -736,7 +741,7 @@ function overlay02(t) {
   rr(s.x + 32, by, bw, 22, 6); ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.fill();
   if (n > 0) { rr(s.x + 32, by, Math.max(10, bw * n / N), 22, 6); const g = ctx.createLinearGradient(s.x + 32, 0, s.x + 32 + bw, 0); g.addColorStop(0, '#ff4f9a'); g.addColorStop(.5, '#ffd23f'); g.addColorStop(1, '#3d9bff'); ctx.fillStyle = g; ctx.fill(); }
   ctx.restore();
-  txt('프랍 1개 = 드로우콜 1회 (개념도)', s.x + 32, by + 22 + size + 16, { size: TALL ? 46 : 34, weight: 500, color: C.dim, alpha: a, sh: 0 });
+  txt('프랍 1개 = 드로우콜 1회 (개념도)', s.x + 32, by + 22 + (TALL ? 56 : 52), { size: TALL ? 44 : 34, weight: 500, color: C.dim, alpha: a, sh: 0 });
 }
 function overlay03(t) {
   const a = win(t, 13.0, 17.4, .3); if (a <= .01) return;
@@ -756,7 +761,7 @@ function overlay03(t) {
     txt('상호작용 → 액터', s.x + 32 + size * 1.3, s.y + size * 2.8 + 78, { size, weight: 600, alpha: aA, sh: 0 });
   }
   if (aB > .01) {
-    const cols = TALL ? 3 : 2, rows = Math.ceil(7 / cols), rh = TALL ? 64 : 58;
+    const cols = TALL ? 4 : 2, rows = Math.ceil(7 / cols), rh = TALL ? 64 : 58;
     const h = 92 + rows * rh + (TALL ? 0 : 10);
     panel(s.x, s.y, s.w, h, aB);
     txt('메시마다 한 배치', s.x + 32, s.y + size + 26, { size, weight: 800, alpha: aB, sh: 0 });
@@ -785,7 +790,7 @@ function overlay03c(t) {
   txt(label, x0 + 20, y0 - 30, { size, weight: 800, color: C.green, alpha: a * k, sh: 0 });
   const code = 'PerInstanceCustomData = (R, G, B)', cs = TALL ? 40 : 36;
   const cw = tw(code, cs, 600, true) + 40;
-  const cx = TALL ? clamp((x0 + x1) / 2 - cw / 2, 20, W - cw - 20) : clamp(x0, 20, W - cw - 20), cy = y1 + 22;
+  const cx = clamp((x0 + x1) / 2 - cw / 2, 20, W - cw - 20), cy = y1 + 22;
   const k2 = eo(p(t, 18.8, .6));
   panel(cx, cy, cw, cs + 34, a * k2);
   txt(code, cx + 20, cy + cs + 8, { size: cs, weight: 600, mono: true, color: '#ffd23f', alpha: a * k2, sh: 0 });
@@ -800,8 +805,9 @@ function overlay04(t) {
       if (k <= .01) return;
       const [X, Y] = proj(OX + (i + .5) * CS, 7, ROAD_Z - CS * .2);
       const size = TALL ? 46 : 38, w = tw(label, size, 800) + 36;
-      panel(X - w / 2, Y - size - 20, w, size + 30, a * k, { stroke: color });
-      txt(label, X, Y - 4, { size, weight: 800, color, align: 'center', alpha: a * k, sh: 0 });
+      const Xc = clamp(X, w / 2 + 24, (TALL ? W - 24 : SIDE.x - 24) - w / 2), Yc = clamp(Y, TALL ? 680 : 200, H);
+      panel(Xc - w / 2, Yc - size - 20, w, size + 30, a * k, { stroke: color });
+      txt(label, Xc, Yc - 4, { size, weight: 800, color, align: 'center', alpha: a * k, sh: 0 });
     };
     tag('＋ 바디 생성', C.born, ka); tag('－ 바디 파괴', C.die, kd);
   }
@@ -809,23 +815,24 @@ function overlay04(t) {
   const [AX, AY] = proj(x, 3.2, ROAD_Z);
   const lab = '인접 27칸 (3×3×3)', size = TALL ? 46 : 36, lw = tw(lab, size, 800) + 36;
   const ky = TALL ? 150 : 160;
-  panel(AX - lw / 2, AY - ky - size, lw, size + 30, a, { stroke: C.body });
-  txt(lab, AX, AY - ky + 12, { size, weight: 800, color: C.body, align: 'center', alpha: a, sh: 0 });
+  const LY = Math.max(AY - ky, TALL ? 520 : 170);
+  panel(AX - lw / 2, LY - size, lw, size + 30, a, { stroke: C.body });
+  txt(lab, AX, LY + 12, { size, weight: 800, color: C.body, align: 'center', alpha: a, sh: 0 });
   // concept bars: total props grows, resident bodies stay constant
   const s = SIDE, bA = win(t, 24.6, 28.5, .4);
   if (bA > .01) {
-    const h = TALL ? 236 : 250, lx = s.x + 32, bx = s.x + (TALL ? 290 : 232), bw = s.w - (bx - s.x) - 40;
+    const h = TALL ? 236 : 250, lx = s.x + 32, bx = s.x + (TALL ? 290 : 232), bw = s.w - (bx - s.x) - (TALL ? 150 : 130);
     panel(s.x, s.y, s.w, h, bA);
-    txt('개념도', s.x + s.w - 32, s.y + size + 22, { size: TALL ? 40 : 30, weight: 600, color: C.dim, align: 'right', alpha: bA, sh: 0 });
-    const grow = eo(p(t, 24.8, 2.6));
-    txt('프랍 총량', lx, s.y + size + 82, { size, weight: 700, alpha: bA, sh: 0 });
+    txt('개념도', lx, s.y + (TALL ? 56 : 50), { size: TALL ? 40 : 30, weight: 600, color: C.dim, alpha: bA, sh: 0 });
+    const grow = eo(p(t, 24.8, 2.6)), r1 = s.y + (TALL ? 130 : 128), r2 = s.y + (TALL ? 208 : 208);
+    txt('프랍 총량', lx, r1, { size, weight: 700, alpha: bA, sh: 0 });
     ctx.save(); ctx.globalAlpha = bA;
-    rr(bx, s.y + 70 + size * .2, Math.max(8, bw * lerp(.18, 1, grow)), 26, 6); ctx.fillStyle = '#8b93a1'; ctx.fill(); ctx.restore();
-    txt('→ 1억', bx + bw * lerp(.18, 1, grow), s.y + 32 + size * .2, { size, weight: 800, align: 'right', alpha: bA * grow, sh: 0 });
-    txt('상주 바디', lx, s.y + size + 172, { size, weight: 700, color: C.body, alpha: bA, sh: 0 });
+    rr(bx, r1 - 24, Math.max(8, bw * lerp(.18, 1, grow)), 26, 6); ctx.fillStyle = '#8b93a1'; ctx.fill(); ctx.restore();
+    txt('1억', bx + bw * lerp(.18, 1, grow) + 18, r1, { size, weight: 800, alpha: bA * grow, sh: 0 });
+    txt('상주 바디', lx, r2, { size, weight: 700, color: C.body, alpha: bA, sh: 0 });
     ctx.save(); ctx.globalAlpha = bA;
-    rr(bx, s.y + 160 + size * .2, bw * .16, 26, 6); ctx.fillStyle = C.body; ctx.fill(); ctx.restore();
-    txt('상수', bx + bw * .16 + 20, s.y + 160 + size * .2 + 24, { size, weight: 800, color: C.body, alpha: bA, sh: 0 });
+    rr(bx, r2 - 24, bw * .16, 26, 6); ctx.fillStyle = C.body; ctx.fill(); ctx.restore();
+    txt('상수', bx + bw * .16 + 18, r2, { size, weight: 800, color: C.body, alpha: bA, sh: 0 });
   }
 }
 function overlay05(t) {
@@ -853,19 +860,19 @@ function overlay05(t) {
     txt('스폰  49.8s → 2.6s', x + 40, y + 560, { size: 44, weight: 800, mono: true, alpha: a * k3, sh: 0 });
     txt(note, x + 40, y + 624, { size: 36, weight: 600, color: '#dfe3ea', alpha: a * k3, sh: 0 });
   } else {
-    const x = 36, y = 32, w = 1008, h = 640;
+    const x = 36, y = 32, w = 1008, h = 620;
     panel(x, y, w, h, a, { fill: 'rgba(16,17,20,.92)' });
     txt('결과 · 실측 (프랍 10만 개 스폰)', x + 40, y + 76, { size: 46, weight: 700, color: C.dim, alpha: a, sh: 0 });
     const row = (label, from, to, yy, d) => {
       const k = eo(p(t, 29.2 + d, .6));
-      txt(label, x + 40, yy - 150, { size: 46, weight: 700, color: C.dim, alpha: a * k, sh: 0 });
+      txt(label, x + 40, yy - 140, { size: 46, weight: 700, color: C.dim, alpha: a * k, sh: 0 });
       txt(from, x + 40, yy, { size: 130, weight: 800, mono: true, color: '#8f96a3', alpha: a * k, sh: 0 });
       const fw = tw(from, 130, 800, true);
       txt('→', x + 60 + fw, yy - 18, { size: 80, weight: 700, color: C.dim, alpha: a * k, sh: 0 });
       txt(to, x + 160 + fw, yy, { size: 150, weight: 800, mono: true, color: C.green, alpha: a * k, sh: 0 });
     };
-    row('드로우콜', '20,967', '503', y + 320, 0);
-    row('FPS', '16.5', '47.4', y + 580, .25);
+    row('드로우콜', '20,967', '503', y + 306, 0);
+    row('FPS', '16.5', '47.4', y + 566, .25);
     const k3 = eo(p(t, 29.8, .6));
     scrim(H - 360, H, a * k3);
     txt('스폰  49.8s → 2.6s', 44, H - 196, { size: 60, weight: 800, mono: true, alpha: a * k3 });

@@ -138,7 +138,7 @@ const MONO = '"JetBrains Mono", Pretendard, "DejaVu Sans Mono", monospace';
 const C = {
   bg: '#060a09', text: '#eef6f2', dim: '#93a8a0', faint: '#56685f', line: '#1f2e29',
   users: '#34f5a6', mem: '#ffb547', net: '#45d4ff', disp: '#8fb0ff', db: '#b896ff', log: '#ff86bd', red: '#ff4d5e',
-  shell: '#16201d', gray: '#5d6a66',
+  shell: '#3a4d46', gray: '#5d6a66',
 };
 // type scale per layout (stage is shown small in the résumé: wide ≥ 36 px, tall ≥ 46 px)
 const T = TALL
@@ -261,7 +261,7 @@ let LID;
 {
   const w = SH.x1 - SH.x0, d = SH.z1 - SH.z0, cx = (SH.x0 + SH.x1) / 2, cz = (SH.z0 + SH.z1) / 2;
   const front = canvasTex(1024, 128, (g, W2, H2) => {
-    g.fillStyle = '#121b18'; g.fillRect(0, 0, W2, H2);
+    g.fillStyle = '#2c3c36'; g.fillRect(0, 0, W2, H2);
     g.fillStyle = '#0b1110'; for (let i = 0; i < 46; i++) g.fillRect(380 + i * 13, 34, 6, 60);
     g.fillStyle = '#34f5a6'; g.fillRect(60, 56, 14, 14); g.fillStyle = '#1d6d4f'; g.fillRect(90, 56, 14, 14);
     g.fillStyle = '#1b2723'; g.fillRect(0, 0, W2, 4); g.fillRect(0, H2 - 4, W2, 4);
@@ -274,12 +274,12 @@ let LID;
     const pv = new THREE.Group(); pv.position.set(px, 0, pz); scene.add(pv);
     const geo = ax === 'x' ? boxAO(len, SH.h, .5, .7) : boxAO(.5, SH.h, len, .7);
     const m = mesh(pv, geo, ax === 'x' && sg === 1 ? [sideM, sideM, sideM, sideM, mat, sideM] : mat, 0, SH.h / 2, 0);
-    edges(pv, geo, C.users, .5, 0).position.copy(m.position);
+    edges(pv, geo, C.users, .8, 0).position.copy(m.position);
     WALLS.push({ pv, ax, sg });
   });
   LID = new THREE.Group(); scene.add(LID);
   const lg = boxAO(w + .6, .5, d + .6, .8);
-  const lidTex = canvasTex(512, 384, (g, W2, H2) => { g.fillStyle = '#141e1b'; g.fillRect(0, 0, W2, H2); g.fillStyle = '#0d1412'; for (let i = 0; i < 9; i++) g.fillRect(150 + i * 24, 120, 10, 144); g.strokeStyle = '#22322d'; g.lineWidth = 3; g.strokeRect(14, 14, W2 - 28, H2 - 28); });
+  const lidTex = canvasTex(512, 384, (g, W2, H2) => { g.fillStyle = '#304540'; g.fillRect(0, 0, W2, H2); g.fillStyle = '#16211e'; for (let i = 0; i < 9; i++) g.fillRect(150 + i * 24, 120, 10, 144); g.strokeStyle = '#22322d'; g.lineWidth = 3; g.strokeRect(14, 14, W2 - 28, H2 - 28); });
   const lm = MP(0, '#ffffff', { map: lidTex, metalness: .45, roughness: .45, transparent: true });
   mesh(LID, lg, lm, cx, 0, cz);
   edges(LID, lg, C.users, .6, 0).position.set(cx, 0, cz);
@@ -356,7 +356,7 @@ let PKT, GPILE, RINGM = [], POOLBED, PEOPLE;
 }
 
 // ── dispatcher plate: the main lane, and (from 04) the DB and log lanes ──
-const LX0 = -24, LX1 = 24, LANEZ = { main: 5.6, db1: 11.0, db2: 13.4, log: 18.0 };
+const LX0 = -24, LX1 = 24, LANEZ = TALL ? { main: 4.4, db1: 10.6, db2: 13.0, log: 17.8 } : { main: 5.6, db1: 11.0, db2: 13.4, log: 18.0 };
 const SEQ = (() => {
   const unit = [['L', 3.0], ['G', .7], ['D', 3.4], ['L', 2.1], ['G', .7], ['G', .7], ['L', 1.5]];
   const s = []; for (let u = 0; u < 4; u++) unit.forEach(([k, l]) => s.push({ k, l, u }));
@@ -368,8 +368,8 @@ const SEQ = (() => {
   s.forEach(b => { if (b.k === 'D') { b.lane = di % 2 ? 'db2' : 'db1'; b.ax = b.x; di++; } });
   for (let u = 0; u < 4; u++) {                  // each unit's three log writes become one batch written at the unit's end
     const g = s.filter(b => b.k === 'G' && b.u === u); const end = g[g.length - 1].x + g[g.length - 1].l;
-    const bl = .62 * g.reduce((a, b) => a + b.l, 0) / g.length * 1.6;
-    g.forEach((b, j) => { b.mx = b.x; b.ax = end - bl + j * bl / g.length; b.al = bl / g.length + (j < g.length - 1 ? .02 : 0); });
+    const bl = .75 * g.reduce((a, b) => a + b.l, 0);
+    g.forEach((b, j) => { b.mx = b.x; b.ax = end - bl + j * bl / g.length; b.al = bl / g.length; });
   }
   s.packEnd = xl - gap;
   return s;
@@ -379,7 +379,7 @@ let LBLK, BEDS = {}, FREE, FREEE, SATE;
   LBLK = dynInst(scene, UNIT, glowMat(3, .45), 40);
   for (const [k, z] of Object.entries(LANEZ)) {
     const g = new THREE.Group(); g.position.set(LX0 - .5, TOP, DC[1] - 9 + z); scene.add(g);
-    const geo = UNIT.clone(); const m = mesh(g, geo, M(3, '#0c1412'), 0, 0, 0); m.scale.set(LX1 - LX0 + 1, .35, 2.6);
+    const geo = UNIT.clone(); const m = mesh(g, geo, MP(3, '#16211f', { roughness: .8 }), 0, 0, 0); m.scale.set(LX1 - LX0 + 1, .35, 2.6);
     const e = edges(g, UNIT, k === 'main' ? C.disp : k === 'log' ? C.log : C.db, .9, 3); e.scale.copy(m.scale);
     BEDS[k] = { g, e };
   }
@@ -392,32 +392,32 @@ const laneZ = k => DC[1] - 9 + LANEZ[k];
 // ── camera path ──────────────────────────────────────────────
 // [t, target, distance, yaw, pitch, vertical fov, view offset x, view offset y]
 const KW = [
-  [0.0, [0, 3, 0], 118, .62, .42, 30, -380, 30],
-  [1.6, [0, 3, 0], 114, .56, .46, 30, -380, 30],
-  [4.6, [0, 1, 0], 112, .32, .82, 30, -10, 20],
-  [5.5, [0, 1, 0], 110, .3, .84, 30, -10, 20],
+  [0.0, [0, 3, 0], 150, .62, .44, 30, -400, 10],
+  [1.6, [0, 3, 0], 146, .56, .48, 30, -400, 10],
+  [4.6, [0, 1, 1], 98, .3, .84, 30, 0, 10],
+  [5.5, [0, 1, 1], 96, .28, .86, 30, 0, 10],
   [6.8, [HC[0], 1, HC[1]], 48, .34, .8, 30, -300, 20],
   [12.0, [HC[0], 1, HC[1]], 46, .24, .84, 30, -300, 20],
   [13.4, [NC[0], 1, NC[1]], 47, -.26, .82, 30, -260, 10],
   [18.8, [NC[0], 1, NC[1]], 45, -.16, .86, 30, -260, 10],
   [20.2, [0, 1, DC[1]], 74, .02, .98, 30, 0, -60],
   [25.8, [0, 1, DC[1]], 72, -.03, 1.0, 30, 0, -60],
-  [27.6, [0, 1, 1], 112, .36, .9, 30, -420, 0],
-  [32.0, [0, 1, 1], 108, .42, .9, 30, -420, 0],
+  [27.6, [0, 1, 1], 118, .36, .9, 30, -520, 0],
+  [32.0, [0, 1, 1], 114, .42, .9, 30, -520, 0],
 ];
 const KT = [
   [0.0, [0, 3, 0], 150, .62, .45, 40, 0, -300],
   [1.6, [0, 3, 0], 146, .56, .5, 40, 0, -300],
-  [4.6, [0, 1, 0], 150, .25, .95, 40, 0, -120],
-  [5.5, [0, 1, 0], 148, .22, .96, 40, 0, -120],
+  [4.6, [0, 1, 1], 124, .25, .95, 40, 0, 40],
+  [5.5, [0, 1, 1], 122, .22, .96, 40, 0, 40],
   [6.8, [HC[0], 1, HC[1]], 54, .3, .9, 40, 0, -230],
   [12.0, [HC[0], 1, HC[1]], 52, .2, .94, 40, 0, -230],
-  [13.4, [NC[0], 1, NC[1]], 54, -.22, .9, 40, 0, -150],
-  [18.8, [NC[0], 1, NC[1]], 52, -.12, .94, 40, 0, -150],
-  [20.2, [0, 1, DC[1]], 104, .0, 1.1, 40, 0, -130],
-  [25.8, [0, 1, DC[1]], 102, -.02, 1.12, 40, 0, -130],
-  [27.6, [0, 1, 1], 150, .3, 1.0, 40, 0, -330],
-  [32.0, [0, 1, 1], 146, .36, 1.0, 40, 0, -330],
+  [13.4, [NC[0], 1, NC[1]], 54, -.22, .9, 40, 0, -60],
+  [18.8, [NC[0], 1, NC[1]], 52, -.12, .94, 40, 0, -60],
+  [20.2, [0, 1, DC[1]], 98, .0, 1.1, 40, 0, -230],
+  [25.8, [0, 1, DC[1]], 96, -.02, 1.12, 40, 0, -230],
+  [27.6, [0, 1, 1], 150, .3, 1.0, 40, 0, -500],
+  [32.0, [0, 1, 1], 146, .36, 1.0, 40, 0, -500],
 ];
 const K = (TALL ? KT : KW).map(([t, T, d, yaw, pitch, fov, ox, oy]) => ({ t, T: V3(...T), d, fov, ox, oy, yaw, pitch }));
 function camAt(t) {
@@ -450,9 +450,9 @@ function animate(t) {
   dimGroup(0, 1 - .55 * ok);
   // focus dimming
   const f2 = win(t, 6.2, 12.9, .7), f3 = win(t, 13.0, 19.7, .7), f4 = win(t, 19.8, 26.7, .7);
-  dimGroup(1, 1 - .7 * Math.max(f3, f4));
-  dimGroup(2, 1 - .7 * Math.max(f2, f4));
-  dimGroup(3, 1 - .7 * Math.max(f2, f3));
+  dimGroup(1, 1 - .8 * Math.max(f3, f4));
+  dimGroup(2, 1 - .8 * Math.max(f2, f4));
+  dimGroup(3, 1 - .8 * Math.max(f2, f3));
 
   // heap objects + tracking rings
   let n = 0, nr = 0;
@@ -507,17 +507,17 @@ function animate(t) {
   const arc = (A, B, h, f) => V3(lerp(A.x, B.x, f), lerp(A.y, B.y, f) + Math.sin(f * Math.PI) * h, lerp(A.z, B.z, f));
   if (t < FIX3 + .2) {
     // before: every view sends on its own → a viewer inside two views gets two packets; each packet is a freshly allocated buffer
-    const P = 1.7;
-    NV.forEach(([vx, vz], v) => DUP[v].forEach((ri, c) => {
-      const f = (((t / P + v * .13 + ri * .31) % 1) + 1) % 1;
+    const P = 1.5;
+    NV.forEach(([vx, vz], v) => DUP[v].forEach(ri => [0, .5].forEach(o => {
+      const f = (((t / P + v * .13 + ri * .31 + o) % 1) + 1) % 1;
       const V = V3(vx, TOP + 1.8, vz), G = V3(GARB[0], TOP + .6, GARB[1]);
-      let q, s = .9, col = C.net;
-      if (f < .1) { q = SRC.clone(); s = .9 * eo(f / .1) * (1 + .5 * (1 - f / .1)); col = '#ffffff'; }
+      let q, s = .72, col = C.net;
+      if (f < .1) { q = SRC.clone(); s = .72 * eo(f / .1) * (1 + .5 * (1 - f / .1)); col = '#ffffff'; }
       else if (f < .52) { q = arc(SRC, V, 2.2, (f - .1) / .42); }
-      else if (f < .86) { q = arc(V, G, 1.6, eio((f - .52) / .34)); col = C.gray; s = .8; }
+      else if (f < .86) { q = arc(V, G, 1.6, eio((f - .52) / .34)); col = C.gray; s = .62; }
       else return;
       setI(PKT, n++, q.x, q.y, q.z, s * pk, s * pk, s * pk, col);
-    }));
+    })));
   } else {
     // after: one merged packet per viewer; its buffer comes from the pool and goes back to it
     const P = 2.0;
@@ -567,8 +567,8 @@ function animate(t) {
     } else {
       x = lerp(b.x, b.ax, eio(p(t, PACK, 1.1)));
     }
-    const hh = 1.2;
-    setI(LBLK, n++, x + .04, y, z, l - .08, hh, 2.0, col);
+    const gap = b.k === 'G' ? .08 * (1 - eio(p(t, MERGE, 1.0))) : .08;
+    setI(LBLK, n++, x + gap / 2, y, z, l - gap, 1.2, 2.0, col);
   });
   done(LBLK, n);
   const fr = eo(p(t, PACK + .9, .6));
@@ -669,7 +669,7 @@ function status(t) {
     runs([['안정 동접 ', C.dim], ['2,000', C.users, true]], W - T.pad, 104, 36, 700, { align: 'right', alpha: a });
     txt('블록 · 그래프는 개념도', W - T.pad, 152, { size: 30, weight: 500, color: C.faint, align: 'right', alpha: a });
   } else {
-    txt('개념도', W - T.pad, 112, { size: 40, weight: 600, color: C.faint, align: 'right', alpha: a });
+    const b = win(t, 12.8, 26.6, .4); txt('개념도', W - T.pad, 112, { size: 40, weight: 600, color: C.faint, align: 'right', alpha: b });
   }
 }
 function bottomLine(t, t0, t1, parts) {
@@ -732,7 +732,8 @@ function gauge(t, x, y, w, h, a) {
 
 // ── 01 · intro: stuck at 2,000, open the box ─────────────────
 function ov01(t) {
-  const a = 1 - eio(p(t, 4.6, .8)); if (a <= 0) return;
+  const a = 1 - eio(p(t, 3.5, .7));
+  if (a > 0) {
   ctx.save(); ctx.globalAlpha = a;
   if (!TALL) {
     const g = ctx.createLinearGradient(0, 0, 1150, 0); g.addColorStop(0, 'rgba(6,10,9,.94)'); g.addColorStop(.75, 'rgba(6,10,9,.6)'); g.addColorStop(1, 'rgba(6,10,9,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, 1150, H);
@@ -752,10 +753,11 @@ function ov01(t) {
     gauge(t, x, 450, W - 2 * x, 300, 1);
   }
   ctx.restore();
-  tag([SH.x0 + 8, SH.h + .3, SH.z1], '게임서버 프로세스', C.users, win(t, .0, OPEN0 + 1.2, .4), { dy: TALL ? 150 : 130, dx: TALL ? 40 : 60 });
+  }
+  tag([SH.x0 + 8, SH.h + .3, SH.z1], '게임서버 프로세스', C.users, win(t, .0, OPEN0 + 1.2, .4), { dy: TALL ? 150 : 150, dx: TALL ? 40 : 260 });
   bottomLine(t, OPEN0 + .4, 5.6, [['서버 프로세스를 열어 ', C.text], ['병목', C.red], ['을 찾는다', C.text]]);
   // module names once the box is open
-  const m = win(t, 4.2, 6.6, .4);
+  const m = win(t, 3.7, 5.8, .35);
   tag([HC[0], TOP, HC[1] - 8.5], '메모리 (힙)', C.mem, m, { dy: TALL ? -70 : -70 });
   tag([NC[0], TOP, NC[1] - 8.5], '패킷 송수신', C.net, m, { dy: TALL ? -70 : -70 });
   tag([DC[0], TOP, DC[1] + 9], '메인 디스패처', C.disp, m, { dy: TALL ? 70 : 70 });
@@ -803,9 +805,9 @@ function ov02(t) {
 function ov03(t) {
   const a = win(t, 13.0, 19.6, .5); if (a <= 0) return;
   const before = win(t, 13.2, FIX3 - .2, .35), after = win(t, FIX3 + .7, 19.6, .4);
-  tag([NSRC[0], TOP + 3.2, NSRC[1]], '보낼 때마다 new 버퍼', '#ffffff', before, { dy: TALL ? -200 : -170, dx: TALL ? 0 : -60 });
+  tag([NSRC[0], TOP + 3.2, NSRC[1]], '보낼 때마다 new 버퍼', '#ffffff', before, { dy: TALL ? -130 : -170, dx: TALL ? -170 : -60 });
   tag([GARB[0], TOP + 1.6, GARB[1]], '가비지', C.gray, before, { dy: TALL ? 130 : 110, dx: TALL ? -60 : 40 });
-  tag([NRINGS[1][0] + NRINGS[1][2] * .7, TOP, NRINGS[1][1] - NRINGS[1][2] * .7], '시야마다 따로 전송', C.net, before, { dy: TALL ? -120 : -110, dx: TALL ? -80 : 120 });
+  tag([NRINGS[1][0] + NRINGS[1][2] * .7, TOP, NRINGS[1][1] - NRINGS[1][2] * .7], '시야마다 따로 전송', C.net, before, { dy: TALL ? -200 : -110, dx: TALL ? 40 : 120 });
   tag([NUNION[0] + NUNION[2] * .7, TOP, NUNION[1] - NUNION[2] * .7], '시야 통합 · 한 번에 전송', C.net, after, { dy: TALL ? -120 : -110, dx: TALL ? -120 : 120 });
   tag([POOL[0][0], TOP + .8, POOL[2][1]], '버퍼 풀 · 재사용', C.users, after, { dy: TALL ? 200 : 170, dx: TALL ? 80 : -40 });
   bottomLine(t, 13.3, FIX3 - .1, [['겹친 시야마다 따로 보내고, ', C.text], ['매번 버퍼를 새로 할당', C.red]]);
@@ -823,15 +825,15 @@ function ov04(t) {
   lab('db1', 'DB 처리 · 분리', C.db, eo(p(t, DBMV - .4, .6)));
   lab('log', '로그 · 비동기 일괄 기록', C.log, eo(p(t, LOGMV - .4, .6)));
   const d0 = SEQ.find(b => b.k === 'D'), g0 = SEQ.filter(b => b.k === 'G')[3];
-  tag([d0.x + d0.l / 2, TOP + 1.4, laneZ('main')], 'DB 처리', C.db, win(t, 20.0, DBMV + .1, .35), { dy: TALL ? 150 : 120, dx: TALL ? 40 : 0 });
-  tag([g0.x + g0.l / 2, TOP + 1.4, laneZ('main')], '로그 파일 기록', C.log, win(t, 20.3, LOGMV + .1, .35), { dy: TALL ? 150 : 120, dx: TALL ? 80 : 60 });
+  tag([d0.x + d0.l / 2, TOP + 1.4, laneZ('main')], 'DB 처리', C.db, win(t, 20.0, DBMV + .1, .35), { dy: TALL ? 150 : 120, dx: TALL ? -30 : 0 });
+  tag([g0.x + g0.l / 2, TOP + 1.4, laneZ('main')], '로그 파일 기록', C.log, win(t, 20.3, LOGMV + .1, .35), { dy: TALL ? 250 : 120, dx: TALL ? 160 : 60 });
   const fr = win(t, PACK + 1.0, 26.6, .4);
   const fx = (SEQ.packEnd + .5 + LX1) / 2;
   const fq = project([fx, TOP + 1.4, laneZ('main')]);
   if (fq.ok && fr > 0) chip('여유', fq.x, fq.y - (TALL ? 4 : 0), C.users, { alpha: fr * a, align: 'center', size: T.lab, fill: .2 });
   bottomLine(t, 19.9, DBMV + .2, [['DB 처리와 로그 기록', C.red], ['까지 메인 디스패처가 떠안는다', C.text]]);
   bottomLine(t, DBMV + .4, PACK + .9, [['DB는 분리, 로그는 비동기로 ', C.text], ['모아서 일괄 기록', C.log]]);
-  bottomLine(t, PACK + 1.1, 26.5, [['디스패처에는 ', C.text], ['게임 로직', C.disp], ['만 남는다', C.text]]);
+  bottomLine(t, PACK + .8, 26.5, [['디스패처에는 ', C.text], ['게임 로직', C.disp], ['만 남는다', C.text]]);
 }
 
 // ── 05 · result ──────────────────────────────────────────────
@@ -841,19 +843,19 @@ function ov05(t) {
   const k2 = eo(p(t, RES + .9, .7));
   ctx.save(); ctx.globalAlpha = a;
   if (!TALL) {
-    const g = ctx.createLinearGradient(0, 0, 1180, 0); g.addColorStop(0, 'rgba(6,10,9,.95)'); g.addColorStop(.75, 'rgba(6,10,9,.6)'); g.addColorStop(1, 'rgba(6,10,9,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, 1180, H);
+    const g = ctx.createLinearGradient(0, 0, 1300, 0); g.addColorStop(0, 'rgba(6,10,9,.95)'); g.addColorStop(.75, 'rgba(6,10,9,.7)'); g.addColorStop(1, 'rgba(6,10,9,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, 1300, H);
     const x = T.pad;
     txt('트릭스터M 서버 최적화 파견 · 3개월', x, 150, { size: T.kick, weight: 600, color: C.dim });
     txt('안정 동접', x, 250, { size: 64, weight: 800 });
     const w0 = runs([['2,000', C.dim, true, T.num2]], x - 4, 420, T.num2, 800);
     runs([['→', C.dim, false, 90]], x + w0 + 22, 410, 90, 700);
-    const w1 = runs([['8,000', C.users, true]], x + w0 + 130, 420, T.num, 800, { alpha: k2 });
-    chip('4배', x + w0 + 130 + w1 + 36, 360, C.users, { size: 64, alpha: k2, fill: .22 });
+    runs([['8,000', C.users, true]], x + w0 + 130, 420, T.num, 800, { alpha: k2 });
+    chip('4배', x + tw('안정 동접', 64, 800) + 32, 228, C.users, { size: 64, alpha: k2, fill: .22 });
     gauge(t, x, 480, 800, 320, 1);
     txt('개선 후 파견 종료', x, 870, { size: T.body, weight: 600, color: C.dim, alpha: k2 });
     let cx = x; FIXES.forEach(([s, c], i) => { const kk = eo(p(t, RES + 1.2 + i * .15, .5)); cx += chip(s, cx, 960, c, { size: T.lab, alpha: kk }) + 16; });
   } else {
-    const g = ctx.createLinearGradient(0, 0, 0, 1000); g.addColorStop(0, 'rgba(6,10,9,.95)'); g.addColorStop(.8, 'rgba(6,10,9,.65)'); g.addColorStop(1, 'rgba(6,10,9,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, 1000);
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(6,10,9,.96)'); g.addColorStop(.6, 'rgba(6,10,9,.9)'); g.addColorStop(1, 'rgba(6,10,9,.82)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     const x = T.pad;
     txt('트릭스터M 최적화 파견 · 3개월', x, 112, { size: T.kick, weight: 600, color: C.dim });
     txt('안정 동접', x, 210, { size: 70, weight: 800 });

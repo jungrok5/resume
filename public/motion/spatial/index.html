@@ -470,8 +470,10 @@ void main() {
   col *= 1. - .74 * sb.g;
   float outF = 1. - inR(q, uFocus);
   col *= 1. - .72 * uFocusK * outF;
+  float fd = min(min(q.x - uFocus.x, uFocus.z - q.x), min(q.y - uFocus.y, uFocus.w - q.y)), fwf = fwidth(fd);
+  col = mix(col, uBlue, (1. - outF) * (1. - smoothstep(fwf * 1.5, fwf * 3.5, fd)) * uFocusK);
   col = mix(col, uLotLine, lineAt(g, 16., 1.7) * uLotK * inW * .6 * (1. - .7 * outF * uFocusK));
-  col = mix(col, uChunkLine, lineAt(g, 4., 1.3) * uChunkK * inR(q, uGridRect) * .5);
+  col = mix(col, uChunkLine, lineAt(g, 4., 1.3) * uChunkK * inR(q, uGridRect) * (.5 - .28 * (1. - sa.r) * uEmptyK));
   col = mix(col, uCellLine, lineAt(g, 1., 1.1) * uCellK * inR(q, uCellRect) * .5);
   vec2 cf = g - ci * 4. - 2.; float dd = length(cf), fwc = fwidth(dd);
   col = mix(col, uMint, sb.r * (.13 + .8 * (1. - smoothstep(.36 - fwc, .36 + fwc, dd))));
@@ -487,7 +489,7 @@ void main() {
     float d = length(q - pl.xy), fw = fwidth(d);
     float fill = 1. - smoothstep(pl.z - fw, pl.z + fw, d);
     float ring = 1. - smoothstep(0., fw * 1.5, abs(d - pl.z) - max(.14, fw * .8));
-    col = mix(col, uBlue, (fill * .17 + ring * .9) * pl.w);
+    col = mix(col, uBlue, (fill * .2 + ring * .95) * pl.w);
   }
   float dist = length(vW - cameraPosition);
   col = mix(col, uFog, smoothstep(uFogN, uFogF, dist));
@@ -571,6 +573,12 @@ function updateState(t) {
     if (t >= s.first) SB[o] = Math.round(255 * k4);
     if (s.first > 0 && t >= s.first && t < s.first + 1) SA[o + 1] = Math.round(255 * (1 - p(t, s.first, 1)) * k4);
   }
+  const k3 = win(t, 15.0, 21.0, .6);
+  if (k3 > 0) { const v = Math.round(255 * .5 * k3); for (let i = 0, n = NC * NC; i < n; i++) SB[i * 4 + 1] = Math.max(SB[i * 4 + 1], v); }
+  for (const e of E3) {
+    const ldk = Math.max(lotDirtyK(t, e) , t >= e.t ? 1 - p(t, e.flush + .2, 1.0) : 0);
+    if (k3 > 0 && ldk > 0) for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) { const q = ((e.lot[1] * 4 + b) * NC + e.lot[0] * 4 + a) * 4; SB[q + 1] = Math.min(SB[q + 1], Math.round(255 * .5 * k3 * (1 - ldk))); }
+  }
   for (const e of E3) {
     const [cx, cz] = e.ch, o = (cz * NC + cx) * 4;
     SA[o + 2] = Math.max(SA[o + 2], Math.round(255 * chunkDirtyK(t, e)));
@@ -597,15 +605,15 @@ const KEYS = [
   [12.4, 10, 0, 6, 9.0, 10, 54, 34, 1, -60, 30],
   [13.2, 9.5, .2, 6.5, 4.5, 8, 47, 34, 1, -60, 30],
   [14.5, 9.5, .2, 6.5, 4.35, 6, 46, 34, 1, -60, 30],
-  [15.7, 7, 0, 6, 84, 26, 52, 34, 0, -40, 60],
-  [20.6, 7, 0, 6, 80, 22, 53, 34, 0, -40, 60],
-  [22.0, -9, 0, 42, 76, 14, 58, 34, 0, -140, 50],
-  [28.6, -9, 0, 42, 73, 10, 59, 34, 0, -140, 50],
-  [30.4, 0, 0, -10, 345, 22, 50, 34, 0, -360, 20],
-  [33.0, 0, 0, -10, 345, 22, 50, 34, 0, -360, 20],
+  [15.7, 7, 0, 6, 64, 26, 52, 34, 0, -60, 70],
+  [20.6, 7, 0, 6, 61, 22, 53, 34, 0, -60, 70],
+  [22.0, -9, 0, 42, 66, 14, 58, 34, 0, -150, 40],
+  [28.6, -9, 0, 42, 64, 10, 59, 34, 0, -150, 40],
+  [30.4, 0, 0, -10, 280, 22, 52, 34, 0, -380, 20],
+  [33.0, 0, 0, -10, 280, 22, 52, 34, 0, -380, 20],
 ];
 const TALLK = t => t < 6.4 ? { d: 1.32, fov: 44, ox: 0, oy: -150 } : t < 14.6 ? { d: 1.18, fov: 44, ox: 0, oy: -20 }
-  : t < 21 ? { d: 1.25, fov: 44, ox: 0, oy: -10 } : t < 29.4 ? { d: 1.3, fov: 46, ox: 0, oy: 20 } : { d: 1.15, fov: 46, ox: 0, oy: -150 };
+  : t < 21 ? { d: 1.25, fov: 44, ox: 0, oy: -10 } : t < 29.4 ? { d: .98, fov: 46, ox: 0, oy: -90 } : { d: 1.15, fov: 46, ox: 0, oy: -150 };
 function spline(xs, ys) {
   const n = xs.length, d = [], m = new Array(n).fill(0);
   for (let i = 0; i < n - 1; i++) d.push((ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]));
@@ -650,7 +658,7 @@ const rectLerp = (a, b, k) => a.map((v, i) => lerp(v, b[i], k));
 const WORLDR = [-HALF - 50, -HALF - 50, HALF + 50, HALF + 50];
 function sceneAt(t) {
   GU.uLotK.value = eio(p(t, 6.6, 1.0)) * (1 - eio(p(t, 29.3, 1.0))) * (1 - .45 * win(t, 21.2, 29.2, .8));
-  GU.uChunkK.value = Math.max(eio(p(t, 9.4, .7)) * (1 - eio(p(t, 14.6, .6))), .4 * win(t, 15.2, 21.1, .6), win(t, 21.0, 29.3, .9));
+  GU.uChunkK.value = Math.max(eio(p(t, 9.4, .7)) * (1 - eio(p(t, 14.6, .6))), .22 * win(t, 15.2, 21.1, .6), win(t, 21.0, 29.3, .9));
   const c2 = t < 14.9 ? LOTR : WORLDR; GU.uGridRect.value.set(...c2);
   GU.uCellK.value = eio(p(t, 11.6, .6)) * (1 - eio(p(t, 14.5, .5))); GU.uCellRect.value.set(...TCH);
   GU.uEmptyK.value = eio(p(t, 21.0, 1.2)) * (1 - eio(p(t, 29.0, 1.2)));
@@ -806,7 +814,7 @@ function ov01(t) {
 // ── 02 · the tiers, one tag per level ────────────────────────
 function ov02(t) {
   if (t < 6.5 || t > 15) return;
-  tag([8, 0, 0], '집터', C.blue, win(t, 8.9, 11.0, .4), { dy: TALL ? -120 : -100, sub: '저장 단위' });
+  tag([0, 0, 9], '집터', C.blue, win(t, 8.9, 11.0, .4), { dx: TALL ? 40 : -230, dy: TALL ? 330 : 40, sub: '저장 단위' });
   tag([10, 0, 4], '청크', C.blue, win(t, 11.2, 12.9, .35), { dy: TALL ? -150 : -120, sub: '전송 단위' });
   tag([9.0, .02, 6.0], '셀', C.blue, win(t, 13.0, 14.7, .35), { dy: TALL ? -150 : -130, dx: TALL ? -60 : -120, sub: '가장 작은 칸' });
   const a = win(t, 7.0, 8.9, .4);
@@ -814,7 +822,7 @@ function ov02(t) {
 }
 
 // ── 03 · dirty flags + 1 s batch ─────────────────────────────
-const DB = TALL ? { x: 900, y: 600 } : { x: 1660, y: 600 };
+const DB = TALL ? { x: 900, y: 670 } : { x: 1660, y: 600 };
 function dbIcon(x, y, a, hot) {
   ctx.save(); ctx.globalAlpha *= a;
   const w = TALL ? 120 : 132, h = TALL ? 120 : 132, ry = 22;
@@ -828,12 +836,13 @@ function dbIcon(x, y, a, hot) {
 function ov03(t) {
   const a = win(t, 14.9, 21.0, .5); if (a <= 0) return;
   // dirty propagation: cell → chunk → lot (first event)
-  const e0 = E3[0];
-  const steps = [['셀 변경', e0.t], ['청크 더티', e0.t + .35], ['집터 더티', e0.t + .7]];
+  const steps = [['셀 변경', 0], ['청크 더티', .35], ['집터 더티', .7]];
   {
     const size = TALL ? 40 : 34; let x = L.mx; const y = TALL ? 1160 : 270;
+    const pw = steps.reduce((s2, [st]) => s2 + tw(st, size, 700) + size + 10, 0) + 2 * 46;
+    ctx.save(); ctx.globalAlpha = a * .85; rr(x - 16, y - size * 1.25, pw + 32, size * 2.5, 12); ctx.fillStyle = 'rgba(10,15,27,.86)'; ctx.fill(); ctx.restore();
     steps.forEach(([s, ts], i) => {
-      const on = t >= ts && t < e0.flush + .1 ? 1 : 0;
+      const on = E3.some(e => t >= e.t + ts && t < e.flush + .1) ? 1 : 0;
       x += chip(s, x, y, C.orange, { size, alpha: a, on, fill: .22 }) + 10;
       if (i < 2) { txt('→', x + 18, y + size * .36, { size, weight: 700, color: C.faint, align: 'center', alpha: a }); x += 46; }
     });
@@ -865,6 +874,7 @@ function ov03(t) {
   dbIcon(DB.x, DB.y, a, hot);
   // the takeaway
   const b = win(t, 17.6, 21.0, .5);
+  if (TALL) bottomShade(a, 300);
   if (TALL) {
     txt('바뀐 집터만 1초마다 묶어 쓴다', L.mx, H - 104, { size: 46, weight: 800, alpha: b });
     txt('→ 수천만 프랍 영속화', L.mx, H - 44, { size: 46, weight: 800, color: C.mint, alpha: b });
@@ -877,14 +887,15 @@ function ov03(t) {
 function ov04(t) {
   const a = win(t, 21.2, 29.0, .5); if (a <= 0) return;
   const [px, pz] = playerAt(t), s = walkS(t), [nx, nz] = along(s + 2), dx = nx - px, dz = nz - pz, dl = Math.hypot(dx, dz) || 1;
-  if (!TALL) {
-    const y0 = 262, sz = 34;
+  {
+    const y0 = TALL ? H - 196 : 262, sz = TALL ? 44 : 34, gy = TALL ? 70 : 58;
+    if (TALL) bottomShade(a, 330);
     ctx.save(); ctx.globalAlpha = a;
     ctx.fillStyle = rgba(C.blue, .75); rr(L.mx, y0 - 24, 30, 30, 4); ctx.fill();
-    ctx.fillStyle = C.mint; ctx.beginPath(); ctx.arc(L.mx + 15, y0 + 58 - 9, 11, 0, 7); ctx.fill();
+    ctx.fillStyle = C.mint; ctx.beginPath(); ctx.arc(L.mx + 15, y0 + gy - 9, 11, 0, 7); ctx.fill();
     ctx.restore();
     txt('처음 들어온 청크 → 전송', L.mx + 48, y0, { size: sz, weight: 700, alpha: a });
-    txt('SightIn 기록 → 다시 와도 재전송 없음', L.mx + 48, y0 + 58, { size: sz, weight: 700, alpha: a });
+    txt(TALL ? 'SightIn 기록 → 재전송 없음' : 'SightIn 기록 → 다시 와도 재전송 없음', L.mx + 48, y0 + gy, { size: sz, weight: 700, alpha: a });
   }
   tag([px, 1.2, pz], '플레이어 시야', C.blue, win(t, 21.6, 23.4, .4), { dy: TALL ? 150 : 130 });
   // outbound: the leading edge meets new chunks
@@ -893,7 +904,7 @@ function ov04(t) {
   // return: the west edge re-enters recorded chunks; the north edge still meets new ones
   const kb = win(t, 26.2, 29.0, .4);
   tag([px - SR, 0, pz], 'SightIn 기록 → 재전송 없음', C.mint, kb, { dy: TALL ? 190 : 150, dx: TALL ? 120 : 60 });
-  tag([px + 2, 0, pz - SR], '새 청크만 전송', C.blue, win(t, 26.8, 29.0, .4), { dy: TALL ? -130 : -110, dx: TALL ? 80 : 120 });
+  tag([px + 2, 0, pz - SR], '새 청크만 전송', C.blue, win(t, 26.8, 29.0, .4), { dy: TALL ? -130 : 10, dx: TALL ? 80 : 360 });
 }
 
 // ── 05 · result ──────────────────────────────────────────────
@@ -914,7 +925,7 @@ function ov05(t) {
       txt(n, x, 704, { size: 40, weight: 800, alpha: kk }); txt(s, x, 756, { size: 36, weight: 600, color: C.dim, alpha: kk });
       x += 330;
     });
-    txt('불이 켜진 곳 = 플레이어 시야 안 · 나머지는 손대지 않는다', 104, 880, { size: 36, weight: 600, color: C.faint, alpha: k3 });
+    txt('밝은 곳 = 플레이어 시야 안의 청크', 104, 880, { size: 36, weight: 600, color: C.faint, alpha: k3 });
   } else {
     topShade(1, 700);
     txt('51억 프랍 · 422GB를 다 다루지 않고', 60, 116, { size: 46, weight: 700, color: C.dim });
@@ -940,8 +951,8 @@ function animate(t) {
   const ia = NEW.geometry.attributes.aInfo;
   NEW.items.forEach((it, i) => {
     const e = E3[it.e], k = eback(p(t, e.t + it.j * .12, .35)) * (1 - eio(p(t, 29.0, .8)));
-    const s = .9 * Math.max(k, 0);
-    _o.position.set(it.x + (it.j === 2 ? .0 : 0), it.j * .9 * Math.min(1, k), it.z); _o.rotation.set(0, 0, 0); _o.scale.set(Math.max(s, 1e-4), Math.max(s, 1e-4), Math.max(s, 1e-4)); _o.updateMatrix();
+    const s = 1.0 * Math.max(k, 0);
+    _o.position.set(it.x + (it.j === 2 ? .0 : 0), it.j * 1.0 * Math.min(1, k), it.z); _o.rotation.set(0, 0, 0); _o.scale.set(Math.max(s, 1e-4), Math.max(s, 1e-4), Math.max(s, 1e-4)); _o.updateMatrix();
     NEW.setMatrixAt(i, _o.matrix);
     ia.array[i * 4] = t >= e.t ? 1.4 * (1 - p(t, e.t + .2, 1.2)) : 0;
   });
@@ -949,11 +960,11 @@ function animate(t) {
   // avatars
   let n = 0;
   const kb = win(t, 14.8, 21.0, .5);
-  if (kb > 0) BUILDERS.forEach(([x, z], i) => { const busy = E3.some(e => e.who === i && t > e.t - .4 && t < e.t + .5); setI(AV, n++, x, busy ? .12 * Math.sin(t * 30) ** 2 : 0, z, 1.25 * kb, ['#ffd6a5', '#bde0fe', '#ffc8dd', '#caffbf'][i]); });
+  if (kb > 0) BUILDERS.forEach(([x, z], i) => { const busy = E3.some(e => e.who === i && t > e.t - .4 && t < e.t + .5); setI(AV, n++, x, busy ? .12 * Math.sin(t * 30) ** 2 : 0, z, 2.0 * kb, ['#ffd6a5', '#bde0fe', '#ffc8dd', '#caffbf'][i]); });
   const kw = win(t, 21.2, 29.4, .5);
-  if (kw > 0) { const [px, pz] = playerAt(t); const bob = Math.abs(Math.sin(walkS(t) * 1.6)) * .15; setI(AV, n++, px, bob, pz, 1.6 * kw, '#ffffff'); }
+  if (kw > 0) { const [px, pz] = playerAt(t); const bob = Math.abs(Math.sin(walkS(t) * 1.6)) * .15; setI(AV, n++, px, bob, pz, 2.2 * kw, '#ffffff'); }
   const k5 = eo(p(t, 29.6, .8));
-  if (k5 > 0) ISLES.slice(1).forEach(([x, z]) => setI(AV, n++, x, 0, z, 2.6 * k5, '#ffffff'));
+  if (k5 > 0) ISLES.slice(1).forEach(([x, z]) => setI(AV, n++, x, 0, z, 3.0 * k5, '#ffffff'));
   done(AV, n);
   // transfer particles: chunk → player for chunks seen for the first time
   n = 0;

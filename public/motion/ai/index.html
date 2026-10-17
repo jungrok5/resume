@@ -157,7 +157,7 @@ const K = {
 const BEATS = [
   { s: 0, e: 8.5, n: '01', title: '자연어 → gRPC 호출 시퀀스', sub: 'MCP 서버 자체 구현 · 리플렉션 기반 API 자동 탐색' },
   { s: 8.5, e: 16.5, n: '02', title: 'AI 테스트 에이전트 팀', sub: null },
-  { s: 16.5, e: 23.5, n: '03', title: 'AI 멀티에이전트 코드리뷰', sub: '서버 · DB 프로젝트 전수 리뷰 → 실제 결함 다수 발견 · 확정' },
+  { s: 16.5, e: 23.5, n: '03', title: 'AI 멀티에이전트 코드리뷰', sub: '서버 · DB 프로젝트 전수 리뷰 → 실제 결함 다수 발견 · 확정', subT: ['서버 · DB 프로젝트 전수 리뷰', '→ 실제 결함 다수 발견 · 확정'] },
   { s: 23.5, e: 29.5, n: '04', title: '로컬 LLM 코딩 스택', sub: 'llama.cpp 기반 구축 · 배포 — 사내 코드 외부 유출 없음' },
 ];
 const FIN = 29.5;
@@ -296,6 +296,7 @@ function drawMCP(g, t) {
   const w = 1080, h = 860;
   chrome(g, w, h, { col: K.mcp, tags: [['MCP', K.mcp]], title: 'MCP 서버 · 자체 구현' });
   gt(g, 'gRPC 리플렉션 → API 목록 자동 탐색', 40, 176, { size: 38, weight: 700, color: K.dim });
+  gt(g, '리플렉션 탐색 대기…', 40, 300, { size: 40, mono: true, color: K.faint, alpha: 1 - p(t, 2.6, .3) });
   const scan = p(t, 2.7, 1.9);
   if (scan > 0 && scan < 1) { g.fillStyle = rgba(K.mcp, .5); g.fillRect(40, 192, (w - 80) * scan, 4); }
   API.forEach((name, i) => {
@@ -316,6 +317,7 @@ const seqRowY = i => 196 + i * 118;
 function drawSEQ(g, t) {
   const w = 1080, h = 860;
   chrome(g, w, h, { col: K.mcp, tags: [['gRPC', K.mcp]], title: '호출 시퀀스 · 자동 생성' });
+  gt(g, '자연어 요청 → 시퀀스 생성 대기…', 40, 210, { size: 40, mono: true, color: K.faint, alpha: 1 - p(t, 5.5, .2) });
   SEQ.forEach((name, i) => {
     const k = eo(p(t, 5.6 + i * .45, .35)), y = seqRowY(i); if (k <= 0) return;
     const ok = eo(p(t, 5.9 + i * .45, .3));
@@ -363,6 +365,7 @@ function drawLOG(g, t) {
 function drawDB(g, t) {
   const w = 1080, h = 780;
   chrome(g, w, h, { col: K.db, tags: [['DB', K.db]], title: 'DB 검증' });
+  gt(g, '로그 분석 결과 대기…', 40, 176, { size: 40, mono: true, color: K.faint, alpha: 1 - p(t, 12.7, .15) });
   gt(g, typed('SELECT item_id, count FROM inventory', p(t, 12.8, .5)), 40, 176, { size: 36, mono: true, color: K.text });
   gt(g, typed('WHERE uid = 1001;', p(t, 13.3, .25)), 40, 226, { size: 36, mono: true, color: K.text });
   const kh = eo(p(t, 13.5, .3));
@@ -392,6 +395,7 @@ function drawDB(g, t) {
 function drawRPT(g, t) {
   const w = 960, h = 860;
   chrome(g, w, h, { col: K.nl, tags: [['보고서', K.nl]], title: 'test-report.md' });
+  gt(g, '작성 대기…', 40, 190, { size: 40, mono: true, color: K.faint, alpha: 1 - p(t, 14.8, .2) });
   gt(g, '# 인벤토리 지급 테스트', 40, 190, { size: 50, weight: 800, color: K.hi, alpha: eo(p(t, 14.9, .3)) });
   [['시나리오', '로그인 → 지급 → 확인'], ['실행', 'gRPC 시퀀스 · 통과'], ['로그', '이상 없음'], ['DB', '기대값 일치']].forEach(([a, b], i) => {
     const k = eo(p(t, 15.1 + i * .22, .3)), y = 290 + i * 86; if (k <= 0) return;
@@ -526,7 +530,7 @@ const SPEC = {
   MCP: { w: 1080, h: 860, x: 12, col: K.mcp, draw: drawMCP, live: [2.6, 5.6] },
   SEQ: { w: 1080, h: 860, x: 24, col: K.mcp, draw: drawSEQ, live: [5.5, 8.2] },
   LOG: { w: 1080, h: 780, x: 36, col: K.ana, draw: drawLOG, live: [10.8, 12.6] },
-  DB: { w: 1080, h: 780, x: 48, col: K.db, draw: drawDB, live: [12.7, 14.6] },
+  DB: { w: 1080, h: 780, x: 48, col: K.db, draw: drawDB, live: [12.6, 14.6] },
   RPT: { w: 960, h: 860, x: 59.4, col: K.nl, draw: drawRPT, live: [14.8, 16.5] },
   TREE: { w: 880, h: 1000, x: 72.6, col: K.rev, draw: drawTREE, live: [17.2, 19.7] },
   DIFF: { w: 1100, h: 980, x: 83.7, col: K.rev, draw: drawDIFF, live: [20.0, 22.5] },
@@ -587,7 +591,7 @@ function onPose(pose, sx, sy, s) {
   return pose.pos.clone().addScaledVector(dir, L).addScaledVector(right, (sx - W / 2) / (H / 2) * half).addScaledVector(up, (H / 2 - sy) / (H / 2) * half);
 }
 // the stage area between the header band and the bottom band, per layout
-const STAGE = TALL ? { top: 318, bot: 1236, margin: 44 } : { top: 214, bot: 962, margin: 70 };
+const STAGE = TALL ? { top: 340, bot: 1226, margin: 44 } : { top: 214, bot: 962, margin: 70 };
 function frame(ids, mul = 1, o = {}) {
   let x0 = Infinity, x1 = -Infinity, hm = 0;
   for (const id of ids) { const s = SPEC[id]; x0 = Math.min(x0, s.x - s.w / 200); x1 = Math.max(x1, s.x + s.w / 200); hm = Math.max(hm, s.h); }
@@ -635,7 +639,7 @@ const GROUPS = TALL
   : [{ ids: ['CHAT', 'MCP', 'SEQ'], cx: 330 }, { ids: ['RPT', 'TREE', 'DIFF'], cx: 960 }, { ids: ['IDE', 'LLM'], cx: 1590 }].map(G => ({ ...G, cy: 610 }));
 const SLOT = {};
 GROUPS.forEach((G, gi) => {
-  const n = G.ids.length, dx = TALL ? 62 : 72, dy = TALL ? 44 : 56, s0 = TALL ? .232 : .27;
+  const n = G.ids.length, dx = TALL ? 62 : 84, dy = TALL ? 44 : 62, s0 = TALL ? .232 : .33;
   G.ids.forEach((id, i) => {
     const o = i - (n - 1) / 2, s = s0 * (1 + .03 * o);
     const sp = SPEC[id], c = onPose(P_FIN, G.cx + o * dx, G.cy + o * dy, s);
@@ -761,7 +765,7 @@ function chipC(label, x, y, col, o = {}) {
   ctx.restore(); return w;
 }
 const LY = TALL
-  ? { x: 56, kick: 82, kickS: 30, title: 164, titleS: 66, sub: 232, subS: 44, subLH: 58, subW: 968, bar: 1278, barS: 42, foot: 1330, footS: 28 }
+  ? { x: 56, kick: 82, kickS: 30, title: 164, titleS: 66, sub: 232, subS: 44, subLH: 58, subW: 968, bar: 1266, barS: 42, foot: 1332, footS: 28 }
   : { x: 72, kick: 66, kickS: 26, title: 132, titleS: 58, sub: 184, subS: 36, subLH: 46, subW: 1700, bar: 1010, barS: 34, foot: 1060, footS: 24 };
 function headerBand(a) {
   if (a <= 0) return;
@@ -784,7 +788,7 @@ function kicker(t, n, a) {
 }
 function subLine(b, t, a) {
   if (b.n !== '02') {
-    wrap(b.sub, LY.subS, 600, LY.subW).forEach((l, j) => txt(l, LY.x, LY.sub + j * LY.subLH, { size: LY.subS, weight: 600, color: '#b7bdc7', alpha: a }));
+    (TALL && b.subT ? b.subT : wrap(b.sub, LY.subS, 600, LY.subW)).forEach((l, j) => txt(l, LY.x, LY.sub + j * LY.subLH, { size: LY.subS, weight: 600, color: '#b7bdc7', alpha: a }));
     return;
   }
   // beat 2: the step line, with the current step lit in its agent colour

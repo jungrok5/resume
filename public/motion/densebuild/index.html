@@ -16,7 +16,7 @@
 <style>
   /* Look: a night building site (one huge shared plot, work-light amber builders) under the server's frame (cool glass stages, dispatcher green). */
   :root {
-    --bg: #0a0d13; --surface: #131821; --line: #263040; --fg: #edf1f6; --dim: #93a0b2; --text2: #c4cdd9;
+    --bg: #05070a; --surface: #131821; --line: #263040; --fg: #edf1f6; --dim: #93a0b2; --text2: #c4cdd9;
     --accent: #5dff9a; --amber: #ffb04a;
     --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
     --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -168,16 +168,16 @@ const COL = Object.fromEntries(Object.entries(HEX).map(([k, v]) => [k, new THREE
 
 // ── layout (wide 16:9 · tall 4:5) ────────────────────────────
 const LY = TALL
-  ? { fov: 40, sx: 0, sy: -250, XSP: 5.9, SW: 4.3 }
+  ? { fov: 40, sx: 0, sy: -170, XSP: 5.9, SW: 4.3 }
   : { fov: 30, sx: -330, sy: 0, XSP: 7.6, SW: 5.6 };
 
 // ── three setup ──────────────────────────────────────────────
 const gl = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 gl.setPixelRatio(1); gl.setSize(BW, BH, false);
-gl.setClearColor(0x0a0d13, 1);
+gl.setClearColor(0x000000, 1);
 gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.05;
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x0a0d13, 46, 120);
+scene.fog = new THREE.Fog(0x000000, 46, 120);
 const camera = new THREE.PerspectiveCamera(LY.fov, W / H, .1, 400);
 const composer = new EffectComposer(gl);
 composer.setPixelRatio(1); composer.setSize(BW, BH);
@@ -249,10 +249,10 @@ function snapPlot(x, z) {
 // ground: asphalt roads, plot pads (집터) with a faint chalk border
 const GROUND = (() => {
   const mat = new THREE.ShaderMaterial({
-    uniforms: { uDim: { value: 1 } }, depthWrite: true,
+    uniforms: { uDim: { value: 1 }, uSky: { value: new THREE.Color(0x000000) } }, depthWrite: true,
     vertexShader: `varying vec2 vP; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vP = w.xz; gl_Position = projectionMatrix * viewMatrix * w; }`,
     fragmentShader: `
-uniform float uDim; varying vec2 vP;
+uniform float uDim; uniform vec3 uSky; varying vec2 vP;
 void main() {
   vec2 o = vP + vec2(${(SITE_W / 2).toFixed(3)}, ${(SITE_D / 2).toFixed(3)}) - ${ROAD.toFixed(3)};
   vec2 pitch = vec2(${(PX + ROAD).toFixed(4)}, ${(PZ + ROAD).toFixed(4)});
@@ -265,8 +265,8 @@ void main() {
   vec3 col = mix(vec3(.040, .045, .055), vec3(.085, .080, .074), plot);
   col += vec3(.20, .17, .12) * border * .5;
   float r = length(vP / vec2(${(SITE_W * .62).toFixed(2)}, ${(SITE_D * .62).toFixed(2)}));
-  col *= 1.0 - smoothstep(.75, 1.25, r);
-  gl_FragColor = vec4(col * uDim, 1.0);
+  col = mix(col * uDim, uSky, smoothstep(.7, 1.2, r));
+  gl_FragColor = vec4(col, 1.0);
 }`,
   });
   const o = new THREE.Mesh(new THREE.PlaneGeometry(SITE_W * 1.6, SITE_D * 1.8).rotateX(-Math.PI / 2), mat);
@@ -432,7 +432,7 @@ function pathA(j, u, o, t) {       // 02a: 8 threads, one lock
   _q.copy(L.E).lerp(L.G, se);
   o.x = _q.x; o.y = _q.y; o.z = _q.z;
   o.red = bw * sstep(r.cap - .08, r.cap, s);
-  o.a = (1 - w * sstep(.9, 1, s)) * (1 - sstep(.97, 1, u) * w) * (1 + .5 * o.red); o.c = COL.amber;
+  o.a = (1 - w * sstep(.9, 1, s)) * (1 - sstep(.97, 1, u) * w) * (1 + .5 * o.red); o.c = w > .5 ? COL.write : COL.amber;
 }
 function pathB(j, u, o) {          // 02b: one dispatcher, one ordered lane
   const r = REQ[j], S = BLD[r.b].p;
@@ -443,21 +443,26 @@ function pathB(j, u, o) {          // 02b: one dispatcher, one ordered lane
   const s = (u - .64) / .36; _q.copy(Q0).lerp(Q1, s);
   o.x = _q.x; o.y = _q.y; o.z = _q.z; o.a = 1 - sstep(.92, 1, s); o.c = COL.write; o.red = 0;
 }
+let PSC = 1;                         // x scale of the stage row while the cube unfolds (pure: set from t before evaluating)
+const _p0 = new THREE.Vector3(), _p1 = new THREE.Vector3(), _pb = new THREE.Vector3();
 function pathC(j, u, o) {          // 03+: Network → Writable → Space → Broadcast → buffer → receivers
   const r = REQ[j], S = BLD[r.b].p, P = CPTS[r.l4];
   if (u < C_RISE) {
-    const k = eio(u / C_RISE); qb(S, riseCtrl(S, P[0], _q.clone()), P[0], k, _q);
+    _p0.copy(P[0]); _p0.x *= PSC;
+    const k = eio(u / C_RISE); qb(S, riseCtrl(S, _p0, _q.clone()), _p0, k, _q);
     o.x = _q.x; o.y = _q.y; o.z = _q.z; o.a = sstep(0, .04, u) * .85; o.c = COL.amber; o.red = 0; return;
   }
   let v = u - C_RISE;
   for (let i = 0; i < 8; i++) {
     if (v < C_SEG[i]) {
       const s = v / C_SEG[i]; _q.copy(P[i]).lerp(P[i + 1], i === 7 ? eio(s) : s);
-      o.x = _q.x; o.y = _q.y; o.z = _q.z; o.a = 1; o.c = COL[C_SEGCOL[i]]; o.red = 0; return;
+      o.x = _q.x * PSC; o.y = _q.y; o.z = _q.z; o.a = 1; o.c = COL[C_SEGCOL[i]]; o.red = 0; return;
     }
     v -= C_SEG[i];
   }
-  const s = clamp(v / C_FAN), R = BLD[FR[r.f]].p; qb(PBUF, FCTRL[r.f], R, s, _q);
+  const s = clamp(v / C_FAN), R = BLD[FR[r.f]].p;
+  _pb.copy(PBUF); _pb.x *= PSC; _p1.copy(FCTRL[r.f]); _p1.x = lerp(_pb.x, R.x, .5);
+  qb(_pb, _p1, R, s, _q);
   o.x = _q.x; o.y = _q.y; o.z = _q.z; o.a = (1 - sstep(.92, 1, s)) * .9; o.c = COL.out; o.red = 0;
 }
 const stateW = t => {
@@ -471,10 +476,10 @@ const CK = TALL ? [
   [5.6, V(2.5, 39, 59), V(0, 6.5, 2)],
   [7.0, V(0, 25, 46), V(0, 9.4, 0)],
   [14.2, V(1.5, 25, 45), V(0, 9.4, 0)],
-  [15.8, V(0, 22, 47), V(0, 10.0, 0)],
-  [22.0, V(0, 22, 47), V(0, 10.0, 0)],
-  [23.6, V(5, 19, 38), V(5, 6.6, 1)],
-  [28.8, V(4.4, 19, 38), V(5, 6.6, 1)],
+  [15.8, V(0, 22, 47), V(0, 8.6, 0)],
+  [22.0, V(0, 22, 47), V(0, 8.6, 0)],
+  [23.6, V(5, 19, 38), V(5, 7.8, 1)],
+  [28.8, V(4.4, 19, 38), V(5, 7.8, 1)],
   [30.6, V(0, 34, 62), V(0, 7.5, 0)],
   [DURATION, V(.6, 34, 62), V(0, 7.5, 0)],
 ] : [
@@ -482,10 +487,10 @@ const CK = TALL ? [
   [5.6, V(2.5, 30.5, 46), V(0, 5.2, 0)],
   [7.0, V(0, 21, 42), V(0, 8.6, 0)],
   [14.2, V(1.5, 21, 41.5), V(0, 8.6, 0)],
-  [15.8, V(0, 19, 45), V(0, 9.6, 0)],
-  [22.0, V(0, 19, 45), V(0, 9.6, 0)],
-  [23.6, V(8, 15.5, 31), V(7, 7.4, 1)],
-  [28.8, V(7.4, 15.5, 31), V(7, 7.4, 1)],
+  [15.8, V(0, 21, 52), V(0, 9.8, 0)],
+  [22.0, V(0, 21, 52), V(0, 9.8, 0)],
+  [23.6, V(7, 17, 39), V(6.5, 8.8, 1)],
+  [28.8, V(6.4, 17, 39), V(6.5, 8.8, 1)],
   [30.6, V(0, 29, 52), V(0, 6.8, 0)],
   [DURATION, V(.8, 29, 52), V(0, 6.8, 0)],
 ];
@@ -540,7 +545,7 @@ function update3D(t) {
     _col.copy(COL.glass).lerp(COL.red, cA * (.35 + .25 * Math.sin(t * 9))).lerp(COL.write, cB).lerp(stage, uk);
     S.edge.material.color.copy(_col); S.fill.material.color.copy(_col);
     const hi = n === 1 ? 1 : .75;
-    S.edge.material.opacity = (.55 + .35 * Math.max(cB, uk * hi)) * (1 - .15 * eio(p(t, T_D, .8)) * (n === 3 ? -1 : 1));
+    S.edge.material.opacity = (.55 + .35 * Math.max(cB, uk * hi)) * (n === 3 ? 1 : 1 - .65 * win(t, T_D, T_E + .6, .8));
     S.fill.material.opacity = .05 + .05 * Math.max(cB, uk * (n === 1 ? 1.4 : .8));
   });
   {
@@ -556,6 +561,7 @@ function update3D(t) {
     const A = REQP.geometry.attributes;
     for (let g = 0; g < TRAIL; g++) {
       const tt = t - g * TDT, ws = stateW(tt);
+      PSC = lerp(.155, 1, unfoldK(tt));
       for (let j = 0; j < NR; j++) {
         const r = REQ[j], u = fract(tt / r.per + r.off);
         let x = 0, y = 0, z = 0, a = 0, cr = 0, cg = 0, cb = 0, red = 0, wsum = 0;
@@ -581,7 +587,8 @@ function update3D(t) {
   {
     const A = GUIDE.geometry.attributes; let s = 0;
     const set = al => { A.alpha.setX(s * 2, al); A.alpha.setX(s * 2 + 1, al); s++; };
-    for (let l = 0; l < 4; l++) for (let i = 0; i < 8; i++) set(uk * (i === 2 ? .9 : .5));
+    const ug = sstep(.75, 1, uk) * (1 - .7 * win(t, T_D, T_E + .6, .8));
+    for (let l = 0; l < 4; l++) for (let i = 0; i < 8; i++) set(ug * (i === 2 ? .9 : .5) * (i >= 6 ? 1 / (1 - .69 * win(t, T_D, T_E + .6, .8)) : 1));
     for (let k = 0; k < 8; k++) { const w = ownerW(k, t); set(cA * (.25 + .9 * w)); const c = w > .3 ? COL.write : COL.red; A.color.setXYZ((s - 1) * 2, c.r, c.g, c.b); A.color.setXYZ((s - 1) * 2 + 1, c.r, c.g, c.b); }
     set(cB * 1.2);
     A.alpha.needsUpdate = A.color.needsUpdate = true; setGain(GUIDE, 1);
@@ -657,7 +664,10 @@ function padlock(x, y, s, a, col) {
   ctx.shadowBlur = 0; ctx.fillStyle = '#1a0a0d'; ctx.beginPath(); ctx.arc(0, 14, 6, 0, 7); ctx.fill(); ctx.fillRect(-2.5, 14, 5, 12);
   ctx.restore();
 }
-function backdrop() {
+function backdrop(t) {
+  const z4 = win(t, T_D, T_E + .2, .6);
+  if (z4 > 0 && !TALL) { const g = ctx.createLinearGradient(0, 0, 940, 0); g.addColorStop(0, `rgba(3,4,7,${.8 * z4})`); g.addColorStop(.65, `rgba(3,4,7,${.7 * z4})`); g.addColorStop(1, 'rgba(3,4,7,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, 940, H); }
+  if (z4 > 0 && TALL) { const g = ctx.createLinearGradient(0, 0, 0, 560); g.addColorStop(0, `rgba(3,4,7,${.7 * z4})`); g.addColorStop(.75, `rgba(3,4,7,${.6 * z4})`); g.addColorStop(1, 'rgba(3,4,7,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, 560); }
   if (TALL) {
     const g = ctx.createLinearGradient(0, 0, 0, 640); g.addColorStop(0, 'rgba(7,9,14,.94)'); g.addColorStop(.62, 'rgba(7,9,14,.72)'); g.addColorStop(1, 'rgba(7,9,14,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, 640);
@@ -689,7 +699,7 @@ function bigNum(num, cap, x, y, a, col, o = {}) {
   ctx.save(); shadow(22);
   txt(num, x, y, { size, weight: 800, color: col, alpha: a, ls: -3 });
   if (inline) txt(cap, x + tw(num, size, 800, false, -3) + 22, y - 6, { size: capSize, weight: 700, color: capCol, alpha: a });
-  else txt(cap, x + 4, y + capSize * 1.45, { size: capSize, weight: 700, color: capCol, alpha: a });
+  else txt(cap, x + 4, y + capSize * 1.75, { size: capSize, weight: 700, color: capCol, alpha: a });
   ctx.restore();
 }
 function lines(arr, x, y, a, lh) {   // arr: [text, color, size, weight]
@@ -697,7 +707,12 @@ function lines(arr, x, y, a, lh) {   // arr: [text, color, size, weight]
   arr.forEach(([s, c, sz, wt], i) => txt(s, x, y + i * lh, { size: sz, weight: wt || 700, color: c, alpha: a }));
   ctx.restore();
 }
-const tagConcept = (a, s = '개념도') => { ctx.save(); shadow(10); txt(s, W - (TALL ? 56 : 80), H - (TALL ? 48 : 52), { size: FS.tag, weight: 700, color: 'rgba(214,224,236,.7)', align: 'right', alpha: a }); ctx.restore(); };
+const tagConcept = (a, s = '개념도') => {
+  if (a <= 0.002) return;
+  const x1 = W - (TALL ? 40 : 56), y = H - (TALL ? 50 : 52), w = tw(s, FS.tag, 700) + 36, h = FS.tag * 1.6;
+  ctx.save(); ctx.globalAlpha *= a; ctx.beginPath(); ctx.roundRect(x1 - w, y - h * .68, w, h, 8); ctx.fillStyle = 'rgba(6,8,12,.78)'; ctx.fill(); ctx.restore();
+  txt(s, x1 - 18, y, { size: FS.tag, weight: 700, color: 'rgba(214,224,236,.82)', align: 'right', alpha: a });
+};
 
 // ── 01 · the load ────────────────────────────────────────────
 function s01(t) {
@@ -759,7 +774,6 @@ function s03(t) {
     } else {
       lines([['한 프레임을', INK, FS.title, 800], ['4 스테이지로', INK, FS.title, 800]], X0, ty, a, 72);
       lines([['읽기는 병렬', BLU, FS.body + 6, 800], ['쓰기만 단일 스레드 직렬', GRN, FS.body + 6, 800]], X0, ty + 200, a * eo(p(t, T_C + 1.2, .5)), 66);
-      lines([['Writable = 디스패처가', DIM, FS.body, 600], ['공유 상태를 바꾸는 단계', DIM, FS.body, 600]], X0, ty + 400, a * eo(p(t, T_C + 2.6, .5)), 54);
     }
     tagConcept(a, '개념도 · 스테이지 폭은 시간 비율 아님');
   }
@@ -770,12 +784,13 @@ function stageLabels(t, a) {
   const k = eo(p(t, T_C + .9, .6));
   STG.forEach((s, n) => {
     const up = TALL ? n % 2 === 0 : true;
-    const P = proj(V(XS[n], up ? CY + SH / 2 + .35 : CY - SH / 2 - .35, 0));
+    const sx = SLAB[n].g.position.x;
+    const P = proj(V(sx, up ? CY + SH / 2 + .35 : CY - SH / 2 - .35, 0));
     const col = n === 1 ? GRN : BLU;
     const yy = up ? P.y - 34 : P.y + 40;
     pill(s, P.x, yy, a * k, { color: col, border: n === 1 ? 'rgba(93,255,154,.6)' : 'rgba(124,200,255,.45)', mono: true, size: TALL ? 40 : 36, weight: 700 });
     const sub = n === 1 ? '직렬' : '병렬';
-    const P2 = proj(V(XS[n], up ? CY - SH / 2 - .3 : CY + SH / 2 + .3, 0));
+    const P2 = proj(V(sx - (n === 3 && !TALL ? SW * .22 : 0), up ? CY - SH / 2 - .3 : CY + SH / 2 + .3, 0));
     if (t < T_D + .4 || t > T_E) txt(sub, P2.x, up ? P2.y + 48 : P2.y - 22, { size: TALL ? 44 : 36, weight: 800, color: col, align: 'center', alpha: a * eo(p(t, T_C + 1.6, .5)) * (t > T_E ? .0 : 1) });
   });
 }
@@ -785,7 +800,7 @@ function s04(t) {
   const ty = TALL ? 190 : 300, z = eo(p(t, T_MERGE + .5, .6));
   if (TALL) {
     lines([['zero-copy 브로드캐스트', INK, FS.title, 800]], X0, ty, a, 74);
-    bigNum('1회', '직렬화', X0 + tw('직렬화', 48, 800) + 24, ty + 190, a * z, LIME, { size: 130 });
+    ctx.save(); shadow(22); txt('1회', X0 + tw('직렬화', 48, 800) + 24, ty + 190, { size: 130, weight: 800, color: LIME, alpha: a * z, ls: -3 }); ctx.restore();
     txt('직렬화', X0, ty + 190, { size: 48, weight: 800, color: DIM, alpha: a * z });
     const x2 = X0 + 500;
     txt('할당', x2, ty + 190, { size: 48, weight: 800, color: DIM, alpha: a * z });
@@ -840,7 +855,7 @@ function renderAt(t) {
   update3D(t);
   composer.render();
   ctx.drawImage(gl.domElement, 0, 0, W, H);
-  backdrop();
+  backdrop(t);
   s01(t); s02(t); s03(t); s04(t); s05(t);
   header(t);
 }
