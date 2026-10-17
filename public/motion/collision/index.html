@@ -742,14 +742,7 @@ function status(t) {
 
 // ── 01 · game view → the server's collision world ───────────
 function ov01(t) {
-  // the scan line: the same moment re-drawn as the server sees it
-  const sk = win(t, SCAN0 - .1, SCAN1 + .2, .25);
-  if (sk > 0) {
-    const sx = scanX(t);
-    const qa = project([sx, 0, 40]), qb = project([sx, 0, -70]);
-    ctx.save(); ctx.globalAlpha = sk; ctx.strokeStyle = C.stat; ctx.lineWidth = 5; ctx.shadowColor = C.stat; ctx.shadowBlur = 18;
-    ctx.beginPath(); ctx.moveTo(qa.x, qa.y); ctx.lineTo(qb.x, qb.y); ctx.stroke(); ctx.restore();
-  }
+  // the scan front itself glows in 3D (SU.scanGlow); the same moment re-drawn as the server sees it
   const sm = win(t, SCAN0 + .6, 4.75, .35);
   tag([BOXES[5][0] - 3, 6.5, BOXES[5][1] + 3], '스태틱 메시 → 서버 충돌 메시', C.stat, sm * p(t, SCAN0 + 1.2, .3), { dy: TALL ? -170 : -150, dx: TALL ? -60 : 120 });
   const ch = win(t, SCAN1 - .2, 7.0, .4);

@@ -389,7 +389,7 @@ const rearK = t => eio(p(t, 14.0, 1.5)) * (1 - eio(p(t, 17.9, 1.0)));
 const stompK = t => t < 20.7 ? eio(p(t, 19.6, 1.1)) : 1 - p(t, 20.7, T_HIT - 20.7) ** 2;
 // charge path: quadratic bezier, arc-length table
 const PATH = (() => {
-  const A0 = V(8, 0, 0), B0 = V(24, 0, 1), C0 = V(36, 0, 11), N = 240, pts = [], acc = [0];
+  const A0 = V(8, 0, 0), B0 = V(30, 0, 0), C0 = V(46, 0, 13), N = 240, pts = [], acc = [0];
   const bz = u => V((1 - u) ** 2 * A0.x + 2 * u * (1 - u) * B0.x + u * u * C0.x, 0, (1 - u) ** 2 * A0.z + 2 * u * (1 - u) * B0.z + u * u * C0.z);
   for (let i = 0; i <= N; i++) { pts.push(bz(i / N)); if (i) acc.push(acc[i - 1] + pts[i].distanceTo(pts[i - 1])); }
   const L = acc[N];
@@ -439,6 +439,7 @@ const PL = [
   [14, 18, 'r', 2], [2, 19, 'r', 3], [-10, 18, 'r', 5], [-20, 16, 'r', 0],
   [6, -10, 'm', 1], [-4, -11, 'm', 3], [-14, -10, 'm', 2], [18, -14, 'r', 4], [-6, -20, 'r', 1],
   [27, 3, 'm', 0], [21, -5, 'm', 5], [-34, 8, 'r', 2], [10, 13, 'm', 3], [-17, 12, 'r', 4],
+  [41, 6, 'r', 5], [44, 15, 'r', 3], [40, -4, 'r', 1], [47, 24, 'r', 4],
 ];
 const NP = PL.length;
 const TUNIC = ['#c0393f', '#2f9aa6', '#ece4d0', '#7550c2', '#d8a02a', '#3f72d8'];
@@ -567,19 +568,19 @@ function setBand(wr, a) {
 const CK = TALL ? [
   [0, -1, 8, 2, 92, .78, .03, 44, 0, -60], [3.6, -1, 8, 2, 84, .7, .05, 44, 0, -60],
   [4.4, -4, 8, 1, 124, .62, .2, 44, 0, -40], [6.4, -4, 8, 1, 118, .62, .2, 44, 0, -40],
-  [7.3, 0, 6, 3, 138, .72, .36, 44, 0, -30], [12.8, 0, 6, 3, 132, .72, .36, 44, 0, -30],
-  [13.8, 2, 12, 1, 128, .95, .16, 44, 0, -70], [18.8, 2, 12, 1, 122, .95, .16, 44, 0, -70],
-  [19.6, 5, 5, 4, 92, .6, .3, 44, 0, -40], [21.9, 5, 5, 4, 92, .6, .3, 44, 0, -40], [24.6, 12, 6, 4, 104, .6, .3, 44, 0, -40],
-  [25.5, 22, 4, 5, 168, .42, .58, 44, 0, -30], [30.3, 25, 4, 6, 160, .42, .58, 44, 0, -30],
-  [31.6, 22, 6, 4, 176, .55, .5, 44, 0, -60], [DURATION, 22, 6, 4, 170, .55, .5, 44, 0, -60],
+  [7.3, -1, 6, 3, 112, .72, .36, 44, 0, -230], [12.8, -1, 6, 3, 108, .72, .36, 44, 0, -230],
+  [13.8, 2, 12, 1, 108, .95, .16, 44, 0, -170], [18.8, 2, 12, 1, 104, .95, .16, 44, 0, -170],
+  [19.6, 5, 5, 4, 80, .7, .3, 44, 0, -200], [21.9, 5, 5, 4, 80, .7, .3, 44, 0, -200], [24.6, 12, 6, 4, 86, .7, .3, 44, 0, -200],
+  [25.5, 26, 3, 7, 122, .2, .6, 44, 0, -120], [30.3, 28, 3, 8, 118, .2, .6, 44, 0, -120],
+  [31.6, 32, 6, 9, 104, .45, .42, 44, 0, 230], [DURATION, 32, 6, 9, 100, .45, .42, 44, 0, 230],
 ] : [
   [0, 0, 8, 2, 66, .8, .02, 40, 150, -40], [3.6, 0, 8, 2, 59, .72, .04, 40, 150, -40],
   [4.4, -6, 8, 1, 84, .6, .2, 38, 280, 10], [6.4, -6, 8, 1, 80, .6, .2, 38, 280, 10],
   [7.3, -2, 6, 3, 94, .72, .34, 38, 300, 30], [12.8, -2, 6, 3, 90, .72, .34, 38, 300, 30],
   [13.8, 2, 12, 1, 88, .95, .16, 38, 300, 20], [18.8, 2, 12, 1, 84, .95, .16, 38, 300, 20],
   [19.6, 4, 5, 4, 66, .95, .3, 38, 400, 40], [21.9, 4, 5, 4, 66, .95, .3, 38, 400, 40], [24.6, 11, 6, 4, 72, .95, .3, 38, 400, 40],
-  [25.5, 22, 3, 6, 108, .15, .6, 38, 120, 40], [30.3, 24, 3, 7, 102, .15, .6, 38, 120, 40],
-  [31.6, 28, 6, 8, 94, .45, .42, 38, 400, 20], [DURATION, 28, 6, 8, 90, .45, .42, 38, 400, 20],
+  [25.5, 26, 3, 7, 124, .15, .6, 38, 100, 40], [30.3, 28, 3, 8, 118, .15, .6, 38, 100, 40],
+  [31.6, 34, 6, 9, 98, .45, .42, 38, 420, 20], [DURATION, 34, 6, 9, 94, .45, .42, 38, 420, 20],
 ];
 function camAt(t) {
   let i = 0; while (i < CK.length - 2 && t >= CK[i + 1][0]) i++;
@@ -623,7 +624,16 @@ function panel(x, y, w, h, a = 1, o = {}) {
 function wrapLines(s, maxW, size, weight = 600) {
   font(size, weight); const words = s.split(' '), out = []; let cur = '';
   for (const w of words) { const nx = cur ? cur + ' ' + w : w; if (ctx.measureText(nx).width > maxW && cur) { out.push(cur); cur = w; } else cur = nx; }
-  if (cur) out.push(cur); return out;
+  if (cur) out.push(cur);
+  if (out.length === 2) {   // balance two lines
+    let best = out, bw = 1e9;
+    for (let i = 1; i < words.length; i++) {
+      const a = words.slice(0, i).join(' '), b = words.slice(i).join(' '), m = Math.max(ctx.measureText(a).width, ctx.measureText(b).width);
+      if (m <= maxW && m < bw) { bw = m; best = [a, b]; }
+    }
+    return best;
+  }
+  return out;
 }
 function line(x0, y0, x1, y1, color, lw = 3, a = 1, dash = null) {
   if (a <= .01) return; ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round'; if (dash) ctx.setLineDash(dash);
@@ -779,7 +789,7 @@ function overlay02(t) {
       // height marker to the ruler
       const [rxh, ryh] = proj(rx, hp.y, rz); line(hx, hy, rxh, ryh, col, 3, s.show * .8, [8, 8]); dot(rxh, ryh, 9, col, s.show);
       const res = `${k.dir} · ${k.pos} · ${k.hgt} → ${PART_NAME[k.part]}`;
-      chip(res, hx, hy - 40, col, s.show * eo(p(t, k.t0 + FLY, .3)));
+      if (!TALL) chip(res, hx, hy - 40, col, s.show * eo(p(t, k.t0 + FLY, .3)));
     }
   });
   // wedge labels
@@ -792,8 +802,8 @@ function overlay02(t) {
   table02(t, a);
 }
 function table02(t, a) {
-  const size = LBL, rh = size * 1.6, rows = ATK.map((k, i) => [k, eo(p(t, k.t0 + FLY, .3))]);
-  const cols = TALL ? [0, 170, 300, 460] : [0, 128, 228, 352], w = TALL ? 680 : 560;
+  const size = LBL, rh = size * (TALL ? 1.42 : 1.6), rows = ATK.map((k, i) => [k, eo(p(t, k.t0 + FLY, .3))]);
+  const cols = TALL ? [0, 150, 260, 400] : [0, 128, 228, 352], w = TALL ? 620 : 560;
   const x = TALL ? W - w - 44 : 64, y = TALL ? 196 : 200, h = 78 + rh * 4 + 8;
   panel(x, y, w, h, a);
   txt('판정 예시', x + 26, y + size + 18, { size, weight: 800, color: C.gold, alpha: a, sh: 0 });
@@ -826,7 +836,7 @@ function overlay03(t) {
   const a = win(t, 13.0, 19.0, .3); if (a <= .01) return;
   skeleton(t, a);
   // resource part data panel
-  const size = LBL, rh = size * 1.55, rows = TALL ? DATA : DATA, w = TALL ? 700 : 600;
+  const size = LBL, rh = size * 1.55, rows = TALL ? DATA.filter(r => r[2] !== 'body' && r[2] !== 'hind') : DATA, w = TALL ? 700 : 600;
   const x = TALL ? W - w - 44 : 64, y = TALL ? 196 : 200, h = 80 + rh * rows.length + 4;
   panel(x, y, w, h, a);
   txt('리소스 부위 데이터 (예시)', x + 26, y + size + 18, { size, weight: 800, color: C.gold, alpha: a, sh: 0 });
