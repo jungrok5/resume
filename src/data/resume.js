@@ -261,6 +261,7 @@ export const sections = [
   },
   {
     id: 'raycast',
+    hook: '2.5D → 3D 복셀 · 10K × 10K 필드 · 레이 샘플링 조향',
     scene: 'raycast3d',
     align: 'right',
     accent: 'cyan',
@@ -271,6 +272,35 @@ export const sections = [
     points: [
       '지상 평면을 넘어 비행체의 3차원 이동·길찾기를 서버에서 처리하는 네비게이션 구조 설계 (복셀 기반 3D 네비게이션)',
       '장애물 회피 = 레이 샘플링 조향(컨텍스트 스티어링). 진행 방향 원뿔로 레이를 샘플링해 막힌 방향을 배제하고 열린 방향으로 조향',
+      '필드를 2.5D 셀 기반에서 3D 복셀 기반으로 전환하고 10K × 10K(10km)로 확장: 복층·비행 네비게이션 가능화, 서버상 OpenGL 3D 맵뷰 구현',
+    ],
+  },
+  {
+    id: 'giant',
+    align: 'left',
+    accent: 'amber',
+    kicker: 'NCSOFT · AION2 · 2016 – 2021',
+    title: '거대 NPC 전투',
+    hook: '부위 판정 · 서버 본 애니메이션 · 궤적 스킬 (리서치)',
+    metric: { big: '부위 판정', cap: '방향 · 위치 · 높이 기반' },
+    points: [
+      '거대 객체 전투 방안 리서치: 방향·위치·높이 기반 부위 판정',
+      '리소스 부위 데이터로 서버에서 본 애니메이션을 처리해 판정',
+      '애니메이션 HIT 정보를 추출해 충돌 처리·이동 애니메이션 동기화, 이동 궤적으로 큰 객체 스킬 처리',
+    ],
+  },
+  {
+    id: 'collision',
+    align: 'right',
+    accent: 'cyan',
+    kicker: 'NCSOFT · AION2 · 2016 – 2021',
+    title: '서버 캐릭터 충돌 처리',
+    hook: '서버 물리 아키텍처 · PC vs NPC 20,000 이동 충돌 테스트',
+    metric: { big: '20,000', cap: 'PC vs NPC 이동 충돌 테스트' },
+    points: [
+      '서버 충돌 처리 방향성 수립·아키텍처 설계 (PhysicsWorld · PhysicsSystem · CollisionShapes)',
+      '클라이언트 스태틱 메시를 서버에서 충돌 가능한 환경 구축, PC·NPC 간 충돌과 시야 Ray·이동 Ray, 지형 충돌(활강, line of sight)',
+      '충돌 성능 확보 리서치(grid, kd-tree, 시야 ray 높이 기반 전처리), 대규모 Agent 리서치: 이동 범위 기반 충돌 분산·업데이트 tick 분할',
     ],
   },
 
@@ -319,7 +349,7 @@ export const sections = [
 // 인터랙티브 페이지에서 모션 그래픽으로 보여주는 대표 이력 (보여줄 순서).
 // 각 id는 public/motion/<id>/index.html 의 모션 그래픽과 1:1로 대응한다.
 // 나머지 섹션은 '그 밖의 주요 작업' 카드로 텍스트만 노출한다.
-export const highlights = ['combat', 'trickster', 'densebuild', 'spatial', 'renderopt', 'ownership', 'pipeline', 'ai']
+export const highlights = ['combat', 'giant', 'collision', 'raycast', 'trickster', 'densebuild', 'spatial', 'renderopt', 'ownership', 'pipeline', 'ai']
 
 // 타임라인 + 폴백 문서가 쓰는 경력 요약 (최신 → 과거)
 export const timeline = [

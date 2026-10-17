@@ -94,7 +94,7 @@ export default function Experience() {
         <p className="kicker">{hero.kicker}</p>
         <h1 className="hero-name">{hero.name}</h1>
         <p className="hero-sub">{hero.sub}</p>
-        <p className="hero-how">대표 작업 8개를 모션 그래픽으로 정리했습니다. 스크롤하면 각 장면이 진행됩니다.</p>
+        <p className="hero-how">대표 작업 {shown.length}개를 모션 그래픽으로 정리했습니다. 스크롤하면 각 장면이 진행됩니다.</p>
         <ol className="hl-index">
           {shown.map((s, i) => (
             <li key={s.id}>
