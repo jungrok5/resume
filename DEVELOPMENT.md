@@ -20,7 +20,7 @@ https://jungrok5.github.io/resume/ (see `.github/workflows/deploy.yml`).
 
 A Korean résumé for a 20-year MMO server architect, in two pages: the document
 (`index.html`) and the motion page (`interactive.html`). On the motion page,
-eight headline projects are explained as scroll-scrubbed motion graphics, each
+twelve headline projects are explained as scroll-scrubbed motion graphics, each
 next to its résumé bullets. **Content is primary** — every résumé fact (company,
 role, period, education, awards, stack) stays present as text.
 
@@ -48,15 +48,19 @@ public/motion/
   assets/               vendored three.js 0.170 + Pretendard / JetBrains Mono
 ```
 
-## The eight pieces
+## The twelve pieces (in page order)
 
 | id | Résumé item | Approach |
 |---|---|---|
 | `combat` | AION2 channel-less 1,000 vs 1,000, 13M packets/s | make the flow visible |
+| `giant` | AION2 giant NPC combat (research) | in-game replay |
+| `collision` | AION2 server character collision, 20,000-agent test | open it up |
+| `raycast` | AION2 3D flight navigation, 2.5D → 3D voxels, 10K × 10K | open it up |
 | `trickster` | TricksterM dispatch, stable CCU 2,000 → 8,000 | open it up |
 | `densebuild` | 50M props full tick + 2,000 builders, single dispatcher | make the flow visible |
 | `spatial` | 51억 props / 422 GB → 집터 · 청크 · 셀 + SightIn | open it up |
 | `renderopt` | draw calls 20,967 → 503, FPS 16.5 → 47.4 | in-game replay |
+| `navmesh` | server dynamic navmesh, affected tiles only (수~수십 ms) | in-game replay (Godot viewer look) |
 | `ownership` | client-delegated NPC simulation, ownership migration | make the flow visible |
 | `pipeline` | proto single source → code · CSV · validation | real artifacts in space |
 | `ai` | in-house MCP server, agent team, local LLM | real artifacts in space |

@@ -365,6 +365,42 @@ export const timeline = [
 // private: true 인 저장소는 비공개(자물쇠 표시, 링크 없음).
 export const projects = [
   {
+    name: '게임 렉 백서',
+    tag: '온라인 게임 렉 원인 228가지를 내 화면부터 서버 DB까지 13개 층으로 정리한 공개 백과 (12개 언어)',
+    href: 'https://jungrok5.github.io/mmo-lag-anatomy/',
+    tech: 'HTML · JavaScript · Python',
+    note: '공개 · MIT',
+    metric: '원인 228가지 · 12개 언어',
+    points: [
+      '원인마다 증상·그래프 모양·확인 방법·주 담당 팀과 팀별 할 일·공신력 있는 출처(출처 주소 630개, 발행처 83곳)를 달아 장애 기록과 대조할 수 있게 정리',
+      '조건을 바꿔 증상을 재현하는 실험 28개, 원인 순위를 매기는 진단 도우미, 공개 장애 사후 분석 12건과 상황별 절차',
+    ],
+  },
+  {
+    name: 'motion-graphics',
+    tag: '코드로 그리는 기술 설명 모션 그래픽 실험 (MMO 서버·네트워크 12개 주제)',
+    href: 'https://jungrok5.github.io/motion-graphics/',
+    tech: 'HTML Canvas · three.js · Playwright · ffmpeg',
+    note: '공개',
+    metric: '12개 주제 · 설명 방식 7가지',
+    points: [
+      '영상 파일이 아니라 코드로 그리는 웹 페이지: 모든 프레임이 시간의 순수 함수라 브라우저에서 바로 재생·탐색되고, 같은 페이지를 MP4로 굽는다',
+      '설명 방식 7가지를 3D(WebGL)로 실험하고 주제마다 맞는 방식을 골라 적용, 제작 과정은 Claude Code 스킬로 반복 제작. 이 페이지도 같은 방식',
+    ],
+  },
+  {
+    name: 'AI 협업 개발 템플릿',
+    tag: 'AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿 (여러 AI 도구 · 여러 레포)',
+    href: 'https://github.com/jungrok5/ai-code-collaboration-best-practices',
+    tech: 'GitHub Actions · Claude Code 플러그인 · Make',
+    note: '공개 · MIT',
+    metric: '워크플로 22개',
+    points: [
+      '어떤 AI 도구로 작업해도 AGENTS.md 하나의 규칙을 읽고 같은 검사를 통과해야 main에 반영되는 구조',
+      'Claude Code 플러그인 가드레일(차단 훅, 스킬 11개, 서브에이전트 5개)과 룰셋·CODEOWNERS·워크플로 22개로 이슈부터 머지까지 자동화',
+    ],
+  },
+  {
     name: 'Hellfarm',
     tag: '디아블로식 파밍 + 뱀서라이크를 합친 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android)',
     href: 'https://github.com/jungrok5/super-vs',
@@ -420,18 +456,6 @@ export const projects = [
     points: [
       '단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)',
       '현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치',
-    ],
-  },
-  {
-    name: 'thesauros',
-    tag: '한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스',
-    href: 'https://github.com/jungrok5/thesauros',
-    tech: 'Python · Next.js · Supabase',
-    note: '라이브 운영 중',
-    metric: '프로덕션 운영',
-    points: [
-      '데이터 수집 → 분석 → 백테스트 → 알림까지 프로덕션으로 직접 운영 (Vercel · Supabase · 크론 8개 · CI)',
-      'AI를 활용한 주식 매매의 효용성 리서치',
     ],
   },
 ]
