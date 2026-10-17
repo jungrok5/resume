@@ -295,7 +295,7 @@ const apiRowY = i => 236 + i * 96;
 function drawMCP(g, t) {
   const w = 1080, h = 860;
   chrome(g, w, h, { col: K.mcp, tags: [['MCP', K.mcp]], title: 'MCP 서버 · 자체 구현' });
-  gt(g, 'gRPC 리플렉션 → API 목록 자동 탐색', 40, 176, { size: 38, weight: 700, color: K.dim });
+  gt(g, '리플렉션 → API 목록 자동 탐색', 40, 176, { size: 38, weight: 700, color: K.dim });
   gt(g, '리플렉션 탐색 대기…', 40, 300, { size: 40, weight: 600, color: K.faint, alpha: 1 - p(t, 2.6, .3) });
   const scan = p(t, 2.7, 1.9);
   if (scan > 0 && scan < 1) { g.fillStyle = rgba(K.mcp, .5); g.fillRect(40, 192, (w - 80) * scan, 4); }
@@ -500,9 +500,9 @@ function drawIDE(g, t) {
 // LLM · the in-house llama.cpp server
 function drawLLM(g, t) {
   const w = 1080, h = 860;
-  chrome(g, w, h, { col: K.loc, tags: [['llama.cpp', K.loc]], title: '로컬 LLM 서버 · 사내' });
+  chrome(g, w, h, { col: K.loc, tags: [['llama.cpp', K.loc]], title: '로컬 LLM · llama.cpp' });
   gt(g, '$ llama-server -m model.gguf', 40, 172, { size: 38, mono: true, weight: 600, color: K.hi });
-  gt(g, 'GPU  RTX 2080 Ti · 11GB', 40, 232, { size: 38, mono: true, color: K.text });
+  gt(g, '검증 GPU  RTX 2080 Ti · 11GB', 40, 232, { size: 38, mono: true, color: K.text });
   gt(g, typed('← IDE 요청 · 응답 스트리밍', p(t, 25.2, .4)), 40, 292, { size: 36, mono: true, color: K.loc });
   g.fillStyle = 'rgba(255,255,255,0.08)'; g.fillRect(36, 330, w - 72, 2);
   const kb = eo(p(t, 26.6, .5));

@@ -99,7 +99,7 @@
 <section class="notes" id="notes">
 <h2>채널 없는 대규모 밀집 전투 <small>· AION2 · NCDP 2019 최우수상</small></h2>
 <article data-ch="00"><p><span class="n">문제</span>채널로 인원을 나누지 않으니 1,000 vs 1,000이 한 필드, 한 시야에서 싸운다. 한 명의 행동은 그 행동을 보는 모두에게 전해져야 하고, 한 시야 1,000명 전투에서는 이것이 초당 1,300만 패킷이 됐다.</p></article>
-<article data-ch="01"><p><span class="n">①</span>네트워크 부하를 기준으로 Session 서버와 Field 서버를 나눴다. 세션 서버를 확장할 수 있게 되면서 처리량이 3배 이상 늘었다. 화면의 서버 수와 부하 게이지는 개념도다.</p></article>
+<article data-ch="01"><p><span class="n">①</span>네트워크 부하를 기준으로 Session 서버와 Field 서버를 나눴다. 세션 서버를 확장할 수 있게 되면서 처리량이 3배로 늘었다. 화면의 서버 수와 부하 게이지는 개념도다.</p></article>
 <article data-ch="02"><p><span class="n">②</span>셀 기반 가상 관심영역으로 브로드캐스팅한다. 주변에 사람이 얼마나 몰리든 한 유저에게 보내는 데이터 크기는 고정된다. 그래프는 개념도다.</p></article>
 <article data-ch="03"><p><span class="n">③</span>Packet Shrink: 패킷 필드를 비트 단위로 패킹해 트래픽을 약 36% 줄였다. 화면의 필드 이름과 비트 수는 예시다.</p></article>
 <article data-ch="04"><p><span class="n">결과</span>이후 2,000 vs 2,000 전투로 확장했고, 이 작업으로 NCDP 2019 최우수상을 받았다 (발표: 「1000 vs 1000 대규모 유저를 채널 없이 서비스 하기 위한 고민들」).</p></article>
@@ -760,7 +760,7 @@ function chart(t, a) {
 
 // ── ③ Packet Shrink ──────────────────────────────────────────
 // 예시 fields: [name, bits before, bits used]
-const FIELDS = [['ID', 32, 20], ['X', 32, 18], ['Y', 32, 18], ['DIR', 32, 8], ['HP', 32, 12]];
+const FIELDS = [['ID', 32, 24], ['X', 32, 22], ['Y', 32, 22], ['DIR', 32, 14], ['HP', 32, 20]];
 const FCOL = ['#ffc864', '#ff9f4a', '#ff7b55', '#b48cff', '#7fb2ff'];
 const PANEL = TALL ? { x: 60, y: 410, w: 960, h: 580 } : { x: 830, y: 330, w: 1000, h: 440 };
 function sPacket(t) {

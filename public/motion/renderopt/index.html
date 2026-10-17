@@ -98,7 +98,7 @@
   <article data-ch="03"><p><b>렌더링.</b> 논리와 표현을 나눴습니다. 정적 프랍은 ISM 인스턴스로 바꾸고, 상호작용하는 프랍만 액터로 남겼습니다. 유저가 고른 색은 인스턴스별 GPU 커스텀 데이터로 넘겨, 색이 달라도 같은 메시는 한 배치로 그립니다.</p></article>
   <article data-ch="04"><p><b>물리.</b> 플레이어 인접 27칸(Prop Chunk)만 충돌 바디를 만들고, 플레이어가 움직이면 새로 들어온 칸은 생성, 벗어난 칸은 파괴합니다. 프랍이 1억 개라도 물리 씬에 상주하는 바디 수는 상수입니다.</p></article>
   <article data-ch="05"><p><b>결과.</b> 10만 개 스폰 실측 기준 드로우콜 20,967 → 503회, FPS 16.5 → 47.4, 스폰 49.8s → 2.6s. 한 시야 128만 프랍(콜리전 ON) 렌더링 유지를 실측했습니다.</p>
-  <p class="fine">영상 속 마을과 디버그 뷰는 원리를 보여 주기 위한 재현(개념도)이고, 장면의 프랍 수는 실측 조건과 다릅니다. 화면의 수치는 모두 실측값입니다.</p></article>
+  <p class="fine">영상 속 마을과 디버그 뷰는 원리를 보여 주기 위한 재현(개념도)이고, 장면의 프랍 수는 실측 조건과 다릅니다. 성능 수치는 모두 실측값입니다.</p></article>
 </section>
 <script type="importmap">{"imports": {"three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/"}}</script>
 <script type="module">
@@ -882,7 +882,7 @@ function overlay05(t) {
 function captions(t) {
   const sw = (s, e) => win(t, s, e, .3);
   caption('01', '유저가 지은 밀집 마을', '프랍 10만 개 스폰 — 화면이 끊긴다', sw(-1, 6.0));
-  caption('02', '프랍 하나 = 드로우콜 하나', '프랍마다 따로 그려서, 그리기 요청이 프랍 수만큼', sw(6.0, 13.0));
+  caption('02', '프랍 하나 = 드로우콜 하나', '프랍마다 따로 그려서, 그리기 요청이 프랍 수에 비례', sw(6.0, 13.0));
   const a3 = sw(13.0, 17.4);
   if (a3 > .01) {
     caption('03', 'ISM 인스턴싱', '정적 프랍 = 인스턴스 · 상호작용하는 것만 액터', a3, a3 * win(t, 13.0, 14.9, .3));

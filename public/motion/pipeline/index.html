@@ -97,8 +97,8 @@
   <h2>데이터 파이프라인 단일 소스 표준화</h2>
   <article data-ch="01"><p>같은 게임 데이터(아이템, 스탯 같은 StaticData)를 서버 코드, 클라 코드, 기획 테이블에서 각각 정의하면, 한쪽을 바꿀 때마다 나머지를 사람이 맞춰야 하고 이름이나 필드가 어긋나기 쉽다. 영상 첫 장면은 이 상태를 그린 개념도다.</p></article>
   <article data-ch="02"><p>원본을 <code>.proto</code> 한 파일로 모으고, C++로 protoc 플러그인을 직접 구현했다. 플러그인은 필드 타입뿐 아니라 커스텀 필드 옵션(<code>[(max) = 9999]</code> 같은 것)과 주석까지 읽어서 생성물에 넘긴다.</p></article>
-  <article data-ch="03"><p>배치 한 번으로 서버·클라 코드, CSV, 유효성 검증 코드가 함께 생성되고, 스탯 계산 코드도 생성된다. 그래서 새 항목을 추가하는 비용이 proto에 한 줄 쓰는 수준으로 줄었다.</p></article>
-  <article data-ch="04"><p>StaticData 유효성 검증은 서버 바이너리의 검증 모드로 도구화했다. 검증 결과는 ExitCode로 나오고, CI와 퍼포스 트리거가 이 값을 그대로 받아 판정한다. 결과적으로 배치 1회로 서버·클라에 동시에 반영되고, 이 방식이 팀 전체 작업 방식으로 채택됐다.</p>
+  <article data-ch="03"><p>배치 한 번으로 서버·클라 코드, CSV, 유효성 검증 코드가 함께 생성되고, 스탯 계산 코드도 생성된다. 그래서 새 항목을 추가하는 비용이 최소화됐다.</p></article>
+  <article data-ch="04"><p>StaticData 유효성 검증은 서버 바이너리의 검증 모드로 도구화했다. 검증 결과는 ExitCode로 나오고, CI와 퍼포스 트리거가 이 값을 그대로 받아 판정한다. 배치 1회로 서버·클라에 동시에 반영되며, 스탯 계산 코드 생성은 팀 전체 작업 방식으로 채택됐다.</p>
   <p class="fine">화면 속 코드·테이블·로그 내용은 설명을 위한 예시이고, 첫 장면은 개념도다.</p></article>
 </section>
 <script type="importmap">
@@ -434,7 +434,7 @@ const P4_LINES = [
 function drawP4(g, t) {
   const w = 860, h = 560;
   sheetFrame(g, w, h, { file: 'p4 trigger · CI', role: '퍼포스 · CI', col: K.src, dark: true });
-  gt(g, 'Perforce · change-submit 트리거', 26, HD + 40, { size: 24, color: K.termDim, weight: 600 });
+  gt(g, 'Perforce · 서브밋 트리거', 26, HD + 40, { size: 24, color: K.termDim, weight: 600 });
   termRows(g, P4_LINES, t, 26, HD + 88, 46, 26);
   g.fillStyle = '#2b3c55'; g.fillRect(20, HD + 290, w - 40, 2);
   gt(g, 'CI · staticdata-validate', 26, HD + 334, { size: 24, color: K.termDim, weight: 600 });
