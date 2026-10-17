@@ -1,0 +1,1061 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 개발 세션</title>
+<style>
+  /* One dark look. Stage 16:9 (default) or 4:5 (?layout=tall), transport bar, chapter chips, notes. ?embed = canvas only. */
+  :root {
+    --bg: #08090b; --surface: #121317; --line: #262931; --fg: #eef0f3; --dim: #8b919c; --text2: #c8ccd4;
+    --accent: #58c4f6; --nl: #efe4cc;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 16px; box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  body.tall .player { width: min(100%, calc((100vh - 170px) * 4 / 5)); }
+  .stage { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  body.tall .stage { aspect-ratio: 4 / 5; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--accent);
+    background: rgba(18,19,23,.8); color: var(--fg); display: grid; place-items: center; cursor: pointer; transition: transform .15s; }
+  .big[hidden] { display: none; }
+  .big:hover { transform: scale(1.06); }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 14px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--nl), var(--accent)); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(88,196,246,.25); }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(88,196,246,.12); }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  .notes { width: min(100%, 760px); margin-top: 40px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes h2 { font-size: 20px; margin: 0 0 12px; }
+  .notes article { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 16px; }
+  .notes h3 { font-size: 15px; margin: 0 0 4px; color: var(--accent); }
+  .notes p { color: var(--text2); margin: 0; }
+  .notes .small { font-size: 13px; color: var(--dim); margin-top: 20px; }
+  /* #poster: canvas only, loops */
+  body.poster { padding: 0; }
+  body.poster .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .big, body.poster .notes, body.poster .set { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+  /* ?embed: the résumé drives renderAt(t) */
+  body.embed { margin: 0; padding: 0; display: block; height: 100vh; overflow: hidden; }
+  body.embed .player { width: 100%; height: 100%; gap: 0; }
+  body.embed .stage { width: 100%; height: 100%; aspect-ratio: auto; border: 0; border-radius: 0; cursor: default; }
+  body.embed canvas { width: 100%; height: 100%; object-fit: contain; }
+  body.embed .bar, body.embed .chapters, body.embed .big, body.embed .notes, body.embed .set,
+  body.render .bar, body.render .chapters, body.render .big, body.render .notes, body.render .set { display: none; }
+</style>
+</head>
+<body>
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="AI 개발 생산성: 자연어 테스트 요청이 MCP 서버를 거쳐 gRPC 호출 시퀀스가 되고, 에이전트 팀이 로그 분석·DB 검증·보고서까지 잇고, 멀티에이전트 코드리뷰와 로컬 LLM 코딩 스택으로 이어지는 작업 화면들을 공간에 늘어놓은 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="34" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:34</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+    <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="이동"><a href="../../interactive.html">← 이력서로</a></nav>
+</div>
+<section class="notes" id="notes">
+  <h2>AI 개발 생산성 향상 · NCSOFT Panthera</h2>
+  <article data-ch="01"><h3>문제</h3>
+    <p>서버 기능 하나를 확인하려면 테스트 호출을 짜고, 서버 로그를 뒤지고, DB를 조회하고, 결과를 정리하는 일을 사람이 손으로 이어 붙여야 합니다. 코드리뷰도 프로젝트 전체를 사람이 다 읽기는 어렵습니다.</p></article>
+  <article data-ch="02"><h3>접근</h3>
+    <p>MCP 서버를 자체 구현해 자연어 테스트 요청을 gRPC 호출 시퀀스로 바꿉니다. 호출할 API는 리플렉션으로 자동 탐색합니다. 테스터 · 분석가 · DB · 서버 매니저 4종의 AI 테스트 에이전트 팀이 테스트 → 로그 분석 → DB 검증 → 보고서를 자동으로 이어 가고, 멀티에이전트 코드리뷰로 서버 · DB 프로젝트를 전수 리뷰합니다.</p></article>
+  <article data-ch="03"><h3>결과</h3>
+    <p>코드리뷰에서 실제 결함을 다수 발견 · 확정했습니다. 또 사내 코드가 외부로 나가지 않는 llama.cpp 기반 로컬 LLM 코딩 스택을 구축해 배포했습니다(체계적 검증으로 3모델 배포, 구형 RTX 2080 Ti 11GB에서 재현성 검증).</p></article>
+  <p class="small">화면 속 요청 문장, API 이름, 로그, DB 행, 코드, 리뷰 코멘트는 이해를 돕기 위한 예시입니다.</p>
+</section>
+<script type="importmap">
+{ "imports": { "three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/" } }
+</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  AI 개발 생산성 — 실물을 공간에 늘어놓기
+//  One working session laid out in space, left to right: the chat with a natural-language test request, the MCP server's
+//  reflection-discovered API list, the generated gRPC call sequence, the agent team's artifacts (log, DB check, report),
+//  the multi-agent review (file tree swept end to end, a diff with review comments stamped 결함 확정), and the local
+//  LLM station (IDE + llama.cpp server) fenced inside the company network. At the end the sheets gather into one frame:
+//  MCP · 에이전트 · 로컬 LLM.
+//  Look from the subject: dark editor/terminal sheets with solid role tags (like issue labels), a cream chat bubble for
+//  the human request, a dotted desk floor. three.js renders offscreen → drawImage onto #c → 2D header/labels on top.
+//  Every frame is a pure function of t. ?layout=tall recomposes for 1080×1350. ?embed[&q=] for the résumé.
+// ─────────────────────────────────────────────────────────────
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const p = (t, s, d) => clamp((t - s) / d);
+const eo = t => 1 - Math.pow(1 - t, 3);
+const eio = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const eback = t => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+const win = (t, s, e, f = .4) => Math.min(eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let x = Math.imul(seed ^ seed >>> 15, 1 | seed); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+
+const QS = new URLSearchParams(location.search);
+const TALL = QS.get('layout') === 'tall';
+const EMBED = QS.has('embed'), RENDER = QS.has('render');
+const Q = clamp(parseFloat(QS.get('q')) || 1, .4, 1);
+const W = TALL ? 1080 : 1920, H = TALL ? 1350 : 1080, DURATION = 34;
+if (TALL) document.body.classList.add('tall');
+if (EMBED) document.body.classList.add('embed');
+if (RENDER) document.body.classList.add('render');
+const cv = document.getElementById('c');
+cv.width = Math.round(W * Q); cv.height = Math.round(H * Q);
+const ctx = cv.getContext('2d');
+const SANS = 'Pretendard, "Noto Sans KR", "DejaVu Sans", sans-serif';
+const MONO = '"JetBrains Mono", Pretendard, "DejaVu Sans Mono", monospace';
+
+// ── palette: an engineer's session ───────────────────────────
+// cream = the human's natural-language request · sky = MCP / gRPC · four agents: lime 서버 매니저, teal 테스터, amber 분석가, indigo DB
+// rose = review findings · violet = local LLM · green = pass
+const K = {
+  bg: '#08090b', panel: '#121317', bar: '#1a1c21', hi: '#eef0f3', text: '#c8ccd4', dim: '#8b919c', faint: '#5c626d', ink: '#0b0c0f',
+  nl: '#efe4cc', nlInk: '#1d1a14', mcp: '#58c4f6', srv: '#a6df63', test: '#3fd0b2', ana: '#f2b14c', db: '#8b93ff',
+  rev: '#ff6f7d', loc: '#c39bff', ok: '#7bd88f',
+};
+
+// ── beats ────────────────────────────────────────────────────
+const BEATS = [
+  { s: 0, e: 8.5, n: '01', title: '자연어 → gRPC 호출 시퀀스', sub: 'MCP 서버 자체 구현 · 리플렉션 기반 API 자동 탐색' },
+  { s: 8.5, e: 16.5, n: '02', title: 'AI 테스트 에이전트 팀', sub: null },
+  { s: 16.5, e: 23.5, n: '03', title: 'AI 멀티에이전트 코드리뷰', sub: '서버 · DB 프로젝트 전수 리뷰 → 실제 결함 다수 발견 · 확정' },
+  { s: 23.5, e: 29.5, n: '04', title: '로컬 LLM 코딩 스택', sub: 'llama.cpp 기반 구축 · 배포 — 사내 코드 외부 유출 없음' },
+];
+const FIN = 29.5;
+// beat 2: the steps, and which agents carry each
+const STEPS = [
+  { s: 8.5, e: 10.6, lab: '테스트', col: K.test, ag: [0, 1] },
+  { s: 10.6, e: 12.6, lab: '로그 분석', col: K.ana, ag: [2] },
+  { s: 12.6, e: 14.6, lab: 'DB 검증', col: K.db, ag: [3] },
+  { s: 14.6, e: 16.5, lab: '보고서', col: K.nl, ag: [0, 1, 2, 3] },
+];
+const AGENTS = [['서버 매니저', K.srv], ['테스터', K.test], ['분석가', K.ana], ['DB', K.db]];
+const stepAt = t => STEPS.findIndex(s => t >= s.s && t < s.e);
+
+// ── three.js ─────────────────────────────────────────────────
+const FOV = 40, TAN = Math.tan(FOV / 2 * Math.PI / 180);
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(Math.round(W * Q), Math.round(H * Q), false);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(K.bg);
+const camera = new THREE.PerspectiveCamera(FOV, W / H, .1, 700);
+scene.add(camera);
+const composer = new EffectComposer(renderer);
+composer.setPixelRatio(1); composer.setSize(Math.round(W * Q), Math.round(H * Q));
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new UnrealBloomPass(new THREE.Vector2(W * Q / 2, H * Q / 2), .38, .4, .88));
+composer.addPass(new OutputPass());
+function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function canvasTex(c, mip = true) { const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); t.generateMipmaps = mip; if (!mip) t.minFilter = THREE.LinearFilter; return t; }
+
+// ── floor: a dotted desk, light pools under the sheets in use, a violet tint inside the company-network fence ─────
+const NPOOL = 8;
+const floorMat = new THREE.ShaderMaterial({
+  depthWrite: false,
+  uniforms: { uCam: { value: new THREE.Vector3() }, uPool: { value: Array.from({ length: NPOOL }, () => new THREE.Vector4()) },
+    uPC: { value: Array.from({ length: NPOOL }, () => new THREE.Color()) }, uZone: { value: new THREE.Vector4(92.6, -2.6, 116.6, 2.2) }, uZK: { value: 0 } },
+  vertexShader: `varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position,1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+  fragmentShader: `varying vec3 vW; uniform vec3 uCam; uniform vec4 uPool[${NPOOL}]; uniform vec3 uPC[${NPOOL}]; uniform vec4 uZone; uniform float uZK;
+    void main(){
+      float d = length(vW.xz - uCam.xz);
+      vec3 c = vec3(.034,.036,.042);
+      vec2 g = fract(vW.xz * 1.25) - .5;
+      float fw = fwidth(vW.z * 1.25);
+      float dt = 1. - smoothstep(.05, .05 + fw * 1.5 + .02, length(g));
+      c += vec3(.085,.09,.10) * dt * clamp(1. - fw * 2.5, 0., 1.);
+      for (int i = 0; i < ${NPOOL}; i++) {
+        vec4 P = uPool[i]; if (P.w <= 0.) continue;
+        vec2 q = (vW.xz - P.xy) / vec2(P.z, P.z * .45);
+        c += uPC[i] * exp(-dot(q,q)) * P.w * .07;
+      }
+      float zone = step(uZone.x, vW.x) * step(vW.x, uZone.z) * step(uZone.y, vW.z) * step(vW.z, uZone.w);
+      c += vec3(.055,.035,.085) * zone * uZK;
+      float fade = exp(-d * .012);
+      c = mix(vec3(.031,.035,.043), c, clamp(fade * 1.5, 0., 1.));
+      gl_FragColor = vec4(c, 1.);
+    }`,
+});
+floorMat.extensions = { derivatives: true };
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), floorMat);
+floor.rotation.x = -Math.PI / 2; floor.position.set(55, 0, 0); scene.add(floor);
+const shadowTex = (() => { const c = mkCanvas(256, 128), g = c.getContext('2d'); const gr = g.createRadialGradient(128, 64, 0, 128, 64, 128); gr.addColorStop(0, 'rgba(0,0,0,0.9)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.setTransform(1, 0, 0, .5, 0, 32); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); return new THREE.CanvasTexture(c); })();
+
+// ── sheet drawing kit (design px; 100 design px = 1 world unit) ─────
+const TS = 1.25;
+function rr(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
+function gt(g, s, x, y, o = {}) {
+  const { size = 40, weight = 500, color = K.text, align = 'left', mono = false, alpha = 1 } = o;
+  if (alpha <= 0) return;
+  g.save(); g.globalAlpha *= alpha; g.font = `${weight} ${size}px ${mono ? MONO : SANS}`;
+  g.fillStyle = color; g.textAlign = align; g.textBaseline = 'alphabetic'; g.fillText(s, x, y); g.restore();
+}
+function mw(g, s, size, weight = 500, mono = false) { g.font = `${weight} ${size}px ${mono ? MONO : SANS}`; return g.measureText(s).width; }
+// solid role tag (dark text on the role color)
+function tag(g, label, x, y, col, o = {}) {
+  const { size = 34, align = 'left', alpha = 1 } = o; if (alpha <= 0) return 0;
+  const w = mw(g, label, size, 800) + size * .9, h = size * 1.5, X = align === 'right' ? x - w : align === 'center' ? x - w / 2 : x;
+  g.save(); g.globalAlpha *= alpha; rr(g, X, y - h / 2, w, h, 8); g.fillStyle = col; g.fill();
+  gt(g, label, X + w / 2, y + size * .36, { size, weight: 800, color: K.ink, align: 'center' }); g.restore();
+  return w;
+}
+function otag(g, label, x, y, col, o = {}) {
+  const { size = 30, align = 'left', alpha = 1, mono = false } = o; if (alpha <= 0) return 0;
+  const w = mw(g, label, size, 700, mono) + size * .9, h = size * 1.5, X = align === 'right' ? x - w : align === 'center' ? x - w / 2 : x;
+  g.save(); g.globalAlpha *= alpha; rr(g, X, y - h / 2, w, h, 8); g.fillStyle = rgba(col, .12); g.fill(); g.lineWidth = 2; g.strokeStyle = rgba(col, .7); g.stroke();
+  gt(g, label, X + w / 2, y + size * .36, { size, weight: 700, color: col, align: 'center', mono }); g.restore();
+  return w;
+}
+const TB = 96;
+function chrome(g, w, h, o) {
+  g.setTransform(TS, 0, 0, TS, 0, 0); g.clearRect(0, 0, w, h);
+  rr(g, 3, 3, w - 6, h - 6, 22); g.fillStyle = K.panel; g.fill();
+  g.save(); rr(g, 3, 3, w - 6, h - 6, 22); g.clip();
+  g.fillStyle = K.bar; g.fillRect(0, 0, w, TB); g.fillStyle = 'rgba(255,255,255,0.07)'; g.fillRect(0, TB, w, 2);
+  g.fillStyle = o.col; g.fillRect(0, 0, 10, h);
+  g.restore();
+  let x = 36;
+  for (const [lab, col] of o.tags) x += tag(g, lab, x, TB / 2, col) + 16;
+  gt(g, o.title, x + 2, TB / 2 + 14, { size: 40, weight: 700, color: K.hi });
+  otag(g, '예시', w - 30, TB / 2, K.dim, { size: 28, align: 'right' });
+  g.save(); rr(g, 3, 3, w - 6, h - 6, 22); g.lineWidth = 2; g.strokeStyle = 'rgba(255,255,255,0.12)'; g.stroke(); g.restore();
+}
+function check(g, x, y, col, s = 1, a = 1) {
+  if (a <= 0) return; g.save(); g.globalAlpha *= a; g.strokeStyle = col; g.lineWidth = 6 * s; g.lineCap = 'round'; g.lineJoin = 'round';
+  g.beginPath(); g.moveTo(x - 14 * s, y); g.lineTo(x - 4 * s, y + 10 * s); g.lineTo(x + 16 * s, y - 12 * s); g.stroke(); g.restore();
+}
+function typed(s, k) { return s.slice(0, Math.round(s.length * clamp(k))); }
+
+// ═════════════════════════════════════════════════════════════
+//  THE SHEETS (all content 예시)
+// ═════════════════════════════════════════════════════════════
+// CHAT · the natural-language request
+function drawCHAT(g, t) {
+  const w = 1080, h = 780;
+  chrome(g, w, h, { col: K.nl, tags: [['세션', K.nl]], title: '자연어 테스트 요청' });
+  gt(g, '나', 40, 160, { size: 34, weight: 700, color: K.dim });
+  rr(g, 36, 182, w - 72, 214, 22); g.fillStyle = K.nl; g.fill();
+  gt(g, '로그인해서 아이템 10개를 지급하고', 72, 268, { size: 50, weight: 800, color: K.nlInk });
+  gt(g, '인벤토리에 들어갔는지 확인해 줘', 72, 344, { size: 50, weight: 800, color: K.nlInk });
+  const k1 = eo(p(t, .9, .4));
+  g.save(); g.globalAlpha = k1;
+  g.beginPath(); g.arc(52, 470, 11, 0, 7); g.fillStyle = K.mcp; g.fill();
+  gt(g, 'MCP 도구 호출', 80, 484, { size: 44, weight: 800, color: K.mcp });
+  g.restore();
+  gt(g, typed('run_test("로그인 → 지급 → 확인")', p(t, 1.1, .8)), 80, 552, { size: 38, mono: true, color: K.text });
+  const k2 = eo(p(t, 7.9, .5));
+  if (k2 > 0) {
+    g.save(); g.globalAlpha = k2; g.fillStyle = 'rgba(255,255,255,0.07)'; g.fillRect(36, 612, w - 72, 2); g.restore();
+    check(g, 62, 676, K.ok, 1.1, k2);
+    gt(g, '시퀀스 생성 · 실행 · 검증 완료', 100, 692, { size: 42, weight: 800, color: K.ok, alpha: k2 });
+  }
+}
+// MCP · reflection-discovered API list
+const API = ['AuthService.Login', 'CharacterService.Select', 'InventoryService.AddItem', 'InventoryService.GetList', 'MailService.Send', 'ShopService.Buy'];
+const apiRowY = i => 236 + i * 96;
+function drawMCP(g, t) {
+  const w = 1080, h = 860;
+  chrome(g, w, h, { col: K.mcp, tags: [['MCP', K.mcp]], title: 'MCP 서버 · 자체 구현' });
+  gt(g, 'gRPC 리플렉션 → API 목록 자동 탐색', 40, 176, { size: 38, weight: 700, color: K.dim });
+  const scan = p(t, 2.7, 1.9);
+  if (scan > 0 && scan < 1) { g.fillStyle = rgba(K.mcp, .5); g.fillRect(40, 192, (w - 80) * scan, 4); }
+  API.forEach((name, i) => {
+    const k = eo(p(t, 2.8 + i * .28, .35)), y = apiRowY(i); if (k <= 0) return;
+    const sel = i < 4 ? eo(p(t, 5.0 + i * .12, .3)) : 0;
+    g.save(); g.globalAlpha = k;
+    rr(g, 36, y, w - 72, 78, 12); g.fillStyle = sel > 0 ? rgba(K.mcp, .06 + .14 * sel) : 'rgba(255,255,255,0.035)'; g.fill();
+    if (sel > 0) { g.fillStyle = rgba(K.mcp, sel); g.fillRect(36, y + 10, 6, 58); }
+    otag(g, 'rpc', 62, y + 39, sel > 0 ? K.mcp : K.faint, { size: 26, mono: true });
+    gt(g, name, 160, y + 54, { size: 42, mono: true, weight: sel > .5 ? 700 : 500, color: sel > .5 ? K.hi : K.text });
+    if (sel > 0) gt(g, '→', w - 60, y + 54, { size: 42, weight: 800, color: K.mcp, align: 'right', alpha: sel });
+    g.restore();
+  });
+}
+// SEQ · the generated gRPC call sequence
+const SEQ = ['AuthService.Login', 'CharacterService.Select', 'InventoryService.AddItem ×10', 'InventoryService.GetList'];
+const seqRowY = i => 196 + i * 118;
+function drawSEQ(g, t) {
+  const w = 1080, h = 860;
+  chrome(g, w, h, { col: K.mcp, tags: [['gRPC', K.mcp]], title: '호출 시퀀스 · 자동 생성' });
+  SEQ.forEach((name, i) => {
+    const k = eo(p(t, 5.6 + i * .45, .35)), y = seqRowY(i); if (k <= 0) return;
+    const ok = eo(p(t, 5.9 + i * .45, .3));
+    g.save(); g.globalAlpha = k;
+    if (i < SEQ.length - 1) { const k2 = eo(p(t, 5.8 + i * .45, .4)); g.fillStyle = rgba(K.mcp, .45); g.fillRect(74, y + 30, 4, 88 * k2); }
+    g.beginPath(); g.arc(76, y, 30, 0, 7); g.fillStyle = rgba(K.mcp, .16); g.fill(); g.lineWidth = 3; g.strokeStyle = K.mcp; g.stroke();
+    gt(g, String(i + 1), 76, y + 14, { size: 36, weight: 800, mono: true, color: K.mcp, align: 'center' });
+    gt(g, name, 134, y + 15, { size: 42, mono: true, weight: 600, color: K.hi });
+    gt(g, 'OK', w - 44, y + 14, { size: 38, mono: true, weight: 800, color: K.ok, align: 'right', alpha: ok });
+    g.restore();
+  });
+  const kv = eo(p(t, 7.6, .45));
+  if (kv > 0) {
+    g.save(); g.globalAlpha = kv;
+    rr(g, 36, 680, w - 72, 132, 16); g.fillStyle = rgba(K.ok, .12); g.fill(); g.lineWidth = 2; g.strokeStyle = rgba(K.ok, .6); g.stroke();
+    check(g, 84, 744, K.ok, 1.3);
+    gt(g, '검증 · 아이템 10개 지급 확인', 130, 762, { size: 46, weight: 800, color: K.hi });
+    g.restore();
+  }
+}
+// LOG · server log, read by 분석가
+const LOGL = [['01.204', 'INFO', 'Login', 'uid=1001'], ['01.391', 'INFO', 'Select', 'char=52'], ['01.512', 'INFO', 'AddItem', '3001 ×10'], ['01.540', 'INFO', 'Commit', 'inventory'], ['01.602', 'INFO', 'GetList', 'count=10']];
+function drawLOG(g, t) {
+  const w = 1080, h = 780;
+  chrome(g, w, h, { col: K.ana, tags: [['분석가', K.ana]], title: '서버 로그 분석' });
+  gt(g, 'game-server.log', 40, 162, { size: 32, mono: true, color: K.faint });
+  LOGL.forEach(([ts, lv, ev, arg], i) => {
+    const y = 236 + i * 76, sc = p(t, 10.9 + i * .24, .24), done = sc >= 1;
+    if (sc > 0 && !done) { g.fillStyle = rgba(K.ana, .16); g.fillRect(24, y - 50, w - 48, 72); }
+    gt(g, ts, 40, y, { size: 40, mono: true, color: K.faint });
+    gt(g, lv, 210, y, { size: 40, mono: true, weight: 700, color: K.ok });
+    gt(g, ev, 350, y, { size: 40, mono: true, weight: 700, color: K.hi });
+    gt(g, arg, 590, y, { size: 40, mono: true, color: K.text });
+    if (done) check(g, w - 64, y - 14, K.ana, 1, 1);
+  });
+  const kv = eo(p(t, 12.1, .4));
+  if (kv > 0) {
+    g.save(); g.globalAlpha = kv;
+    rr(g, 36, 628, w - 72, 116, 16); g.fillStyle = rgba(K.ana, .12); g.fill(); g.lineWidth = 2; g.strokeStyle = rgba(K.ana, .6); g.stroke();
+    gt(g, '→ ERROR 없음 · 요청과 로그 일치', 72, 702, { size: 44, weight: 800, color: K.hi });
+    g.restore();
+  }
+}
+// DB · state check
+function drawDB(g, t) {
+  const w = 1080, h = 780;
+  chrome(g, w, h, { col: K.db, tags: [['DB', K.db]], title: 'DB 검증' });
+  gt(g, typed('SELECT item_id, count FROM inventory', p(t, 12.8, .5)), 40, 176, { size: 36, mono: true, color: K.text });
+  gt(g, typed('WHERE uid = 1001;', p(t, 13.3, .25)), 40, 226, { size: 36, mono: true, color: K.text });
+  const kh = eo(p(t, 13.5, .3));
+  const C = [40, 380, 620, 900];
+  ['항목', '실제', '기대값', ''].forEach((s, i) => gt(g, s, C[i], 316, { size: 34, weight: 700, color: K.dim, alpha: kh }));
+  g.save(); g.globalAlpha = kh; g.fillStyle = 'rgba(255,255,255,0.12)'; g.fillRect(36, 336, w - 72, 2); g.restore();
+  [['item 3001', '10', '10'], ['지급 로그', '1건', '1건']].forEach((r, i) => {
+    const k = eo(p(t, 13.65 + i * .3, .3)), y = 404 + i * 78; if (k <= 0) return;
+    g.save(); g.globalAlpha = k;
+    gt(g, r[0], C[0], y, { size: 40, mono: i === 0, weight: 700, color: K.hi });
+    gt(g, r[1], C[1], y, { size: 40, mono: true, weight: 700, color: K.hi });
+    gt(g, r[2], C[2], y, { size: 40, mono: true, color: K.text });
+    check(g, C[3] + 40, y - 14, K.db, 1.1);
+    g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(36, y + 26, w - 72, 2);
+    g.restore();
+  });
+  const kv = eo(p(t, 14.1, .4));
+  if (kv > 0) {
+    g.save(); g.globalAlpha = kv;
+    rr(g, 36, 618, w - 72, 116, 16); g.fillStyle = rgba(K.db, .14); g.fill(); g.lineWidth = 2; g.strokeStyle = rgba(K.db, .6); g.stroke();
+    gt(g, '→ DB 상태 = 기대값', 72, 692, { size: 46, weight: 800, color: K.hi });
+    check(g, w - 90, 676, K.db, 1.3);
+    g.restore();
+  }
+}
+// RPT · the written report
+function drawRPT(g, t) {
+  const w = 960, h = 860;
+  chrome(g, w, h, { col: K.nl, tags: [['보고서', K.nl]], title: 'test-report.md' });
+  gt(g, '# 인벤토리 지급 테스트', 40, 190, { size: 50, weight: 800, color: K.hi, alpha: eo(p(t, 14.9, .3)) });
+  [['시나리오', '로그인 → 지급 → 확인'], ['실행', 'gRPC 시퀀스 · 통과'], ['로그', '이상 없음'], ['DB', '기대값 일치']].forEach(([a, b], i) => {
+    const k = eo(p(t, 15.1 + i * .22, .3)), y = 290 + i * 86; if (k <= 0) return;
+    gt(g, '–', 40, y, { size: 40, color: K.faint, alpha: k });
+    gt(g, a, 80, y, { size: 40, weight: 700, color: K.dim, alpha: k });
+    gt(g, b, 300, y, { size: 42, weight: 700, color: K.hi, alpha: k });
+  });
+  const kv = eo(p(t, 16.0, .4));
+  if (kv > 0) {
+    g.save(); g.globalAlpha = kv;
+    rr(g, 36, 660, w - 72, 150, 16); g.fillStyle = rgba(K.ok, .14); g.fill(); g.lineWidth = 2; g.strokeStyle = rgba(K.ok, .65); g.stroke();
+    check(g, 96, 732, K.ok, 1.6);
+    gt(g, '통과 · 자동 작성', 150, 756, { size: 56, weight: 800, color: K.hi });
+    g.restore();
+  }
+}
+// TREE · the whole project swept
+const FILES = [
+  { grp: 'Server/', lang: 'C#' }, ['InventoryService.cs', 1], ['MailService.cs', 0], ['ShopService.cs', 0], ['GuildGrain.cs', 1], ['RankingGrain.cs', 0],
+  { grp: 'Database/', lang: 'SQL' }, ['usp_AddItem.sql', 1], ['usp_SendMail.sql', 0], ['usp_GetRanking.sql', 0], ['Tables/Inventory.sql', 0],
+];
+function drawTREE(g, t) {
+  const w = 880, h = 1000;
+  chrome(g, w, h, { col: K.rev, tags: [['리뷰', K.rev]], title: '전수 리뷰' });
+  const prog = p(t, 17.3, 2.3);
+  gt(g, prog >= 1 ? '서버 · DB 프로젝트 전체 완료' : '서버 · DB 프로젝트 전체', 40, 164, { size: 34, weight: 700, color: prog >= 1 ? K.ok : K.dim });
+  rr(g, 40, 184, w - 80, 14, 7); g.fillStyle = 'rgba(255,255,255,0.08)'; g.fill();
+  rr(g, 40, 184, (w - 80) * prog, 14, 7); g.fillStyle = prog >= 1 ? K.ok : K.rev; g.fill();
+  let y = 270, fi = 0;
+  for (const f of FILES) {
+    if (f.grp) {
+      gt(g, '▾ ' + f.grp, 40, y, { size: 40, weight: 800, color: K.hi });
+      gt(g, f.lang, 40 + mw(g, '▾ ' + f.grp + '  ', 40, 800), y, { size: 32, weight: 700, color: K.dim });
+      y += 64; continue;
+    }
+    const [name, flag] = f, k = p(t, 17.3 + fi * .24, .24), done = k >= 1;
+    if (k > 0 && !done) { g.fillStyle = rgba(K.rev, .14); g.fillRect(24, y - 44, w - 48, 62); }
+    if (done && flag) { g.fillStyle = rgba(K.rev, .1); g.fillRect(24, y - 44, w - 48, 62); }
+    gt(g, name, 84, y, { size: 36, mono: true, weight: done && flag ? 700 : 500, color: done && flag ? K.hi : K.text });
+    if (done) {
+      if (flag) { g.beginPath(); g.arc(w - 62, y - 12, 13, 0, 7); g.fillStyle = K.rev; g.fill(); }
+      else check(g, w - 62, y - 12, rgba(K.ok, .75), .9);
+    }
+    y += 62; fi++;
+    if (fi === 5) y += 18;
+  }
+}
+// DIFF · code + review comments from different agents, stamped 결함 확정
+const CODE = [['41', 'async Task AddItem(long uid, int n) {'], ['42', '  var inv = await db.Inventory'], ['43', '      .FindAsync(uid);'], ['44', '  inv.Count += n;'], ['45', '  await db.SaveChangesAsync();'], ['46', '}']];
+const COMMENTS = [
+  { line: 3, who: '리뷰 에이전트 A', area: '동시성', col: K.mcp, body: '동시 요청 시 갱신 유실 → 원자적 UPDATE', t0: 20.1, st: 21.6 },
+  { line: 2, who: '리뷰 에이전트 B', area: '예외 처리', col: K.ana, body: '행이 없으면 null → 예외 처리 누락', t0: 20.8, st: 22.0 },
+];
+function drawDIFF(g, t) {
+  const w = 1100, h = 980;
+  chrome(g, w, h, { col: K.rev, tags: [['리뷰', K.rev]], title: 'InventoryService.cs' });
+  CODE.forEach(([n, s], i) => {
+    const y = 172 + i * 58;
+    const c = COMMENTS.find(c => c.line === i), hk = c ? eo(p(t, c.t0, .3)) : 0;
+    if (hk > 0) { g.fillStyle = rgba(K.rev, .16 * hk); g.fillRect(14, y - 42, w - 28, 56); g.fillStyle = rgba(K.rev, hk); g.fillRect(14, y - 42, 6, 56); }
+    gt(g, n, 50, y, { size: 36, mono: true, color: K.faint });
+    gt(g, s, 120, y, { size: 38, mono: true, color: hk > .5 ? K.hi : K.text });
+  });
+  COMMENTS.forEach((c, j) => {
+    const k = eo(p(t, c.t0, .4)); if (k <= 0) return;
+    const y = 540 + j * 210, x = 36, cw = w - 72;
+    g.save(); g.globalAlpha = k;
+    // leader from the code line to the card
+    g.strokeStyle = rgba(c.col, .7); g.lineWidth = 3; g.setLineDash([3, 8]); g.lineCap = 'round';
+    g.beginPath(); g.moveTo(28 + j * 0, 172 + c.line * 58 - 14); g.lineTo(28, y + 40); g.stroke(); g.setLineDash([]);
+    rr(g, x, y, cw, 186, 16); g.fillStyle = '#191b21'; g.fill(); g.lineWidth = 2; g.strokeStyle = rgba(c.col, .55); g.stroke();
+    g.beginPath(); g.arc(x + 52, y + 56, 26, 0, 7); g.fillStyle = c.col; g.fill();
+    gt(g, c.who.slice(-1), x + 52, y + 68, { size: 32, weight: 800, color: K.ink, align: 'center' });
+    gt(g, c.who, x + 96, y + 68, { size: 34, weight: 800, color: c.col });
+    otag(g, c.area, x + 106 + mw(g, c.who, 34, 800), y + 56, K.dim, { size: 28 });
+    gt(g, c.body, x + 40, y + 146, { size: 40, weight: 700, color: K.hi });
+    g.restore();
+    const ks = clamp(eback(p(t, c.st, .4)), 0, 1.2);
+    if (ks > 0) {
+      g.save(); g.translate(x + cw - 34, y + 56); g.rotate(-.05); g.scale(ks, ks);
+      tag(g, '결함 확정', 0, 0, K.rev, { size: 34, align: 'right' }); g.restore();
+    }
+  });
+}
+// IDE · coding with the local model
+function drawIDE(g, t) {
+  const w = 1080, h = 780;
+  chrome(g, w, h, { col: K.loc, tags: [['IDE', K.loc]], title: '코딩 어시스턴트 · 로컬 모델' });
+  rr(g, 36, 136, w - 72, 112, 20); g.fillStyle = K.nl; g.fill();
+  gt(g, 'AddItem 갱신 유실 고쳐 줘', 72, 210, { size: 46, weight: 800, color: K.nlInk });
+  const k1 = eo(p(t, 25.4, .3));
+  g.save(); g.globalAlpha = k1; g.beginPath(); g.arc(52, 316, 11, 0, 7); g.fillStyle = K.loc; g.fill(); g.restore();
+  gt(g, '로컬 모델 응답', 80, 330, { size: 40, weight: 800, color: K.loc, alpha: k1 });
+  ['UPDATE Inventory', '   SET Count = Count + @n', ' WHERE Uid = @uid;'].forEach((s, i) => {
+    gt(g, typed(s, p(t, 25.7 + i * .3, .3)), 80, 410 + i * 64, { size: 42, mono: true, weight: 600, color: K.hi });
+  });
+  g.fillStyle = '#0d0e11'; g.fillRect(4, h - 96, w - 8, 92);
+  g.fillStyle = rgba(K.loc, .5); g.fillRect(4, h - 96, w - 8, 2);
+  gt(g, 'llama.cpp · localhost', 40, h - 36, { size: 34, mono: true, color: K.loc });
+  gt(g, '외부 전송 없음', w - 40, h - 36, { size: 36, weight: 800, color: K.ok, align: 'right' });
+}
+// LLM · the in-house llama.cpp server
+function drawLLM(g, t) {
+  const w = 1080, h = 860;
+  chrome(g, w, h, { col: K.loc, tags: [['llama.cpp', K.loc]], title: '로컬 LLM 서버 · 사내' });
+  gt(g, '$ llama-server -m model.gguf', 40, 172, { size: 38, mono: true, weight: 600, color: K.hi });
+  gt(g, 'GPU  RTX 2080 Ti · 11GB', 40, 232, { size: 38, mono: true, color: K.text });
+  gt(g, typed('← IDE 요청 · 응답 스트리밍', p(t, 25.2, .4)), 40, 292, { size: 36, mono: true, color: K.loc });
+  g.fillStyle = 'rgba(255,255,255,0.08)'; g.fillRect(36, 330, w - 72, 2);
+  const kb = eo(p(t, 26.6, .5));
+  gt(g, '3', 44, 560, { size: 210, weight: 800, mono: true, color: K.loc, alpha: kb });
+  gt(g, '모델 배포', 210, 470, { size: 60, weight: 800, color: K.hi, alpha: kb });
+  gt(g, '체계적 검증 후 배포', 210, 536, { size: 38, weight: 600, color: K.dim, alpha: kb });
+  for (let i = 0; i < 3; i++) {
+    const k = eo(p(t, 26.9 + i * .3, .3)), x = 40 + i * 340; if (k <= 0) continue;
+    g.save(); g.globalAlpha = k;
+    rr(g, x, 600, 320, 84, 14); g.fillStyle = rgba(K.loc, .12); g.fill(); g.lineWidth = 2; g.strokeStyle = rgba(K.loc, .6); g.stroke();
+    gt(g, `모델 ${i + 1}`, x + 30, 656, { size: 38, weight: 700, color: K.hi });
+    check(g, x + 274, 640, K.ok, 1);
+    g.restore();
+  }
+  const kv = eo(p(t, 28.0, .4));
+  check(g, 64, 770, K.ok, 1.2, kv);
+  gt(g, '재현성 검증 · 구형 RTX 2080 Ti', 106, 786, { size: 42, weight: 800, color: K.ok, alpha: kv });
+}
+
+// ── registry · world layout ───────────────────────────────────
+// Sheets stand on the desk, leaning back LEAN; stations left → right: B1 (0–24) · B2 (36–59) · B3 (73–84) · B4 (99–111).
+const LEAN = 9 * Math.PI / 180, Y0 = .7;
+const SPEC = {
+  CHAT: { w: 1080, h: 780, x: 0, col: K.nl, draw: drawCHAT, live: [0, 8.6] },
+  MCP: { w: 1080, h: 860, x: 12, col: K.mcp, draw: drawMCP, live: [2.6, 5.6] },
+  SEQ: { w: 1080, h: 860, x: 24, col: K.mcp, draw: drawSEQ, live: [5.5, 8.2] },
+  LOG: { w: 1080, h: 780, x: 36, col: K.ana, draw: drawLOG, live: [10.8, 12.6] },
+  DB: { w: 1080, h: 780, x: 48, col: K.db, draw: drawDB, live: [12.7, 14.6] },
+  RPT: { w: 960, h: 860, x: 59.4, col: K.nl, draw: drawRPT, live: [14.8, 16.5] },
+  TREE: { w: 880, h: 1000, x: 72.6, col: K.rev, draw: drawTREE, live: [17.2, 19.7] },
+  DIFF: { w: 1100, h: 980, x: 83.7, col: K.rev, draw: drawDIFF, live: [20.0, 22.5] },
+  IDE: { w: 1080, h: 780, x: 98.6, col: K.loc, draw: drawIDE, live: [25.3, 26.7] },
+  LLM: { w: 1080, h: 860, x: 110.6, col: K.loc, draw: drawLLM, live: [25.1, 28.5] },
+};
+const ORDER = Object.keys(SPEC);
+const centerOf = (s, h = s.h) => new THREE.Vector3(s.x, Y0 + h / 200 * Math.cos(LEAN), -h / 200 * Math.sin(LEAN));
+const glowMat = () => new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  uniforms: { uSize: { value: new THREE.Vector2() }, uM: { value: 40 }, uK: { value: 0 }, uC: { value: new THREE.Color() } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`,
+  fragmentShader: `varying vec2 vUv; uniform vec2 uSize; uniform float uM; uniform float uK; uniform vec3 uC;
+    float sdRR(vec2 p, vec2 b, float r){ vec2 q = abs(p) - b + r; return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - r; }
+    void main(){ vec2 full = uSize + 2. * uM; vec2 p = (vUv - .5) * full; float d = sdRR(p, uSize * .5 - 3., 22.);
+      float edge = exp(-abs(d) / 2.); float outer = d > 0. ? exp(-d / 14.) * .35 : 0.;
+      gl_FragColor = vec4(uC * (edge * .9 + outer) * uK, 1.); }`,
+});
+const ART = {};
+for (const id of ORDER) {
+  const s = SPEC[id], ww = s.w / 100, hh = s.h / 100;
+  const c = mkCanvas(Math.round(s.w * TS), Math.round(s.h * TS)), g = c.getContext('2d');
+  const tex = canvasTex(c);
+  const grp = new THREE.Group();
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: .02 });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(ww, hh), mat); mesh.position.z = .05; mesh.renderOrder = 5;
+  const slabMat = new THREE.MeshBasicMaterial({ color: 0x0c0d10, transparent: true });
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(ww - .08, hh - .08, .08), slabMat); slab.renderOrder = 4;
+  const gm = glowMat(); gm.uniforms.uSize.value.set(s.w, s.h); gm.uniforms.uC.value.set(s.col);
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(ww + .8, hh + .8), gm); glow.position.z = .06; glow.renderOrder = 6;
+  grp.add(slab, mesh, glow); scene.add(grp);
+  const shMat = new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false });
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(ww * 1.1, 2.4), shMat); shadow.rotation.x = -Math.PI / 2; shadow.renderOrder = 2; scene.add(shadow);
+  ART[id] = { s, c, g, tex, grp, mat, slabMat, gm, shadow, shMat, key: null };
+}
+function artPt(id, x, y, z = .06) {
+  const a = ART[id]; a.grp.updateMatrixWorld();
+  return a.grp.localToWorld(new THREE.Vector3((x / a.s.w - .5) * a.s.w / 100, (.5 - y / a.s.h) * a.s.h / 100, z));
+}
+
+// ── camera poses ─────────────────────────────────────────────
+const PITCH = 9;
+function fr(c, s, sx, sy, yawDeg = 0, pitchDeg = PITCH) {
+  const yaw = yawDeg * Math.PI / 180, pit = pitchDeg * Math.PI / 180;
+  const dir = new THREE.Vector3(-Math.sin(yaw) * Math.cos(pit), -Math.sin(pit), -Math.cos(yaw) * Math.cos(pit));
+  const d = H / (200 * s * TAN), ppu = s * 100;
+  const right = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize();
+  const up = new THREE.Vector3().crossVectors(right, dir).normalize();
+  const C = c.clone ? c.clone() : new THREE.Vector3(...c);
+  const pos = C.clone().addScaledVector(dir, -d).addScaledVector(right, (W / 2 - sx) / ppu).addScaledVector(up, (sy - H / 2) / ppu);
+  return { pos, tgt: pos.clone().addScaledVector(dir, d) };
+}
+function onPose(pose, sx, sy, s) {
+  const dir = pose.tgt.clone().sub(pose.pos).normalize();
+  const right = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize();
+  const up = new THREE.Vector3().crossVectors(right, dir).normalize();
+  const L = H / (200 * s * TAN), half = L * TAN;
+  return pose.pos.clone().addScaledVector(dir, L).addScaledVector(right, (sx - W / 2) / (H / 2) * half).addScaledVector(up, (H / 2 - sy) / (H / 2) * half);
+}
+// the stage area between the header band and the bottom band, per layout
+const STAGE = TALL ? { top: 318, bot: 1236, margin: 44 } : { top: 214, bot: 962, margin: 70 };
+function frame(ids, mul = 1, o = {}) {
+  let x0 = Infinity, x1 = -Infinity, hm = 0;
+  for (const id of ids) { const s = SPEC[id]; x0 = Math.min(x0, s.x - s.w / 200); x1 = Math.max(x1, s.x + s.w / 200); hm = Math.max(hm, s.h); }
+  const avail = STAGE.bot - STAGE.top;
+  const s = Math.min(o.sMax ?? 1.2, (W - 2 * STAGE.margin) / ((x1 - x0) * 100), avail / hm) * mul;
+  const c = centerOf({ x: (x0 + x1) / 2, h: hm });
+  return fr(c, s, W / 2 + (o.dx || 0), (STAGE.top + STAGE.bot) / 2 + (o.dy || 0));
+}
+const P_FIN = fr([55, 5, -1], .3, W / 2, H / 2);
+const P_FIN2 = fr([55, 5, -1], .306, W / 2, H / 2);
+const CAM = TALL ? [
+  [0, frame(['CHAT'])], [2.2, frame(['CHAT'], 1.012)], [2.9, frame(['MCP'])], [5.1, frame(['MCP'], 1.012)], [5.8, frame(['SEQ'])], [10.2, frame(['SEQ'], 1.02)],
+  [10.9, frame(['LOG'])], [12.2, frame(['LOG'], 1.01)], [12.9, frame(['DB'])], [14.3, frame(['DB'], 1.01)], [15.0, frame(['RPT'])], [16.4, frame(['RPT'], 1.01)],
+  [17.1, frame(['TREE'])], [19.6, frame(['TREE'], 1.01)], [20.2, frame(['DIFF'])], [23.4, frame(['DIFF'], 1.015)],
+  [24.1, frame(['IDE'])], [26.5, frame(['IDE'], 1.01)], [27.2, frame(['LLM'])], [29.4, frame(['LLM'], 1.01)], [31.2, P_FIN], [34, P_FIN2],
+] : [
+  [0, frame(['CHAT', 'MCP'])], [2.3, frame(['CHAT', 'MCP'], 1.012)], [3.1, frame(['MCP', 'SEQ'])], [8.4, frame(['MCP', 'SEQ'], 1.02)],
+  [9.3, frame(['SEQ', 'LOG'])], [11.5, frame(['SEQ', 'LOG'], 1.012)], [12.5, frame(['DB', 'RPT'])], [16.4, frame(['DB', 'RPT'], 1.02)],
+  [17.3, frame(['TREE', 'DIFF'])], [23.4, frame(['TREE', 'DIFF'], 1.02)], [24.3, frame(['IDE', 'LLM'], .97)], [29.4, frame(['IDE', 'LLM'], .99)],
+  [31.2, P_FIN], [34, P_FIN2],
+];
+const CAM_T = CAM.map(k => k[0]);
+const CAM_C = ['pos', 'tgt'].flatMap(key => ['x', 'y', 'z'].map(ax => {
+  const y = CAM.map(k => k[1][key][ax]), n = y.length, d = [], m = new Array(n).fill(0);
+  for (let i = 0; i < n - 1; i++) d.push((y[i + 1] - y[i]) / (CAM_T[i + 1] - CAM_T[i]));
+  for (let i = 1; i < n - 1; i++) {
+    if (d[i - 1] * d[i] <= 0) continue;
+    const h0 = CAM_T[i] - CAM_T[i - 1], h1 = CAM_T[i + 1] - CAM_T[i], w1 = 2 * h1 + h0, w2 = h1 + 2 * h0;
+    m[i] = (w1 + w2) / (w1 / d[i - 1] + w2 / d[i]);
+  }
+  return { y, m };
+}));
+function camAt(t) {
+  const n = CAM.length; t = clamp(t, CAM_T[0], CAM_T[n - 1]);
+  let i = 0; while (i < n - 2 && t > CAM_T[i + 1]) i++;
+  const h = CAM_T[i + 1] - CAM_T[i], u = (t - CAM_T[i]) / h, u2 = u * u, u3 = u2 * u;
+  const v = CAM_C.map(({ y, m }) => y[i] * (2 * u3 - 3 * u2 + 1) + m[i] * h * (u3 - 2 * u2 + u) + y[i + 1] * (-2 * u3 + 3 * u2) + m[i + 1] * h * (u3 - u2));
+  return { pos: new THREE.Vector3(v[0], v[1], v[2]), tgt: new THREE.Vector3(v[3], v[4], v[5]) };
+}
+
+// ── the gathering at the end: three groups = MCP · 에이전트 · 로컬 LLM ─────
+// slot = [sx, sy, s] on the final camera; LOG and DB step back out of the picture.
+const GROUPS = TALL
+  ? [{ ids: ['CHAT', 'MCP', 'SEQ'], cy: 452 }, { ids: ['RPT', 'TREE', 'DIFF'], cy: 798 }, { ids: ['IDE', 'LLM'], cy: 1142 }].map(G => ({ ...G, cx: 806 }))
+  : [{ ids: ['CHAT', 'MCP', 'SEQ'], cx: 330 }, { ids: ['RPT', 'TREE', 'DIFF'], cx: 960 }, { ids: ['IDE', 'LLM'], cx: 1590 }].map(G => ({ ...G, cy: 610 }));
+const SLOT = {};
+GROUPS.forEach((G, gi) => {
+  const n = G.ids.length, dx = TALL ? 62 : 72, dy = TALL ? 44 : 56, s0 = TALL ? .232 : .27;
+  G.ids.forEach((id, i) => {
+    const o = i - (n - 1) / 2, s = s0 * (1 + .03 * o);
+    const sp = SPEC[id], c = onPose(P_FIN, G.cx + o * dx, G.cy + o * dy, s);
+    // onPose gives the sheet centre; store it with its delay
+    SLOT[id] = { c, d: gi * .18 + i * .08 };
+  });
+});
+const kFin = (id, t) => SLOT[id] ? eio(p(t, FIN + SLOT[id].d, 1.35)) : 0;
+
+// focus: the sheets the current step reads stay bright, the rest dims
+const FOCUS = [[0, 2.7, ['CHAT']], [1.4, 5.5, ['MCP']], [4.8, 10.7, ['SEQ']], [9.9, 12.8, ['LOG']], [12.0, 14.8, ['DB']], [14.0, 16.6, ['RPT']],
+  [16.5, 20.1, ['TREE']], [19.6, 23.6, ['DIFF']], [23.5, 29.6, ['IDE', 'LLM']]];
+function focusK(id, t) {
+  let any = 0, foc = 0;
+  for (const [a, b, ids] of FOCUS) { const w = a === 0 ? 1 - eio(p(t, b - .4, .4)) : win(t, a, b, .45); any = Math.max(any, w); if (ids.includes(id)) foc = Math.max(foc, w); }
+  const fin = eo(p(t, FIN, 1));
+  return { br: lerp(1 - any * (1 - foc) * .62, 1, fin), foc: foc * (1 - fin) };
+}
+
+// ── thick glowing lines (screen-space quads) ─────────────────
+const MAXSEG = 900;
+const lineGeo = new THREE.InstancedBufferGeometry();
+lineGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0, -1, 0, 1, -1, 0, 1, 1, 0, 0, 1, 0]), 3));
+lineGeo.setIndex([0, 1, 2, 0, 2, 3]);
+const iA = new THREE.InstancedBufferAttribute(new Float32Array(MAXSEG * 3), 3), iB = new THREE.InstancedBufferAttribute(new Float32Array(MAXSEG * 3), 3);
+const iC = new THREE.InstancedBufferAttribute(new Float32Array(MAXSEG * 3), 3), iWd = new THREE.InstancedBufferAttribute(new Float32Array(MAXSEG), 1);
+[iA, iB, iC, iWd].forEach(a => a.setUsage(THREE.DynamicDrawUsage));
+lineGeo.setAttribute('iA', iA); lineGeo.setAttribute('iB', iB); lineGeo.setAttribute('iC', iC); lineGeo.setAttribute('iW', iWd);
+const lineMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, depthTest: true, blending: THREE.AdditiveBlending,
+  uniforms: { uRes: { value: new THREE.Vector2(W, H) } },
+  vertexShader: `attribute vec3 iA; attribute vec3 iB; attribute vec3 iC; attribute float iW; uniform vec2 uRes; varying vec3 vC; varying float vS;
+    void main(){
+      vec4 a = projectionMatrix * viewMatrix * vec4(iA, 1.); vec4 b = projectionMatrix * viewMatrix * vec4(iB, 1.);
+      const float N = .12;
+      if (a.w < N && b.w < N) { gl_Position = vec4(2., 2., 2., 1.); vC = vec3(0.); vS = 0.; return; }
+      if (a.w < N) a = mix(a, b, (N - a.w) / (b.w - a.w));
+      if (b.w < N) b = mix(b, a, (N - b.w) / (a.w - b.w));
+      vec2 sa = a.xy / a.w * uRes * .5, sb = b.xy / b.w * uRes * .5;
+      vec2 dir = sb - sa; float L = length(dir); dir = L > 1e-4 ? dir / L : vec2(1., 0.);
+      vec2 n = vec2(-dir.y, dir.x); vec4 c = mix(a, b, position.x);
+      vec2 off = (n * position.y + dir * (position.x * 2. - 1.) * .5) * iW;
+      c.xy += off / (uRes * .5) * c.w; gl_Position = c; vC = iC; vS = position.y;
+    }`,
+  fragmentShader: `varying vec3 vC; varying float vS; void main(){ float f = exp(-vS * vS * 3.5); gl_FragColor = vec4(vC * f, 1.); }`,
+});
+const lineMesh = new THREE.Mesh(lineGeo, lineMat); lineMesh.frustumCulled = false; lineMesh.renderOrder = 7; scene.add(lineMesh);
+let NS = 0; const _c = new THREE.Color();
+function seg(a, b, col, inten, wd) {
+  if (NS >= MAXSEG || inten <= .002) return;
+  _c.set(col);
+  iA.array.set([a.x, a.y, a.z], NS * 3); iB.array.set([b.x, b.y, b.z], NS * 3);
+  iC.array.set([_c.r * inten, _c.g * inten, _c.b * inten], NS * 3); iWd.array[NS] = wd; NS++;
+}
+function bez(P, u) {
+  const [a, b, c, d] = P, v = 1 - u;
+  return new THREE.Vector3(v * v * v * a.x + 3 * v * v * u * b.x + 3 * v * u * u * c.x + u * u * u * d.x,
+    v * v * v * a.y + 3 * v * v * u * b.y + 3 * v * u * u * c.y + u * u * u * d.y, v * v * v * a.z + 3 * v * v * u * b.z + 3 * v * u * u * c.z + u * u * u * d.z);
+}
+function curve(P, k0, k1, col, base, wd = 3, hot = -1, sub = 30) {
+  if (k1 <= k0) return;
+  let prev = bez(P, k0);
+  for (let i = 1; i <= sub; i++) {
+    const u = lerp(k0, k1, i / sub), q = bez(P, u);
+    const heat = hot >= 0 ? Math.exp(-Math.pow((u - hot) * 8, 2)) : 0;
+    seg(prev, q, col, base + heat * 1.4, wd + heat * 3); prev = q;
+  }
+}
+const arc = (a, b, up = 1.2, out = 1.8) => [a, new THREE.Vector3(a.x + (b.x - a.x) * .3, a.y + up, a.z + out), new THREE.Vector3(b.x - (b.x - a.x) * .3, b.y + up, b.z + out), b];
+
+// ── tokens: the thing being handed along ─────────────────────
+const glowTex = (() => { const c = mkCanvas(128, 128), g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.25, 'rgba(255,255,255,.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
+function tokenTex(label, col) {
+  const size = 36, c0 = mkCanvas(8, 8).getContext('2d'); c0.font = `800 ${size}px ${SANS}`;
+  const w = Math.ceil(c0.measureText(label).width + 48), h = 64;
+  const c = mkCanvas(w * 2, h * 2), g = c.getContext('2d'); g.scale(2, 2);
+  rr(g, 2, 2, w - 4, h - 4, 12); g.fillStyle = col; g.fill();
+  g.font = `800 ${size}px ${SANS}`; g.fillStyle = K.ink; g.textBaseline = 'middle'; g.textAlign = 'center'; g.fillText(label, w / 2, h / 2 + 2);
+  return { t: canvasTex(c, false), aspect: w / h };
+}
+// [label, color, from sheet + point, to sheet + point, t0, t1]
+const TOKENS = [
+  ['자연어 요청', K.nl, ['CHAT', 980, 290], ['MCP', 140, 200], 1.7, 2.7],
+  ['gRPC 시퀀스', K.mcp, ['MCP', 1000, 420], ['SEQ', 120, 300], 5.0, 5.8],
+  ['실행 결과', K.test, ['SEQ', 1000, 740], ['LOG', 120, 236], 9.9, 10.8],
+  ['로그 분석', K.ana, ['LOG', 1000, 690], ['DB', 120, 200], 12.0, 12.9],
+  ['DB 검증', K.db, ['DB', 1000, 680], ['RPT', 120, 200], 14.0, 14.9],
+  ['리뷰 지적', K.rev, ['TREE', 820, 330], ['DIFF', 80, 400], 19.5, 20.2],
+  ['프롬프트', K.loc, ['IDE', 1000, 200], ['LLM', 120, 290], 24.6, 25.2],
+  ['응답', K.loc, ['LLM', 120, 290], ['IDE', 1000, 330], 25.25, 25.75],
+];
+const TOK = TOKENS.map(([label, col, A, B, t0, t1]) => {
+  const { t, aspect } = tokenTex(label, col);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, depthWrite: false, transparent: true })); sp.renderOrder = 9; scene.add(sp);
+  const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: new THREE.Color(col).multiplyScalar(1.3), blending: THREE.AdditiveBlending, depthTest: false, depthWrite: false, transparent: true })); gl.renderOrder = 8; scene.add(gl);
+  return { label, col, A, B, t0, t1, sp, gl, aspect };
+});
+const tokPath = T => arc(artPt(T.A[0], T.A[1], T.A[2]), artPt(T.B[0], T.B[1], T.B[2]));
+
+// ── 2D overlay ───────────────────────────────────────────────
+function txt(s, x, y, o = {}) {
+  const { size = 36, weight = 500, color = K.hi, align = 'left', alpha = 1, mono = false, ls = 0, shadow = 0 } = o;
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.font = `${weight} ${size}px ${mono ? MONO : SANS}`;
+  ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic'; if (ls) ctx.letterSpacing = ls + 'px';
+  if (shadow) { ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = shadow; }
+  ctx.fillText(s, x, y); ctx.restore();
+}
+function tw(s, size, weight = 500, mono = false) { ctx.font = `${weight} ${size}px ${mono ? MONO : SANS}`; return ctx.measureText(s).width; }
+function wrap(s, size, weight, maxW) {
+  const words = s.split(' '), out = []; let cur = '';
+  for (const w of words) { const n = cur ? cur + ' ' + w : w; if (tw(n, size, weight) > maxW && cur) { out.push(cur); cur = w; } else cur = n; }
+  if (cur) out.push(cur); return out;
+}
+function proj(v) { const q = v.clone().project(camera); return [(q.x + 1) / 2 * W, (1 - q.y) / 2 * H, q.z]; }
+function chipC(label, x, y, col, o = {}) {
+  const { size = 34, alpha = 1, on = 1, align = 'left' } = o; if (alpha <= 0) return 0;
+  const w = tw(label, size, 800) + size * 1.0, h = size * 1.55, X = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  ctx.beginPath(); ctx.roundRect(X, y - h / 2, w, h, 9);
+  ctx.fillStyle = on > .5 ? col : rgba(col, .1); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = rgba(col, on > .5 ? 1 : .5); ctx.stroke();
+  txt(label, X + w / 2, y + size * .36, { size, weight: 800, color: on > .5 ? K.ink : rgba(col, .85), align: 'center' });
+  ctx.restore(); return w;
+}
+const LY = TALL
+  ? { x: 56, kick: 82, kickS: 30, title: 164, titleS: 66, sub: 232, subS: 44, subLH: 58, subW: 968, bar: 1278, barS: 42, foot: 1330, footS: 28 }
+  : { x: 72, kick: 66, kickS: 26, title: 132, titleS: 58, sub: 184, subS: 36, subLH: 46, subW: 1700, bar: 1010, barS: 34, foot: 1060, footS: 24 };
+function headerBand(a) {
+  if (a <= 0) return;
+  const hb = TALL ? 330 : 222;
+  const g = ctx.createLinearGradient(0, 0, 0, hb); g.addColorStop(0, `rgba(8,9,11,${.94 * a})`); g.addColorStop(.75, `rgba(8,9,11,${.82 * a})`); g.addColorStop(1, 'rgba(8,9,11,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, hb);
+}
+function kicker(t, n, a) {
+  ctx.save(); ctx.globalAlpha = a;
+  txt('›', LY.x, LY.kick + 2, { size: LY.kickS + 8, weight: 800, color: K.nl });
+  const s = 'AI 개발 생산성 · Panthera';
+  txt(s, LY.x + LY.kickS, LY.kick, { size: LY.kickS, weight: 700, color: '#a9afba' });
+  let x = LY.x + LY.kickS + tw(s, LY.kickS, 700) + 28;
+  BEATS.forEach((b, i) => {
+    const on = b.n === n, done = +b.n < +n;
+    ctx.fillStyle = on ? K.nl : done ? 'rgba(239,228,204,0.45)' : 'rgba(255,255,255,0.15)';
+    ctx.fillRect(x + i * 40, LY.kick - LY.kickS * .55, 30, 8);
+  });
+  ctx.restore();
+}
+function subLine(b, t, a) {
+  if (b.n !== '02') {
+    wrap(b.sub, LY.subS, 600, LY.subW).forEach((l, j) => txt(l, LY.x, LY.sub + j * LY.subLH, { size: LY.subS, weight: 600, color: '#b7bdc7', alpha: a }));
+    return;
+  }
+  // beat 2: the step line, with the current step lit in its agent colour
+  const si = stepAt(t);
+  const parts = TALL ? [[['자연어로 ', -1], ['테스트', 0], [' → ', -1], ['로그 분석', 1]], [['→ ', -1], ['DB 검증', 2], [' → ', -1], ['보고서', 3], [' 자동화', -1]]]
+    : [[['자연어로 ', -1], ['테스트', 0], [' → ', -1], ['로그 분석', 1], [' → ', -1], ['DB 검증', 2], [' → ', -1], ['보고서', 3], [' 자동화', -1]]];
+  parts.forEach((line, j) => {
+    let x = LY.x;
+    line.forEach(([s, k]) => {
+      const on = k >= 0 && k === si, done = k >= 0 && k < si;
+      const col = on ? STEPS[k].col : k >= 0 ? (done ? '#e2e5ea' : '#8b919c') : '#b7bdc7';
+      txt(s, x, LY.sub + j * LY.subLH, { size: LY.subS, weight: on ? 800 : 600, color: col, alpha: a });
+      if (on) { ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = col; ctx.fillRect(x, LY.sub + j * LY.subLH + 9, tw(s, LY.subS, 800), 4); ctx.restore(); }
+      x += tw(s, LY.subS, on ? 800 : 600);
+    });
+  });
+}
+function header(t) {
+  let band = 0;
+  BEATS.forEach((b, i) => {
+    const a = Math.min(i === 0 ? 1 : eo(p(t, b.s, .35)), 1 - eio(p(t, b.e - .3, .3)));
+    band = Math.max(band, a);
+  });
+  headerBand(band);
+  BEATS.forEach((b, i) => {
+    const a = Math.min(i === 0 ? 1 : eo(p(t, b.s, .35)), 1 - eio(p(t, b.e - .3, .3))); if (a <= 0) return;
+    kicker(t, b.n, a);
+    const ty = LY.title;
+    txt(b.n, LY.x, ty, { size: LY.titleS, weight: 800, mono: true, color: K.nl, alpha: a });
+    txt(b.title, LY.x + tw(b.n + ' ', LY.titleS, 800, true), ty, { size: LY.titleS, weight: 800, color: '#f4f5f7', alpha: a });
+    subLine(b, t, a);
+  });
+}
+function bottomBand(a) {
+  if (a <= 0) return;
+  const y0 = TALL ? 1222 : 952;
+  const g = ctx.createLinearGradient(0, y0, 0, y0 + 50); g.addColorStop(0, 'rgba(8,9,11,0)'); g.addColorStop(1, `rgba(8,9,11,${.9 * a})`);
+  ctx.fillStyle = g; ctx.fillRect(0, y0, W, 50); ctx.fillStyle = `rgba(8,9,11,${.9 * a})`; ctx.fillRect(0, y0 + 50, W, H - y0 - 50);
+}
+// beat 2: the four agents, lit as the baton passes
+function teamBar(t) {
+  const a = Math.min(eo(p(t, 8.6, .4)), 1 - eio(p(t, 16.2, .3))); if (a <= 0) return;
+  const si = stepAt(t), on = si >= 0 ? STEPS[si].ag : [];
+  ctx.save(); ctx.globalAlpha = a;
+  let ws = AGENTS.map(([l]) => tw(l, LY.barS, 800) + LY.barS), gap = 16;
+  const label = '에이전트 팀';
+  const lw = TALL ? 0 : tw(label, LY.barS, 700) + 22;
+  let x = TALL ? (W - ws.reduce((s, w) => s + w, 0) - gap * 3) / 2 : LY.x;
+  if (!TALL) { txt(label, x, LY.bar + LY.barS * .36, { size: LY.barS, weight: 700, color: '#9aa1ad' }); x += lw; }
+  AGENTS.forEach(([l, col], i) => { const lit = on.includes(i) ? 1 : 0; x += chipC(l, x, LY.bar, col, { size: LY.barS, on: lit, alpha: lit ? 1 : .8 }) + gap; });
+  ctx.restore();
+}
+// beat 4: what the fence on the floor means
+function fenceLegend(t) {
+  const a = Math.min(eo(p(t, 23.9, .4)), 1 - eio(p(t, 29.2, .3))); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const s = LY.barS, lab = '사내망 안에서만 · 코드가 밖으로 나가지 않음';
+  const w = 64 + 18 + tw(lab, s, 800), x = TALL ? (W - w) / 2 : LY.x;
+  ctx.strokeStyle = K.loc; ctx.lineWidth = 4; ctx.setLineDash([12, 9]); ctx.beginPath(); ctx.moveTo(x, LY.bar); ctx.lineTo(x + 64, LY.bar); ctx.stroke(); ctx.setLineDash([]);
+  txt(lab, x + 82, LY.bar + s * .36, { size: s, weight: 800, color: K.loc });
+  ctx.restore();
+}
+function footnote(t) {
+  const a = 1 - eo(p(t, FIN + .2, .6)) * .0;
+  txt('* 화면 속 요청 · API · 로그 · 코드는 예시', W - (TALL ? 40 : 56), LY.foot, { size: LY.footS, weight: 500, color: '#9aa1ad', align: 'right', alpha: a });
+}
+// the result frame: three words over the three gathered groups
+const FIN_WORDS = [['MCP', K.mcp, '자연어 → gRPC 시퀀스'], ['에이전트', K.nl, '테스트 · 코드리뷰 자동화'], ['로컬 LLM', K.loc, 'llama.cpp · 사내 유출 없음']];
+function finale(t) {
+  const a = eo(p(t, FIN + .5, .9)); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  if (TALL) {
+    const g = ctx.createLinearGradient(0, 0, 0, 300); g.addColorStop(0, 'rgba(8,9,11,0.94)'); g.addColorStop(1, 'rgba(8,9,11,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, 300);
+    txt('AI 개발 생산성 향상', LY.x, 128, { size: 56, weight: 800, color: '#f4f5f7' });
+    txt('NCSOFT Panthera · 도입 주도', LY.x, 190, { size: 40, weight: 600, color: '#a9afba' });
+    FIN_WORDS.forEach(([w, col, sub], i) => {
+      const k = eo(p(t, FIN + .8 + i * .2, .6)), cy = GROUPS[i].cy;
+      const lg = ctx.createLinearGradient(0, 0, 640, 0); lg.addColorStop(0, `rgba(8,9,11,${.85 * k})`); lg.addColorStop(1, 'rgba(8,9,11,0)');
+      ctx.fillStyle = lg; ctx.fillRect(0, cy - 130, 640, 240);
+      txt(w, LY.x, cy + 18, { size: i === 0 ? 150 : 132, weight: 800, color: col, alpha: k, shadow: 16 });
+      txt(sub, LY.x + 4, cy + 86, { size: 44, weight: 700, color: '#d5d9e0', alpha: k, shadow: 12 });
+    });
+  } else {
+    const g = ctx.createLinearGradient(0, 0, 0, 380); g.addColorStop(0, 'rgba(8,9,11,0.94)'); g.addColorStop(.7, 'rgba(8,9,11,0.7)'); g.addColorStop(1, 'rgba(8,9,11,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, 380);
+    txt('AI 개발 생산성 향상 · NCSOFT Panthera', W / 2, 92, { size: 36, weight: 700, color: '#a9afba', align: 'center' });
+    const S = 124, sep = ' · ', parts = [];
+    FIN_WORDS.forEach(([w, col], i) => { parts.push([w, col]); if (i < 2) parts.push([sep, '#6d7480']); });
+    const tot = parts.reduce((s, [w]) => s + tw(w, S, 800), 0); let x = W / 2 - tot / 2;
+    parts.forEach(([w, col]) => { txt(w, x, 250, { size: S, weight: 800, color: col }); x += tw(w, S, 800); });
+    const lg = ctx.createLinearGradient(0, 850, 0, 960); lg.addColorStop(0, 'rgba(8,9,11,0)'); lg.addColorStop(1, 'rgba(8,9,11,0.9)'); ctx.fillStyle = lg; ctx.fillRect(0, 850, W, 110);
+    ctx.fillStyle = 'rgba(8,9,11,0.9)'; ctx.fillRect(0, 960, W, 120);
+    FIN_WORDS.forEach(([w, col, sub], i) => {
+      const k = eo(p(t, FIN + 1.0 + i * .2, .6));
+      txt(sub, GROUPS[i].cx, 930, { size: 38, weight: 700, color: '#dfe2e7', align: 'center', alpha: k });
+      ctx.save(); ctx.globalAlpha = k; ctx.fillStyle = col; ctx.fillRect(GROUPS[i].cx - 30, 952, 60, 5); ctx.restore();
+    });
+  }
+  ctx.restore();
+}
+function overlay(t) {
+  bottomBand(Math.max(Math.min(eo(p(t, 8.6, .4)), 1 - eio(p(t, 16.2, .3))), Math.min(eo(p(t, 23.9, .4)), 1 - eio(p(t, 29.2, .3)))) * .9 + .1);
+  header(t);
+  teamBar(t);
+  fenceLegend(t);
+  finale(t);
+  footnote(t);
+}
+
+// ── frame ────────────────────────────────────────────────────
+const frustum = new THREE.Frustum(), _pm = new THREE.Matrix4(), _sph = new THREE.Sphere();
+const FENCE = { x0: 92.6, z0: -2.6, x1: 116.6, z1: 2.2 };
+function fence(k) {
+  if (k <= 0) return;
+  const { x0, z0, x1, z1 } = FENCE, pts = [[x0, z1], [x1, z1], [x1, z0], [x0, z0], [x0, z1]];
+  for (let e = 0; e < 4; e++) {
+    const [ax, az] = pts[e], [bx, bz] = pts[e + 1], L = Math.hypot(bx - ax, bz - az), n = Math.ceil(L / .7);
+    for (let i = 0; i < n; i++) {
+      const u0 = i / n, u1 = (i + .55) / n;
+      seg(new THREE.Vector3(lerp(ax, bx, u0), .9, lerp(az, bz, u0)), new THREE.Vector3(lerp(ax, bx, u1), .9, lerp(az, bz, u1)), K.loc, .55 * k, 3.2);
+      seg(new THREE.Vector3(lerp(ax, bx, u0), .04, lerp(az, bz, u0)), new THREE.Vector3(lerp(ax, bx, u0 + 1 / n), .04, lerp(az, bz, u0 + 1 / n)), K.loc, .22 * k, 2);
+    }
+    for (let i = 0; i <= n; i += 3) { const x = lerp(ax, bx, i / n), z = lerp(az, bz, i / n); seg(new THREE.Vector3(x, .04, z), new THREE.Vector3(x, .9, z), K.loc, .3 * k, 2); }
+  }
+}
+function renderAt(t) {
+  t = clamp(t, 0, DURATION);
+  const cam = camAt(t);
+  camera.position.copy(cam.pos);
+  camera.position.x += Math.sin(t * .5) * .04; camera.position.y += Math.sin(t * .37 + 1) * .03;
+  camera.lookAt(cam.tgt); camera.updateMatrixWorld();
+  _pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); frustum.setFromProjectionMatrix(_pm);
+  const pools = floorMat.uniforms.uPool.value, pcs = floorMat.uniforms.uPC.value; let pi = 0;
+  for (const id of ORDER) {
+    const a = ART[id], s = a.s, base = centerOf(s), kf = kFin(id, t);
+    let pos = base, vis = 1;
+    if (SLOT[id]) pos = base.clone().lerp(SLOT[id].c, kf);
+    else { vis = 1 - eo(p(t, FIN, .8)); pos = base.clone().add(new THREE.Vector3(0, -1.5 * (1 - vis), -3 * (1 - vis))); }
+    const { br, foc } = focusK(id, t);
+    pos = pos.clone().add(new THREE.Vector3(0, .12 * foc, .25 * foc));
+    a.grp.position.copy(pos); a.grp.rotation.set(-LEAN, 0, 0); a.grp.visible = vis > .003; a.grp.updateMatrixWorld();
+    a.mat.opacity = vis; a.slabMat.opacity = vis; a.mat.color.setScalar(br);
+    a.gm.uniforms.uK.value = .9 * foc * vis;
+    const grounded = 1 - kf;
+    a.shadow.visible = grounded * vis > .01; a.shadow.position.set(pos.x, .012, base.z + .5); a.shMat.opacity = .75 * grounded * vis;
+    if (pi < NPOOL && foc > .02) { pools[pi].set(pos.x, base.z + 1.6, s.w / 100 * .55, foc); pcs[pi].set(s.col); pi++; }
+    if (a.grp.visible) {
+      _sph.set(a.grp.position, Math.hypot(s.w, s.h) / 200);
+      if (frustum.intersectsSphere(_sph)) {
+        const key = Math.round(clamp(t, s.live[0], s.live[1]) * 30);
+        if (a.key !== key) { a.g.setTransform(1, 0, 0, 1, 0, 0); s.draw(a.g, key / 30); a.tex.needsUpdate = true; a.key = key; }
+      }
+    }
+  }
+  for (; pi < NPOOL; pi++) pools[pi].set(0, 0, 1, 0);
+  floorMat.uniforms.uCam.value.copy(camera.position);
+  const kz = win(t, 23.7, FIN + .6, .5);
+  floorMat.uniforms.uZK.value = kz;
+
+  NS = 0;
+  for (const T of TOK) {
+    const kk = win(t, T.t0 - .1, T.t1 + .5, .25), r = p(t, T.t0, T.t1 - T.t0);
+    const P = kk > 0 || (r > 0 && r < 1) ? tokPath(T) : null;
+    if (kk > 0) curve(P, 0, Math.max(.02, eo(p(t, T.t0 - .1, .4))), T.col, .2 * kk, 2.4, r > 0 && r < 1 ? eio(r) : -1);
+    const on = r > 0 && r < 1;
+    T.sp.visible = T.gl.visible = on;
+    if (on) {
+      const q = bez(P, eio(r)), sz = .62;
+      T.sp.position.copy(q).add(new THREE.Vector3(0, sz * .7, 0)); T.sp.scale.set(sz * T.aspect, sz, 1);
+      T.gl.position.copy(q); T.gl.scale.set(sz * 2, sz * 2, 1);
+    }
+  }
+  fence(kz);
+  iA.needsUpdate = iB.needsUpdate = iC.needsUpdate = iWd.needsUpdate = true;
+  lineGeo.instanceCount = Math.max(1, NS);
+  if (!NS) iC.array.fill(0, 0, 3);
+
+  composer.render();
+  ctx.setTransform(Q, 0, 0, Q, 0, 0); ctx.globalAlpha = 1;
+  ctx.drawImage(renderer.domElement, 0, 0, W, H);
+  overlay(t);
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) {
+    try { document.fonts.add(await new FontFace(family, `url(../assets/fonts/${file})`, { weight }).load()); } catch (e) { /* fall back */ }
+  }
+  await document.fonts.ready;
+  for (const T of TOK) { const { t: tex, aspect } = tokenTex(T.label, T.col); T.sp.material.map.dispose(); T.sp.material.map = tex; T.aspect = aspect; }
+  for (const id of ORDER) ART[id].key = null;
+  renderAt(0);
+})();
+
+// ── player (standalone only) ─────────────────────────────────
+if (!RENDER && !EMBED) {
+  const $ = id => document.getElementById(id);
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CHAPTERS = [...BEATS.map(b => [b.s, b.n, b.title]), [FIN, '', '정리']];
+  $('scrub').setAttribute('aria-valuemax', Math.round(DURATION));
+  let t = 0, playing = false, last = 0;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button');
+    b.innerHTML = (n ? `<span>${n}</span>` : '') + label;
+    b.addEventListener('click', () => { seek(s + .01); play(); });
+    $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing; $('big').innerHTML = ended ? ICON.replay : ICON.play; $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur));
+  }
+  function draw() { renderAt(Math.min(t, DURATION)); }
+  function play() { if (t >= DURATION) t = 0; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(x) { t = clamp(x, 0, DURATION); draw(); ui(); }
+  function frameLoop(now) {
+    if (playing) {
+      t += Math.min(.1, (now - last) / 1000) * rate; last = now;
+      if (t >= DURATION) { t = DURATION; playing = false; }
+      draw(); ui();
+    }
+    requestAnimationFrame(frameLoop);
+  }
+  const RATES = [1, .75, .5];
+  let rate = 1;
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) {
+    rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`);
+    try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ }
+  }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('play').addEventListener('click', e => { e.stopPropagation(); toggle(); });
+  $('big').addEventListener('click', e => { e.stopPropagation(); toggle(); });
+  $('fs').addEventListener('click', () => { const el = $('stage'); if (document.fullscreenElement) document.exitFullscreen?.(); else el.requestFullscreen?.().catch(() => {}); });
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+  });
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frameLoop);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+}
+</script>
+</body>
+</html>

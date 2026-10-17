@@ -1,0 +1,917 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NPC 오너십 이전</title>
+<style>
+  /* Night plaza island seen from above; the server floats over it like a puppeteer's bar.
+     Every NPC hangs on one string of light to whoever simulates it. */
+  :root {
+    --bg: #0a0916; --surface: #141226; --line: #2a2646; --fg: #efeaff; --dim: #9d97bd; --text2: #c9c3e3;
+    --accent: #ffd98a;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center; padding: 16px; box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  body.tall .player { width: min(100%, calc((100vh - 170px) * 4 / 5)); }
+  .stage { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  body.tall .stage { aspect-ratio: 4 / 5; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--accent);
+    background: rgba(14,12,30,.8); color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .big[hidden] { display: none; }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 14px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--accent); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(255,217,138,.25); }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(255,217,138,.1); }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  .notes { width: min(100%, 760px); margin-top: 40px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes h2 { font-size: 20px; line-height: 1.4; margin: 0 0 14px; }
+  .notes p { color: var(--text2); margin: 0 0 14px; }
+  .notes b { color: var(--fg); }
+  .notes .fine { font-size: 14px; color: var(--dim); }
+  body.poster, body.embed { padding: 0; }
+  body.poster .player, body.embed .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .big, body.poster .notes, body.poster .set { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+  body.embed { height: 100vh; overflow: hidden; }
+  body.embed .player { height: 100%; gap: 0; }
+  body.embed .bar, body.embed .chapters, body.embed .big, body.embed .notes, body.embed .set { display: none; }
+  body.embed .stage { border: 0; border-radius: 0; aspect-ratio: auto; height: 100%; cursor: default; }
+  body.embed canvas { object-fit: contain; }
+</style>
+
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="NPC 시뮬레이션 오너십을 최근접 클라이언트로 위임하는 과정 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="33" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:33</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="이동"><a href="../../interactive.html">← 이력서로</a></nav>
+</div>
+<section class="notes" id="notes">
+  <h2>클라이언트 위임 분산 시뮬레이션 (Miniverse UE5)</h2>
+  <p><b>문제.</b> 서버가 모든 NPC를 직접 시뮬레이션하면 서버 부하가 월드의 NPC 총수에 비례해 커진다.</p>
+  <p><b>접근.</b> 로블록스 분산 물리(네트워크 오너십)와 같은 개념을 NPC AI에 자체 구현했다. NPC 시뮬레이션을 가장 가까운 클라이언트에 동적으로 위임하고, 유저가 움직이면 오너십이 끊김 없이 다음 최근접 클라이언트로 이전된다. 서버는 클라이언트가 보낸 결과를 권위 검증(이동 클램프 검증)하고 다른 클라이언트에 중계만 한다.</p>
+  <p><b>결과.</b> 서버 부하가 'NPC 총수'가 아닌 '유저 주변 활성 NPC 수'로 수렴한다.</p>
+  <p class="fine">화면의 NPC·유저 수와 서버 부하 표시는 개념도이며 측정값이 아니다.</p>
+</section>
+
+<script type="importmap">{"imports": {"three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/"}}</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  NPC 오너십 이전 — 클라이언트 위임 분산 시뮬레이션 (33 s)
+//  Approach: 흐름과 관계를 빛으로. Each NPC hangs on a string of light to whoever simulates it:
+//  first the server floating over the plaza (puppeteer), then the nearest client, in that client's colour.
+//  Players walk, strings slide over to the next nearest client without breaking.
+//  Every frame is a pure function of t. ?layout=tall → 1080×1350, ?embed, ?q=0.4–1, ?render.
+// ─────────────────────────────────────────────────────────────
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const QS = new URLSearchParams(location.search);
+const TALL = QS.get('layout') === 'tall';
+const EMBED = QS.has('embed'), RENDER = QS.has('render');
+const Q = Math.min(1, Math.max(.4, Number(QS.get('q')) || 1));
+const W = TALL ? 1080 : 1920, H = TALL ? 1350 : 1080, DURATION = 33;
+const FOV = TALL ? 40 : 34;
+if (TALL) document.body.classList.add('tall');
+if (EMBED) document.body.classList.add('embed');
+const cv = document.getElementById('c');
+cv.width = Math.round(W * Q); cv.height = Math.round(H * Q);
+const ctx = cv.getContext('2d');
+const SANS = 'Pretendard, "Noto Sans KR", "DejaVu Sans", sans-serif';
+const MONO = '"JetBrains Mono", Pretendard, monospace';
+
+// ── math ─────────────────────────────────────────────────────
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const p = (t, s, d) => clamp((t - s) / d);
+const eo = t => 1 - Math.pow(1 - t, 3);
+const eio = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const ss = t => t * t * (3 - 2 * t);
+const win = (t, s, e, f = .4) => Math.min(eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+const fract = x => x - Math.floor(x);
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let x = Math.imul(seed ^ seed >>> 15, 1 | seed); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+
+// ── timeline ─────────────────────────────────────────────────
+// [start, end, num, title, sub]
+const BEATS = [
+  [0, 7.4, '01', '서버가 모든 NPC를 시뮬레이션', '서버 부하 ∝ NPC 총수'],
+  [7.4, 14.0, '02', 'NPC 시뮬레이션을 최근접 클라이언트에 위임', '로블록스 분산 물리(네트워크 오너십) 개념을 NPC AI에 자체 구현'],
+  [14.0, 22.0, '03', '유저가 움직이면 오너십이 따라 이동', '끊김 없이 다음 최근접 클라이언트로 마이그레이션'],
+  [22.0, 28.2, '04', '서버는 권위 검증 · 중계만', ''],
+  [28.2, DURATION, '05', '결과', ''],
+];
+const T_DELEG = 7.9;                    // first handoff
+const T_WALK0 = 14.5, T_WALK1 = 20.8;   // A ⇄ C cross the plaza
+const VER = [22.4, 24.3, 26.2];         // verify cycles (client A, B, C), 1.9 s each
+const T_RES = 28.2;
+
+// ── palette ──────────────────────────────────────────────────
+const HEX = { srv: '#ffe7b0', hot: '#ff9a52', ver: '#e6e0ff', dimNpc: '#4a4668', ink: '#f3efff' };
+const PCOL = ['#ff7f6e', '#62c4ff', '#7ef0a6'];   // client A coral · B sky · C mint
+const PNAME = ['A', 'B', 'C'];
+const C3 = h => new THREE.Color(h);
+const SRV = C3(HEX.srv), HOT = C3(HEX.hot), VERC = C3(HEX.ver);
+const PC3 = PCOL.map(C3);
+
+// ═════════════════════════════════════════════════════════════
+//  WORLD (pure functions of t)
+// ═════════════════════════════════════════════════════════════
+const SERVER = V(0, 6.2, -2.8);
+const R_ACQ = 3.9, R_REL = 4.5;         // ownership: nearest client within range (hysteresis on release)
+const VIL = [V(-5.2, 0, .2), V(.3, 0, -1.2), V(5.1, 0, .5)];
+
+// players: A walks V1 → V2, C walks V2 → V1 (they cross), B stays at V3
+const bez = (a, b, c, k) => [lerp(lerp(a[0], b[0], k), lerp(b[0], c[0], k), k), lerp(lerp(a[1], b[1], k), lerp(b[1], c[1], k), k)];
+const PATHS = [
+  { a: [-4.7, 1.25], b: [-2.2, 2.9], c: [1.0, .15], ph: .3 },
+  { a: [5.3, 1.55], b: [5.3, 1.55], c: [5.3, 1.55], ph: 2.1 },
+  { a: [.75, -2.05], b: [-2.4, -3.4], c: [-4.9, -.95], ph: 4.4 },
+];
+function walkK(c, t) { return c === 1 ? 0 : eio(p(t, T_WALK0 + (c === 2 ? -.2 : 0), T_WALK1 - T_WALK0)); }
+function playerPos(c, t, out = new THREE.Vector3()) {
+  const P = PATHS[c], k = walkK(c, t);
+  const [x, z] = bez(P.a, P.b, P.c, k);
+  const idle = 1 - Math.sin(Math.PI * k) * .8;
+  let bx = x + .16 * idle * Math.sin(t * .55 + P.ph), bz = z + .12 * idle * Math.cos(t * .47 + P.ph);
+  if (c === 1) { bx += .35 * Math.sin(t * .22 + 1) * ss(p(t, 20, 6)); bz += .3 * Math.sin(t * .31) * ss(p(t, 20, 6)); }
+  return out.set(bx, 0, bz);
+}
+
+// NPCs: three village plazas, some in between, many out on the island (far from all users)
+const NPC = (() => {
+  const R = rng(2025), out = [];
+  VIL.forEach((v, vi) => { for (let k = 0; k < 9; k++) { const a = k / 9 * 6.283 + R() * .5, r = .45 + .75 * Math.sqrt(R()); out.push({ base: V(v.x + Math.cos(a) * r * 1.15, 0, v.z + Math.sin(a) * r * .9), kind: 'v' }); } });
+  [[-2.6, .3], [-2.9, -1.9], [2.6, -.4], [2.9, 1.3], [-1.2, 1.6], [3.2, -2.2], [-7.2, 1.6], [7.3, 2.0]].forEach(([x, z]) => out.push({ base: V(x + (R() - .5) * .4, 0, z + (R() - .5) * .4), kind: 's' }));
+  // remote: random over the island, rejected if a user ever comes near
+  const near = (x, z) => { for (let tt = 0; tt <= DURATION; tt += .5) for (let c = 0; c < 3; c++) { const q = playerPos(c, tt); if (Math.hypot(q.x - x, q.z - z) < R_REL + .6) return true; } return false; };
+  let guard = 0;
+  while (out.length < 50 && guard++ < 4000) {
+    const x = (R() * 2 - 1) * 9.6, z = (R() * 2 - 1) * 6.2;
+    if ((x / 10.2) ** 2 + (z / 6.6) ** 2 > 1) continue;
+    if (near(x, z)) continue;
+    if (out.some(o => Math.hypot(o.base.x - x, o.base.z - z) < 1.1)) continue;
+    out.push({ base: V(x, 0, z), kind: 'r' });
+  }
+  out.forEach((o, i) => { o.ph = R() * 6.28; o.ph2 = R() * 6.28; o.w = .35 + R() * .35; o.amp = o.kind === 'r' ? .18 : .22; o.rnd = R();
+    o.spawn = i % 5 < 3 ? -1 : .4 + R() * 4.0; o.ang = 0; });
+  return out;
+})();
+const NN = NPC.length;
+function npcPos(i, t, out = new THREE.Vector3()) {
+  const o = NPC[i];
+  return out.set(o.base.x + o.amp * Math.sin(t * o.w + o.ph), 0, o.base.z + o.amp * Math.cos(t * o.w * .8 + o.ph2));
+}
+
+// ownership timeline, precomputed once from the deterministic paths: events [{t, o}] with o = -1 server, 0..2 client, -2 nobody
+const TR = { s2c: 1.0, c2c: .75, x2n: .8, n2c: .7 };
+const OWN = (() => {
+  const R = rng(77), v = new THREE.Vector3(), q = new THREE.Vector3();
+  const best = (i, t) => { npcPos(i, t, v); let bc = -2, bd = 1e9; const d = [0, 0, 0];
+    for (let c = 0; c < 3; c++) { playerPos(c, t, q); d[c] = Math.hypot(q.x - v.x, q.z - v.z); if (d[c] < bd) { bd = d[c]; bc = c; } } return { bc, bd, d }; };
+  return NPC.map((o, i) => {
+    const ev = [{ t: -99, o: -1 }];
+    const b0 = best(i, T_DELEG);
+    const td = b0.bd < R_ACQ ? T_DELEG + .32 * b0.bd + .35 * R() : 9.3 + .6 * R();
+    let cur = b0.bd < R_ACQ ? b0.bc : -2;
+    ev.push({ t: td, o: cur });
+    let last = td + 1.2;
+    for (let t = last; t <= DURATION + .01; t += .05) {
+      const { bc, bd, d } = best(i, t);
+      let nxt = cur;
+      if (cur >= 0) {
+        if (d[cur] > R_REL) nxt = bd < R_ACQ ? bc : -2;
+        else if (bc !== cur && bd < d[cur] - .55) nxt = bc;
+      } else if (bd < R_ACQ) nxt = bc;
+      if (nxt !== cur && t - last > .9) { ev.push({ t, o: nxt }); cur = nxt; last = t; }
+    }
+    return ev;
+  });
+})();
+function ownerAt(i, t) {   // {a: previous owner, b: current owner, k: 0..1 transition, tr: transition kind}
+  const ev = OWN[i]; let j = 0;
+  while (j < ev.length - 1 && ev[j + 1].t <= t) j++;
+  if (j === 0) return { a: -1, b: -1, k: 1 };
+  const a = ev[j - 1].o, b = ev[j].o;
+  const d = a === -1 ? TR.s2c : b === -2 ? TR.x2n : a === -2 ? TR.n2c : TR.c2c;
+  return { a, b, k: clamp((t - ev[j].t) / d) };
+}
+const present = (i, t) => clamp((t - NPC[i].spawn) / .5);
+// counts for the server-load strip
+function counts(t) {
+  let srv = 0, act = 0, tot = 0;
+  for (let i = 0; i < NN; i++) {
+    if (present(i, t) <= 0) continue; tot++;
+    const o = ownerAt(i, t), cur = o.k < .5 ? o.a : o.b;
+    if (cur === -1) srv++; else if (cur >= 0) act++;
+  }
+  return { srv, act, tot };
+}
+
+// ═════════════════════════════════════════════════════════════
+//  THREE
+// ═════════════════════════════════════════════════════════════
+const gl = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+gl.setPixelRatio(1); gl.setSize(Math.round(W * Q), Math.round(H * Q), false);
+gl.setClearColor(0x07060f, 1);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(FOV, W / H, .1, 200);
+const composer = new EffectComposer(gl);
+composer.setPixelRatio(1); composer.setSize(Math.round(W * Q), Math.round(H * Q));
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(W * Q / 2, H * Q / 2), .55, .4, .62);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+const PXH = H * Q / (2 * Math.tan(THREE.MathUtils.degToRad(FOV / 2)));
+const ADD = { transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending };
+
+// ── ground: island plaza, paths, trees, village rings, ownership tint ──
+const TREES = (() => { const R = rng(9), out = []; let g = 0;
+  while (out.length < 26 && g++ < 3000) { const x = (R() * 2 - 1) * 9.4, z = (R() * 2 - 1) * 6.0;
+    if ((x / 10) ** 2 + (z / 6.4) ** 2 > .92) continue;
+    if (VIL.some(v => Math.hypot(v.x - x, v.z - z) < 2.0)) continue;
+    if (NPC.some(o => Math.hypot(o.base.x - x, o.base.z - z) < .7)) continue;
+    if (out.some(o => Math.hypot(o.x - x, o.y - z) < 1.3)) continue;
+    out.push(new THREE.Vector3(x, z, .35 + R() * .3)); }
+  return out; })();
+const GU = {
+  uTrees: { value: TREES }, uVil: { value: VIL.map(v => new THREE.Vector2(v.x, v.z)) },
+  uPl: { value: [0, 1, 2].map(() => new THREE.Vector3()) }, uPc: { value: PC3.map(c => new THREE.Vector3(c.r, c.g, c.b)) },
+  uOwn: { value: 0 }, uR: { value: R_ACQ }, uDim: { value: 1 }, uTime: { value: 0 },
+};
+const GROUND = (() => {
+  const mat = new THREE.ShaderMaterial({
+    uniforms: GU, depthWrite: false, depthTest: false,
+    vertexShader: `varying vec2 vP; void main(){ vec4 w = modelMatrix*vec4(position,1.); vP = w.xz; gl_Position = projectionMatrix*viewMatrix*w; }`,
+    fragmentShader: `
+uniform vec3 uTrees[${TREES.length}]; uniform vec2 uVil[3]; uniform vec3 uPl[3]; uniform vec3 uPc[3];
+uniform float uOwn, uR, uDim, uTime;
+varying vec2 vP;
+float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f);
+  return mix(mix(h21(i), h21(i+vec2(1,0)), f.x), mix(h21(i+vec2(0,1)), h21(i+vec2(1,1)), f.x), f.y); }
+float fbm(vec2 p){ float s=0., a=.5; for(int k=0;k<4;k++){ s+=a*vn(p); p*=2.03; a*=.5; } return s; }
+float ring(float d, float R, float px){ float fw = fwidth(d); return 1. - smoothstep(px*.5*fw, (px*.5+1.2)*fw, abs(d-R)); }
+float segD(vec2 p, vec2 a, vec2 b){ vec2 pa=p-a, ba=b-a; float h=clamp(dot(pa,ba)/dot(ba,ba),0.,1.); return length(pa-ba*h); }
+void main(){
+  vec2 p = vP;
+  float isl = (p.x/10.4)*(p.x/10.4) + (p.y/6.8)*(p.y/6.8);
+  float edgeN = fbm(p*.6) * .16;
+  float land = 1. - smoothstep(.93 - edgeN, .97 - edgeN, isl);
+  // grass: dark moss with soft patches
+  float n = fbm(p*.45 + 3.), n2 = fbm(p*2.3);
+  vec3 col = mix(vec3(.050,.078,.080), vec3(.072,.104,.092), n);
+  col *= .9 + .2*n2;
+  // footpaths between the plazas
+  float pd = min(segD(p, uVil[0], uVil[1]), segD(p, uVil[1], uVil[2]));
+  pd = min(pd, segD(p, uVil[0], vec2(-8.5, 3.6))); pd = min(pd, segD(p, uVil[2], vec2(8.6, -3.4))); pd = min(pd, segD(p, uVil[1], vec2(.6, 5.6)));
+  pd += (vn(p*1.3)-.5)*.12;
+  float path = 1. - smoothstep(.22, .32, pd);
+  col = mix(col, vec3(.135,.120,.130) * (.9+.2*n2), path*.85);
+  // village plazas: cobbled discs
+  for (int k=0;k<3;k++){ float d = length((p-uVil[k])*vec2(.87,1.1));
+    float pl = 1. - smoothstep(1.55, 1.68, d);
+    vec2 c = p*3.2; float cob = smoothstep(.08,.16, abs(fract(c.x + .5*step(.5,fract(c.y*.5)))-.5)) * smoothstep(.06,.14,abs(fract(c.y)-.5));
+    col = mix(col, vec3(.15,.14,.17)*(.85+.25*cob), pl*.9);
+    col += vec3(.18,.16,.2) * ring(d, 1.62, 2.4) * .6; }
+  // trees: canopy discs with a soft shadow and a lit rim
+  for (int k=0;k<${TREES.length};k++){ vec3 tr = uTrees[k]; float d = length(p - tr.xy);
+    float sh = 1. - smoothstep(tr.z*.9, tr.z*1.5, length(p - tr.xy - vec2(.18,.22)));
+    col *= 1. - .45*sh;
+    float cn = 1. - smoothstep(tr.z-.04, tr.z, d);
+    vec3 can = mix(vec3(.04,.09,.07), vec3(.09,.17,.12), smoothstep(tr.z, 0., length(p - tr.xy + vec2(.1,.12)*tr.z)));
+    col = mix(col, can, cn); }
+  // ownership: the nearest client within range tints the ground; thin border where two clients meet
+  if (uOwn > 0.) {
+    float d0 = length(p - uPl[0].xy), d1 = length(p - uPl[1].xy), d2 = length(p - uPl[2].xy);
+    float dm = min(d0, min(d1, d2));
+    vec3 pc = d0 == dm ? uPc[0] : d1 == dm ? uPc[1] : uPc[2];
+    float in1 = 1. - smoothstep(uR - .05, uR + .05, dm);
+    col += pc * in1 * (.035 + .05*(1. - dm/uR)) * uOwn;
+    float rr = min(ring(d0, uR, 2.2), 1.) * step(dm, d0 + .001) + min(ring(d1, uR, 2.2), 1.) * step(dm, d1 + .001) + min(ring(d2, uR, 2.2), 1.) * step(dm, d2 + .001);
+    float dash = step(.45, fract(atan(p.y, p.x) * 0. + (p.x + p.y) * 1.6));
+    col += pc * rr * .32 * uOwn * (.55 + .45*dash);
+    // border between two owners (perpendicular bisector), only inside range
+    float s01 = abs(d0 - d1), s02 = abs(d0 - d2), s12 = abs(d1 - d2);
+    float b = 0.;
+    if (d2 > max(d0,d1)) b = max(b, 1. - smoothstep(0., fwidth(s01)*2.2, s01));
+    if (d1 > max(d0,d2)) b = max(b, 1. - smoothstep(0., fwidth(s02)*2.2, s02));
+    if (d0 > max(d1,d2)) b = max(b, 1. - smoothstep(0., fwidth(s12)*2.2, s12));
+    col += vec3(.7,.68,.85) * b * in1 * .22 * uOwn;
+  }
+  // island rim and the night beyond
+  col += vec3(.10,.10,.17) * (1. - smoothstep(0., .035, abs(isl - (.95 - edgeN)))) * .7;
+  vec3 sea = vec3(.028,.024,.055) + vec3(.012,.01,.03) * fbm(p*.25 + uTime*.02);
+  col = mix(sea, col, land);
+  gl_FragColor = vec4(col * uDim, 1.);
+}`,
+  });
+  const o = new THREE.Mesh(new THREE.PlaneGeometry(60, 40).rotateX(-Math.PI / 2), mat);
+  o.frustumCulled = false; o.renderOrder = -10; scene.add(o); return o;
+})();
+
+// ── fat lines (screen-space quads, additive): strings, links, server edges ──
+class Fat {
+  constructor(max) {
+    this.max = max;
+    const g = new THREE.BufferGeometry();
+    this.A = new Float32Array(max * 12); this.B = new Float32Array(max * 12); this.C = new Float32Array(max * 12); this.Wd = new Float32Array(max * 4);
+    const S = new Float32Array(max * 8), I = new Uint32Array(max * 6);
+    for (let s = 0; s < max; s++) {
+      S.set([0, -1, 0, 1, 1, -1, 1, 1], s * 8);
+      const v = s * 4; I.set([v, v + 2, v + 1, v + 1, v + 2, v + 3], s * 6);
+    }
+    g.setAttribute('position', new THREE.BufferAttribute(this.A, 3));
+    g.setAttribute('aB', new THREE.BufferAttribute(this.B, 3));
+    g.setAttribute('aC', new THREE.BufferAttribute(this.C, 3));
+    g.setAttribute('aW', new THREE.BufferAttribute(this.Wd, 1));
+    g.setAttribute('aS', new THREE.BufferAttribute(S, 2));
+    g.setIndex(new THREE.BufferAttribute(I, 1));
+    this.g = g;
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { uRes: { value: new THREE.Vector2(W * Q, H * Q) }, uQ: { value: Q } }, ...ADD,
+      vertexShader: `
+attribute vec3 aB, aC; attribute float aW; attribute vec2 aS;
+uniform vec2 uRes; uniform float uQ;
+varying vec3 vC; varying float vS;
+void main(){
+  vec4 ca = projectionMatrix*viewMatrix*vec4(position,1.), cb = projectionMatrix*viewMatrix*vec4(aB,1.);
+  vec2 sa = ca.xy/ca.w*uRes*.5, sb = cb.xy/cb.w*uRes*.5;
+  vec2 d = sb - sa; d = length(d) < 1e-4 ? vec2(1.,0.) : normalize(d);
+  vec2 n = vec2(-d.y, d.x);
+  vec4 c = aS.x < .5 ? ca : cb;
+  float w = aW * uQ;
+  c.xy += (n*aS.y*w*.5 + d*(aS.x < .5 ? -1. : 1.)*w*.25) / (uRes*.5) * c.w;
+  gl_Position = c; vC = aC; vS = aS.y;
+  if (aW <= 0.) gl_Position = vec4(2.,2.,2.,1.);
+}`,
+      fragmentShader: `varying vec3 vC; varying float vS; void main(){ float e = 1. - smoothstep(.35, 1., abs(vS)); gl_FragColor = vec4(vC*e, 1.); }`,
+    });
+    this.o = new THREE.Mesh(g, mat); this.o.frustumCulled = false; this.o.renderOrder = 4; scene.add(this.o);
+    this.n = 0;
+  }
+  begin() { this.n = 0; }
+  seg(a, b, r, gg, bb, w) {
+    if (this.n >= this.max || w <= 0 || r + gg + bb < .003) return;
+    const s = this.n++;
+    for (let k = 0; k < 4; k++) { const o = s * 12 + k * 3;
+      this.A[o] = a.x; this.A[o + 1] = a.y; this.A[o + 2] = a.z; this.B[o] = b.x; this.B[o + 1] = b.y; this.B[o + 2] = b.z;
+      this.C[o] = r; this.C[o + 1] = gg; this.C[o + 2] = bb; this.Wd[s * 4 + k] = w; }
+  }
+  end() { const at = this.g.attributes; at.position.needsUpdate = at.aB.needsUpdate = at.aC.needsUpdate = at.aW.needsUpdate = true; this.g.setDrawRange(0, this.n * 6); }
+}
+const FAT = new Fat(1400);
+
+// ── point sprites: glow (additive) and discs (pawns, normal blending) ──
+const GVS = `attribute float size; attribute float alpha; attribute vec3 color; uniform float uPx; varying vec3 vC;
+void main(){ vec4 mv = modelViewMatrix*vec4(position,1.); gl_PointSize = max(size*uPx/max(-mv.z,.1), 1.5); vC = color*alpha; gl_Position = projectionMatrix*mv; if (alpha <= 0.) gl_Position = vec4(2.,2.,2.,1.); }`;
+const GFS = `varying vec3 vC; void main(){ vec2 c = gl_PointCoord*2.-1.; float d = dot(c,c); if (d > 1.) discard; gl_FragColor = vec4(vC*(exp(-d*4.5) + .12*exp(-d*1.2)), 1.); }`;
+const DVS = `attribute float size; attribute float alpha; attribute vec3 color; attribute vec3 ring; uniform float uPx; varying vec3 vC; varying vec3 vR; varying float vA;
+void main(){ vec4 mv = modelViewMatrix*vec4(position,1.); gl_PointSize = clamp(size*uPx/max(-mv.z,.1), 6., 90.); vC = color; vR = ring; vA = alpha; gl_Position = projectionMatrix*mv; if (alpha <= 0.) gl_Position = vec4(2.,2.,2.,1.); }`;
+const DFS = `varying vec3 vC; varying vec3 vR; varying float vA;
+void main(){ vec2 c = gl_PointCoord*2.-1.; float d = length(c); float aa = fwidth(d)*1.2;
+  float edge = 1. - smoothstep(1.-aa, 1., d);
+  float rim = smoothstep(.56-aa, .56, d) * (1. - smoothstep(.86-aa, .86, d));
+  float core = 1. - smoothstep(.56-aa, .56, d);
+  vec3 col = vec3(.02,.02,.04);
+  col = mix(col, vR, rim);
+  col = mix(col, vC, core);
+  col += vec3(.45) * core * (1. - smoothstep(0., .4, length(c - vec2(-.16,-.2))));
+  float a = edge * vA; if (a < .003) discard; gl_FragColor = vec4(col, a); }`;
+function points(n, disc, order) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+  g.setAttribute('size', new THREE.BufferAttribute(new Float32Array(n), 1));
+  g.setAttribute('alpha', new THREE.BufferAttribute(new Float32Array(n), 1));
+  g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+  if (disc) g.setAttribute('ring', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+  const mat = new THREE.ShaderMaterial({ uniforms: { uPx: { value: PXH } }, vertexShader: disc ? DVS : GVS, fragmentShader: disc ? DFS : GFS,
+    ...(disc ? { transparent: true, depthWrite: false, depthTest: false } : ADD) });
+  const o = new THREE.Points(g, mat); o.frustumCulled = false; o.renderOrder = order; scene.add(o);
+  o.k = 0; o.n = n;
+  o.begin = () => { o.k = 0; };
+  o.put = (v, size, alpha, col, ringCol) => { if (o.k >= n) return; const A = g.attributes, i = o.k++;
+    A.position.setXYZ(i, v.x, v.y, v.z); A.size.setX(i, size); A.alpha.setX(i, alpha); A.color.setXYZ(i, col.r, col.g, col.b);
+    if (ringCol) A.ring.setXYZ(i, ringCol.r, ringCol.g, ringCol.b); };
+  o.end = () => { const A = g.attributes; for (let i = o.k; i < n; i++) A.alpha.setX(i, 0);
+    A.position.needsUpdate = A.size.needsUpdate = A.alpha.needsUpdate = A.color.needsUpdate = true; if (A.ring) A.ring.needsUpdate = true; };
+  return o;
+}
+const GLOW = points(600, false, 3);
+const PAWNS = points(80, true, 8);
+const GLOW2 = points(200, false, 9);   // beads and halos drawn over the pawns
+
+// ── server: a floating hex platform ──
+const SRV_MESH = (() => {
+  const g = new THREE.CylinderGeometry(1.45, 1.25, .36, 6, 1);
+  const m = new THREE.ShaderMaterial({ uniforms: { uHeat: { value: 0 }, uCol: { value: new THREE.Color() } }, transparent: true, depthWrite: false,
+    vertexShader: `varying vec3 vN; varying vec3 vL; void main(){ vN = normal; vL = position; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+    fragmentShader: `uniform float uHeat; uniform vec3 uCol; varying vec3 vN; varying vec3 vL;
+      void main(){ float top = step(.5, vN.y); float side = 1. - top;
+        vec3 c = mix(vec3(.07,.06,.12), vec3(.12,.10,.2), top);
+        c += uCol * (.16 + .5*uHeat) * side * (.6 + .4*sin(vL.y*40.));
+        float rr = length(vL.xz); c += uCol * top * (1. - smoothstep(.0, 1.3, rr)) * (.12 + .35*uHeat);
+        gl_FragColor = vec4(c, .96); }` });
+  const o = new THREE.Mesh(g, m); o.position.copy(SERVER); o.renderOrder = 6; scene.add(o); return o;
+})();
+const HEXV = (y, r) => Array.from({ length: 6 }, (_, k) => { const a = k / 6 * Math.PI * 2; return V(SERVER.x + Math.sin(a) * r, SERVER.y + y, SERVER.z + Math.cos(a) * r); });
+const HEX_TOP = HEXV(.18, 1.45), HEX_BOT = HEXV(-.18, 1.25);
+
+// ── camera ──
+// keyframes [t, pos, target, shiftX px]
+const CK = TALL ? [
+  [0, V(0, 13.6, 13.6), V(0, 2.4, -.8), 0],
+  [7.4, V(0, 13.0, 13.0), V(0, 2.2, -.7), 0],
+  [8.6, V(0, 12.2, 12.6), V(0, 1.6, -.5), 0],
+  [21.6, V(.4, 12.0, 12.4), V(-.6, 1.4, -.5), 0],
+  [22.8, V(0, 13.2, 13.4), V(0, 2.3, -.8), 0],
+  [28.0, V(0, 13.2, 13.4), V(0, 2.3, -.8), 0],
+  [29.6, V(0, 14.4, 14.0), V(0, 2.2, -.8), 0],
+  [DURATION, V(0, 14.4, 14.0), V(0, 2.2, -.8), 0],
+] : [
+  [0, V(0, 10.6, 12.4), V(0, 2.4, -.7), -300],
+  [7.4, V(-.2, 10.2, 12.0), V(0, 2.2, -.6), -300],
+  [8.6, V(0, 9.6, 11.6), V(0, 1.7, -.4), -300],
+  [21.6, V(-.4, 9.5, 11.5), V(-.5, 1.6, -.4), -300],
+  [22.8, V(0, 10.4, 12.2), V(0, 2.4, -.7), -300],
+  [28.0, V(0, 10.4, 12.2), V(0, 2.4, -.7), -300],
+  [29.6, V(0, 11.0, 12.8), V(0, 2.3, -.7), -310],
+  [DURATION, V(0, 11.0, 12.8), V(0, 2.3, -.7), -310],
+];
+function cameraAt(t) {
+  let i = 0; while (i < CK.length - 2 && t > CK[i + 1][0]) i++;
+  const [t0, p0, g0, s0] = CK[i], [t1, p1, g1, s1] = CK[i + 1], k = eio(p(t, t0, t1 - t0));
+  camera.position.copy(p0).lerp(p1, k);
+  camera.position.x += .25 * Math.sin(t * .13);
+  camera.lookAt(g0.clone().lerp(g1, k));
+  camera.setViewOffset(W, H, lerp(s0, s1, k), 0, W, H);
+  camera.updateMatrixWorld();
+}
+
+// ═════════════════════════════════════════════════════════════
+//  SCENE UPDATE
+// ═════════════════════════════════════════════════════════════
+const SEG = 14;
+const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3(), _n = new THREE.Vector3(), _e = new THREE.Vector3(), _m = new THREE.Vector3(), _q = new THREE.Vector3(), _q2 = new THREE.Vector3();
+const _col = new THREE.Color(), _col2 = new THREE.Color();
+const PL = [V(0, 0, 0), V(0, 0, 0), V(0, 0, 0)];
+const NP = Array.from({ length: NN }, () => V(0, 0, 0));
+const bezP = (a, c, b, s, out) => out.set(
+  (1 - s) * (1 - s) * a.x + 2 * (1 - s) * s * c.x + s * s * b.x,
+  (1 - s) * (1 - s) * a.y + 2 * (1 - s) * s * c.y + s * s * b.y,
+  (1 - s) * (1 - s) * a.z + 2 * (1 - s) * s * c.z + s * s * b.z);
+const playerTop = (c, out) => out.copy(PL[c]).setY(.32);
+// endpoint + control point of NPC i's string for owner o
+function anchor(i, o, N, E, C) {
+  if (o === -1) {
+    const a = Math.atan2(N.z - SERVER.z, N.x - SERVER.x);
+    E.set(SERVER.x + Math.cos(a) * 1.05, SERVER.y - .2, SERVER.z + Math.sin(a) * .7);
+    C.set(lerp(E.x, N.x, .62), lerp(N.y, E.y, .62), lerp(E.z, N.z, .62));
+  } else if (o >= 0) {
+    playerTop(o, E); const d = Math.hypot(E.x - N.x, E.z - N.z);
+    C.set((E.x + N.x) / 2, .3 + .22 * d, (E.z + N.z) / 2);
+  } else { E.copy(N).setY(.12); C.copy(N).setY(.12); }
+}
+const colOf = (o, out) => o === -1 ? out.copy(SRV) : o >= 0 ? out.copy(PC3[o]) : out.setRGB(0, 0, 0);
+// verify cycle state: which client is uplinking, and phase 0..1 inside its cycle
+function verState(t) { for (let c = 0; c < 3; c++) { const s = VER[c]; if (t >= s && t < s + 1.9) return { c, u: (t - s) / 1.9 }; } return null; }
+
+let LOAD = 0;
+function update3D(t) {
+  cameraAt(t);
+  GU.uTime.value = t;
+  for (let c = 0; c < 3; c++) { playerPos(c, t, PL[c]); GU.uPl.value[c].set(PL[c].x, PL[c].z, 0); }
+  GU.uOwn.value = eo(p(t, T_DELEG + .2, 1.4));
+  FAT.begin(); GLOW.begin(); PAWNS.begin(); GLOW2.begin();
+  const vs = verState(t), b4 = win(t, 22.0, T_RES + .3, .5), res = eo(p(t, T_RES, 1));
+  const strDim = 1 - .4 * b4;
+
+  // NPC strings + pawns
+  let nSrv = 0;
+  for (let i = 0; i < NN; i++) {
+    const pr = present(i, t); if (pr <= 0) continue;
+    const N = npcPos(i, t, NP[i]).setY(.1);
+    const o = ownerAt(i, t);
+    anchor(i, o.a, N, _a, _b); anchor(i, o.b, N, _c, _e);
+    const k = eio(o.k);
+    _a.lerp(_c, k); _b.lerp(_e, k);                 // endpoint and control slide: the string never breaks
+    colOf(o.a, _col); colOf(o.b, _col2); _col.lerp(_col2, k);
+    const cur = o.k < .5 ? o.a : o.b;
+    if (cur === -1) nSrv++;
+    // string brightness: server strings a little dimmer (there are many), the one migrating now brighter
+    const mig = o.a >= 0 && o.b >= 0 && o.k < 1 ? Math.sin(Math.PI * o.k) : 0;
+    const base = (cur === -1 ? .34 : .5) * strDim * eo(pr) * (1 + 1.6 * mig);
+    const ph = fract(t * (cur === -1 ? .75 : .9) + NPC[i].rnd * 7.3);     // a bead = one sim update, owner → NPC
+    let prev = bezP(_a, _b, N, 0, _q2).clone();
+    // spawn: string drops from the server
+    const reach = eo(clamp((t - NPC[i].spawn) / .6));
+    for (let s = 1; s <= SEG; s++) {
+      const u = s / SEG; if (u > reach + 1e-6 && cur === -1 && o.a === -1 && o.b === -1) break;
+      bezP(_a, _b, N, u, _q);
+      const bead = Math.exp(-Math.pow((u - .5 / SEG - ph) * 8, 2));
+      const g = base * (.55 + 2.4 * bead);
+      FAT.seg(prev, _q, _col.r * g, _col.g * g, _col.b * g, cur === -1 ? 2.6 : 3.4);
+      prev.copy(_q);
+    }
+    if (cur !== -2) { bezP(_a, _b, N, ph, _q); GLOW.put(_q, .16, .5 * base * eo(pr), _col); }
+    // pawn
+    const active = cur !== -2;
+    const ringC = active ? _col : _col2.set(HEX.dimNpc);
+    const body = active ? _m.set(1, 1, 1) : null;
+    const bodyCol = active ? new THREE.Color().copy(_col).lerp(new THREE.Color('#fff8ec'), .55) : new THREE.Color('#2c2a40');
+    const fadeNone = o.b === -2 ? 1 - .45 * eo(o.k) : 1;
+    PAWNS.put(N, .3 * (.6 + .4 * eback(pr)), pr * fadeNone, bodyCol, ringC);
+    if (active) GLOW.put(N, .55, .18 * pr, _col);
+  }
+  // server load glow ∝ how many strings it holds
+  const loadT = nSrv / NN;
+  LOAD = loadT;
+  const heat = clamp(loadT * 1.1);
+  _col.copy(VERC).lerp(HOT, heat);
+  SRV_MESH.material.uniforms.uHeat.value = heat; SRV_MESH.material.uniforms.uCol.value.copy(_col);
+  const breathe = 1 + .08 * Math.sin(t * (3 + 5 * heat));
+  GLOW.put(_q.copy(SERVER).setY(SERVER.y - .25), 3.2 * (.45 + .55 * heat) * breathe, .5 + .5 * heat, _col);
+  // hex edges
+  const eg = .55 + .6 * heat;
+  for (let k = 0; k < 6; k++) {
+    const k2 = (k + 1) % 6;
+    FAT.seg(HEX_TOP[k], HEX_TOP[k2], _col.r * eg, _col.g * eg, _col.b * eg, 3);
+    FAT.seg(HEX_BOT[k], HEX_BOT[k2], _col.r * eg * .7, _col.g * eg * .7, _col.b * eg * .7, 2.5);
+    FAT.seg(HEX_TOP[k], HEX_BOT[k], _col.r * eg * .5, _col.g * eg * .5, _col.b * eg * .5, 2);
+  }
+  // check pulse on the server during verification
+  if (vs && vs.u > .36 && vs.u < .62) {
+    const v = (vs.u - .36) / .26, r = 1.5 + v * 1.6, g = (1 - v) * 1.4;
+    const ring = HEXV(-.05, r);
+    for (let k = 0; k < 6; k++) FAT.seg(ring[k], ring[(k + 1) % 6], .9 * g, 1.0 * g, .85 * g, 3.5);
+  }
+
+  // client ↔ server links: always there (thin); in 04 the update goes up, the relay comes down
+  const SB = _m.copy(SERVER).setY(SERVER.y - .2).clone();
+  for (let c = 0; c < 3; c++) {
+    const P = playerTop(c, new THREE.Vector3()).setY(.5);
+    const ctl = new THREE.Vector3((P.x + SB.x) / 2 + (P.x - SB.x) * .18, (P.y + SB.y) / 2 + 1.2, (P.z + SB.z) / 2 + .8);
+    let upB = -1, dnB = -1, hi = 0;
+    if (vs) {
+      if (vs.c === c && vs.u < .4) { upB = vs.u / .4; hi = 1; }
+      if (vs.c !== c && vs.u > .58) { dnB = (vs.u - .58) / .42; hi = 1; }
+      if (vs.c === c && vs.u >= .4) hi = .5;
+    }
+    const lb = (.13 + .32 * hi * b4) * (1 - .4 * res);
+    let prev = P.clone();
+    for (let s = 1; s <= SEG; s++) {
+      const u = s / SEG; bezP(P, ctl, SB, u, _q);
+      let g = lb;
+      if (upB >= 0) g += 2.4 * Math.exp(-Math.pow((u - upB) * 7, 2)) * b4;
+      if (dnB >= 0) g += 2.4 * Math.exp(-Math.pow((u - (1 - dnB)) * 7, 2)) * b4;
+      const cc = upB >= 0 ? PC3[c] : dnB >= 0 ? VERC : _col2.copy(PC3[c]).lerp(VERC, .5);
+      FAT.seg(prev, _q, cc.r * g, cc.g * g, cc.b * g, 2.2 + 1.6 * hi * b4);
+      prev.copy(_q);
+    }
+    if (upB >= 0 && upB < 1) { bezP(P, ctl, SB, upB, _q); GLOW2.put(_q, .5, 1.3 * b4, PC3[c]); }
+    if (dnB >= 0 && dnB < 1) { bezP(P, ctl, SB, 1 - dnB, _q); GLOW2.put(_q, .5, 1.3 * b4, VERC); }
+  }
+
+  // players: halo, walking trail, pawn
+  for (let c = 0; c < 3; c++) {
+    const P = PL[c];
+    const mv = Math.sin(Math.PI * walkK(c, t));
+    for (let g = 1; g <= 10; g++) { playerPos(c, t - g * .14, _q); _q.y = .05; GLOW.put(_q, .22 * (1 - g / 12), mv * .55 * (1 - g / 11), PC3[c]); }
+    GLOW2.put(_q.copy(P).setY(.15), 1.3, .35, PC3[c]);
+    PAWNS.put(_q.copy(P).setY(.2), .62, 1, new THREE.Color('#ffffff'), PC3[c]);
+  }
+  FAT.end(); GLOW.end(); PAWNS.end(); GLOW2.end();
+  bloom.strength = .55 + .25 * heat;
+}
+function eback(t) { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); }
+
+// ═════════════════════════════════════════════════════════════
+//  2D OVERLAY
+// ═════════════════════════════════════════════════════════════
+const INK = '#f3efff', DIM = 'rgba(204,198,232,.78)', GOLD = '#ffd98a', VERS = '#e6e0ff', HOTS = '#ffab70';
+const S = TALL ? 1.3 : 1;   // label scale
+function txt(s, x, y, o = {}) {
+  const { size = 36, weight = 600, color = INK, align = 'left', alpha = 1, mono = false, ls = 0 } = o;
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.font = `${weight} ${size}px ${mono ? MONO : SANS}`;
+  ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  if (ls) ctx.letterSpacing = ls + 'px';
+  ctx.fillText(s, x, y); ctx.restore();
+}
+function tw(s, size, weight = 600, mono = false) { ctx.save(); ctx.font = `${weight} ${size}px ${mono ? MONO : SANS}`; const w = ctx.measureText(s).width; ctx.restore(); return w; }
+function wrap(s, size, weight, maxW) {
+  const ws = s.split(' '), out = []; let cur = '';
+  for (const w of ws) { const n = cur ? cur + ' ' + w : w; if (cur && tw(n, size, weight) > maxW) { out.push(cur); cur = w; } else cur = n; }
+  if (cur) out.push(cur); return out;
+}
+function proj(v) { const q = v.clone().project(camera); return { x: (q.x + 1) / 2 * W, y: (1 - q.y) / 2 * H }; }
+const shadow = (b = 14) => { ctx.shadowColor = 'rgba(0,0,0,.85)'; ctx.shadowBlur = b; };
+function pill(s, x, y, col, a, size, o = {}) {   // centred pill, y = centre
+  if (a <= 0) return;
+  const { fill = 'rgba(12,10,26,.86)', txtCol = INK, weight = 800 } = o;
+  const w = tw(s, size, weight) + size * .9, h = size * 1.5;
+  ctx.save(); ctx.globalAlpha *= a; shadow(10);
+  ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2, w, h, h / 2); ctx.fillStyle = fill; ctx.fill();
+  ctx.shadowBlur = 0; ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore();
+  txt(s, x, y + size * .36, { size, weight, color: txtCol, align: 'center', alpha: a });
+  return w;
+}
+
+// layout boxes
+const LX = TALL ? 64 : 80;                 // text column left
+const LW = TALL ? W - 128 : 560;           // text column width
+
+function vignette() {
+  const g = ctx.createRadialGradient(W * (TALL ? .5 : .62), H * .55, Math.min(W, H) * .3, W * (TALL ? .5 : .62), H * .55, Math.max(W, H) * .72);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.55)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  if (TALL) {
+    const tp = ctx.createLinearGradient(0, 0, 0, 400); tp.addColorStop(0, 'rgba(7,6,15,.94)'); tp.addColorStop(.7, 'rgba(7,6,15,.7)'); tp.addColorStop(1, 'rgba(7,6,15,0)');
+    ctx.fillStyle = tp; ctx.fillRect(0, 0, W, 400);
+    const bt = ctx.createLinearGradient(0, H - 300, 0, H); bt.addColorStop(0, 'rgba(7,6,15,0)'); bt.addColorStop(.45, 'rgba(7,6,15,.8)'); bt.addColorStop(1, 'rgba(7,6,15,.95)');
+    ctx.fillStyle = bt; ctx.fillRect(0, H - 300, W, 300);
+  } else {
+    const lf = ctx.createLinearGradient(0, 0, 760, 0); lf.addColorStop(0, 'rgba(7,6,15,.95)'); lf.addColorStop(.75, 'rgba(7,6,15,.75)'); lf.addColorStop(1, 'rgba(7,6,15,0)');
+    ctx.fillStyle = lf; ctx.fillRect(0, 0, 760, H);
+  }
+}
+
+// beat header: number + title + subtitle
+function header(t) {
+  BEATS.forEach(([s, e, n, title, sub], bi) => {
+    if (bi === 4) return;
+    const a = bi === 0 ? 1 - eio(p(t, e - .35, .35)) : win(t, s, e, .35); if (a <= 0) return;
+    ctx.save(); ctx.globalAlpha = a; shadow(16);
+    const ts = TALL ? 60 : 58, sz = TALL ? 46 : 36;
+    const tl = wrap(title, ts, 800, LW), y0 = TALL ? 112 : 150;
+    txt(n, LX, y0 - (TALL ? 0 : 6) - ts * 1.0, { size: TALL ? 40 : 34, weight: 700, mono: true, color: GOLD });
+    tl.forEach((l, i) => txt(l, LX, y0 + i * ts * 1.18, { size: ts, weight: 800, color: INK }));
+    let y = y0 + (tl.length - 1) * ts * 1.18 + sz * 1.55;
+    if (sub) wrap(sub, sz, 600, LW).forEach((l, i) => txt(l, LX, y + i * sz * 1.35, { size: sz, weight: 600, color: bi === 0 ? HOTS : DIM }));
+    if (bi === 3) verSteps(t, LX, y);
+    ctx.restore();
+  });
+}
+// 04: three steps, the current one lit
+function verSteps(t, x, y) {
+  const vs = verState(t);
+  const ph = !vs ? (t < VER[0] ? 0 : 2) : vs.u < .4 ? 0 : vs.u < .62 ? 1 : 2;
+  const items = [['클라 → 서버', 'NPC 상태 갱신'], ['서버', '권위 검증 (이동 클램프)'], ['서버 → 다른 클라', '중계']];
+  const sz = TALL ? 46 : 36;
+  if (TALL) {   // one row of three chips
+    const ws = items.map(([, b]) => tw(b, sz, 800) + sz * 1.1), gap = 18;
+    let tot = ws.reduce((s, w) => s + w, 0) + gap * 2, sc = Math.min(1, LW / tot);
+    let xx = x;
+    items.forEach(([, b], i) => {
+      const on = i === ph, w = ws[i] * sc, h = sz * 1.6;
+      ctx.save(); ctx.beginPath(); ctx.roundRect(xx, y - sz * 1.05, w, h, 10); ctx.fillStyle = on ? 'rgba(230,224,255,.16)' : 'rgba(20,18,38,.7)'; ctx.fill();
+      ctx.strokeStyle = on ? (i === 0 ? PCOL[vs ? vs.c : 0] : VERS) : 'rgba(150,140,190,.35)'; ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore();
+      txt(b, xx + w / 2, y - sz * 1.05 + h / 2 + sz * .36 * sc, { size: sz * sc, weight: 800, color: on ? INK : DIM, align: 'center' });
+      xx += w + gap * sc;
+    });
+    return;
+  }
+  items.forEach(([a, b], i) => {
+    const on = i === ph, yy = y + i * 96;
+    const col = on ? (i === 0 ? PCOL[vs ? vs.c : 0] : VERS) : 'rgba(150,140,190,.5)';
+    ctx.save(); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(LX + 14, yy - 12, on ? 11 : 8, 0, 7); ctx.fill(); ctx.restore();
+    txt(a, LX + 44, yy - 2, { size: 32, weight: 700, color: on ? DIM : 'rgba(170,164,200,.5)' });
+    txt(b, LX + 44, yy + 42, { size: 36, weight: 800, color: on ? INK : 'rgba(190,184,220,.5)' });
+  });
+}
+
+// in-scene labels: client tags, server tag, migration callout
+function sceneLabels(t) {
+  const fs = Math.round(36 * S);
+  for (let c = 0; c < 3; c++) {
+    const P = proj(V(PL[c].x, .2, PL[c].z));
+    pill('클라 ' + PNAME[c], P.x, P.y + fs * 1.45, PCOL[c], 1, fs, { txtCol: PCOL[c] });
+  }
+  // server tag + what it is doing now
+  const Ps = proj(V(SERVER.x, SERVER.y + .2, SERVER.z));
+  const sy = Ps.y - fs * 1.35;
+  txt('서버', Ps.x, sy, { size: Math.round(40 * S), weight: 800, color: INK, align: 'center' });
+  const vs = verState(t);
+  const st = t < T_DELEG + .2 ? ['모든 NPC 시뮬레이션', HOTS] : t < 13.6 ? ['최근접 클라에 위임', GOLD] : t < 22 ? ['검증 · 중계', VERS] : vs && vs.u > .36 && vs.u < .66 ? ['✓ 검증 통과', '#b8ffd0'] : ['검증 · 중계', VERS];
+  const Pb = proj(V(SERVER.x, SERVER.y - .25, SERVER.z));
+  const by = Pb.y + fs * 1.35;
+  if (!(TALL && false)) pill(st[0], Ps.x, by, st[1], 1, Math.round(32 * S), { txtCol: st[1] });
+
+  // 03: callout on the village that is changing hands
+  const m = win(t, 15.6, 21.8, .4);
+  if (m > 0) {
+    const v = VIL[0], P = proj(V(v.x, 0, v.z + (TALL ? 1.9 : 1.75)));
+    const kk = clamp((t - 16.6) / 2.4);
+    let x = P.x;
+    const fs2 = Math.round(34 * S);
+    const s1 = '오너십 ', sA = 'A', sAr = ' → ', sC = 'C';
+    const parts = [[s1, INK], [sA, PCOL[0]], [sAr, INK], [sC, PCOL[2]]];
+    const tot = parts.reduce((s, [q]) => s + tw(q, fs2, 800), 0);
+    const w = tot + fs2 * 1.1, h = fs2 * 1.55;
+    x = clamp(x, w / 2 + 16, W - w / 2 - 16);
+    ctx.save(); ctx.globalAlpha = m; shadow(10); ctx.beginPath(); ctx.roundRect(x - w / 2, P.y - h / 2, w, h, 10); ctx.fillStyle = 'rgba(12,10,26,.88)'; ctx.fill(); ctx.shadowBlur = 0;
+    ctx.strokeStyle = `rgba(230,224,255,.45)`; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+    let xx = x - tot / 2;
+    parts.forEach(([q, c]) => { txt(q, xx, P.y + fs2 * .36, { size: fs2, weight: 800, color: c, alpha: m }); xx += tw(q, fs2, 800); });
+    // progress underline: owner A → C
+    ctx.save(); ctx.globalAlpha = m; ctx.fillStyle = PCOL[0]; ctx.fillRect(x - w / 2 + 14, P.y + h / 2 - 7, (w - 28) * (1 - kk), 4); ctx.fillStyle = PCOL[2]; ctx.fillRect(x - w / 2 + 14 + (w - 28) * (1 - kk), P.y + h / 2 - 7, (w - 28) * kk, 4); ctx.restore();
+  }
+}
+
+// server-load strip: one pip per NPC that the server load scales with
+const PIP = { n: NN };
+function loadStrip(t) {
+  const { srv, act, tot } = counts(t);
+  const cols = TALL ? 25 : 25, rows = Math.ceil(NN / cols);
+  const x0 = LX, w = TALL ? W - 2 * LX : LW;
+  const gap = TALL ? 9 : 5, pw = (w - gap * (cols - 1)) / cols, ph = TALL ? 26 : 18;
+  const res = eo(p(t, T_RES + .3, .8));
+  const y0 = TALL ? H - 150 : H - 150 - (rows - 1) * (ph + gap);
+  // labels
+  const l1 = TALL ? 40 : 32, l2 = TALL ? 48 : 38;
+  const after = t > 9.4;
+  const labY = y0 - (TALL ? 30 : 26);
+  ctx.save(); shadow(10);
+  txt('서버 부하', x0, labY - l2 * 1.15, { size: l1, weight: 700, color: DIM });
+  const tag = '개념도', tagX = x0 + tw('서버 부하', l1, 700) + 18;
+  ctx.save(); ctx.beginPath(); ctx.roundRect(tagX, labY - l2 * 1.15 - l1 * .95, tw(tag, l1 * .82, 700) + 20, l1 * 1.25, 6); ctx.strokeStyle = 'rgba(204,198,232,.55)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+  txt(tag, tagX + 10, labY - l2 * 1.15 - l1 * .05, { size: l1 * .82, weight: 700, color: DIM });
+  const kSw = eo(p(t, 9.4, .6));
+  if (!after || kSw < 1) txt('∝ NPC 총수', x0, labY, { size: l2, weight: 800, color: HOTS, alpha: 1 - kSw });
+  if (after) txt('∝ 유저 주변 활성 NPC 수', x0, labY, { size: l2, weight: 800, color: VERS, alpha: kSw * (1 - res) });
+  ctx.restore();
+  // pips: server-simulated (warm), verified/relayed (pale), not counted (outline)
+  for (let i = 0; i < NN; i++) {
+    const r = Math.floor(i / cols), c = i % cols, x = x0 + c * (pw + gap), y = y0 + r * (ph + gap);
+    if (i >= tot) continue;
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(x, y, pw, ph, 3);
+    if (i < srv) { ctx.fillStyle = `rgba(255,${Math.round(lerp(200, 150, LOAD))},${Math.round(lerp(140, 90, LOAD))},.95)`; ctx.fill(); }
+    else if (i < srv + act) { ctx.fillStyle = 'rgba(230,224,255,.92)'; ctx.fill(); }
+    else { ctx.strokeStyle = 'rgba(150,140,190,.42)'; ctx.lineWidth = 1.5; ctx.stroke(); }
+    ctx.restore();
+  }
+  // 05: brackets — the whole strip is the NPC total, the lit part is what the load follows
+  if (res > 0) {
+    const n = srv + act, yb = y0 + rows * (ph + gap) + (TALL ? 10 : 8);
+    const xe = x0 + Math.min(n, cols) * (pw + gap) - gap;
+    ctx.save(); ctx.globalAlpha = res;
+    ctx.strokeStyle = VERS; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x0, yb); ctx.lineTo(x0, yb + 10); ctx.lineTo(xe, yb + 10); ctx.lineTo(xe, yb); ctx.stroke();
+    ctx.restore();
+    const lb = TALL ? 42 : 32;
+    txt('유저 주변 활성 NPC', x0, yb + 10 + lb * 1.2, { size: lb, weight: 800, color: VERS, alpha: res });
+    txt('나머지 = NPC 총수에만 포함', x0 + w, yb + 10 + lb * 1.2, { size: lb, weight: 600, color: DIM, align: 'right', alpha: res * .9 });
+  }
+}
+
+// 05: result headline
+function result(t) {
+  const a = eo(p(t, T_RES + .2, .8)); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; shadow(20);
+  if (TALL) {
+    const y = 120;
+    txt('서버 부하가 수렴하는 곳', LX, y, { size: 46, weight: 700, color: DIM });
+    const s1 = "'NPC 총수'가 아닌", f1 = 54;
+    txt(s1, LX, y + 78, { size: f1, weight: 700, color: 'rgba(204,198,232,.6)' });
+    ctx.save(); ctx.strokeStyle = 'rgba(255,171,112,.85)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(LX - 4, y + 78 - f1 * .32); ctx.lineTo(LX + tw(s1, f1, 700) * eo(p(t, T_RES + .7, .6)) + 4, y + 78 - f1 * .32); ctx.stroke(); ctx.restore();
+    const k2 = eo(p(t, T_RES + 1.0, .8));
+    txt("'유저 주변 활성 NPC 수'", LX, y + 78 + 150, { size: 104, weight: 800, color: INK, alpha: k2, ls: -2 });
+  } else {
+    const y = 210;
+    txt('서버 부하가 수렴하는 곳', LX, y, { size: 38, weight: 700, color: DIM });
+    const s1 = "'NPC 총수'가 아닌", f1 = 50;
+    txt(s1, LX, y + 84, { size: f1, weight: 700, color: 'rgba(204,198,232,.6)' });
+    ctx.save(); ctx.strokeStyle = 'rgba(255,171,112,.85)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(LX - 4, y + 84 - f1 * .32); ctx.lineTo(LX + tw(s1, f1, 700) * eo(p(t, T_RES + .7, .6)) + 4, y + 84 - f1 * .32); ctx.stroke(); ctx.restore();
+    const k2 = eo(p(t, T_RES + 1.0, .8));
+    txt('유저 주변', LX - 4, y + 84 + 150, { size: 112, weight: 800, color: INK, alpha: k2, ls: -2 });
+    txt('활성 NPC 수', LX - 4, y + 84 + 280, { size: 112, weight: 800, color: INK, alpha: k2, ls: -2 });
+    txt('클라이언트 위임 · 서버 권위 검증', LX, y + 84 + 362, { size: 36, weight: 700, color: GOLD, alpha: eo(p(t, T_RES + 1.6, .7)) });
+  }
+  ctx.restore();
+}
+
+// ── frame ────────────────────────────────────────────────────
+function renderAt(t) {
+  t = clamp(t, 0, DURATION);
+  ctx.setTransform(Q, 0, 0, Q, 0, 0); ctx.globalAlpha = 1; ctx.filter = 'none'; ctx.shadowBlur = 0;
+  update3D(t);
+  composer.render();
+  ctx.drawImage(gl.domElement, 0, 0, W, H);
+  vignette();
+  sceneLabels(t);
+  header(t);
+  result(t);
+  loadStrip(t);
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) {
+    try { document.fonts.add(await new FontFace(family, `url(../assets/fonts/${file})`, { weight }).load()); } catch (e) { /* fallback font */ }
+  }
+  await document.fonts.ready;
+  renderAt(0);
+})();
+
+// ── player (standalone only) ─────────────────────────────────
+if (!RENDER && !EMBED) {
+  const $ = id => document.getElementById(id);
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CH = [[0, '01', '서버가 전부'], [7.4, '02', '최근접 위임'], [14.0, '03', '마이그레이션'], [22.0, '04', '검증 · 중계'], [28.2, '05', '결과']];
+  $('scrub').setAttribute('aria-valuemax', Math.round(DURATION));
+  let t = 0, playing = false, last = 0, rate = 1;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+  CH.forEach(([s, n, label], i) => {
+    const b = document.createElement('button'); b.innerHTML = `<span>${n}</span>${label}`;
+    b.addEventListener('click', () => { seek(s + .01); play(); }); $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing; $('big').innerHTML = ended ? ICON.replay : ICON.play; $('big').classList.toggle('replay', ended);
+    let cur = 0; CH.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur));
+  }
+  const draw = () => renderAt(Math.min(t, DURATION));
+  function play() { if (t >= DURATION) t = 0; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  const toggle = () => playing ? pause() : play();
+  function seek(x) { t = clamp(x, 0, DURATION); draw(); ui(); }
+  function frame(now) {
+    if (playing) { t += (now - last) / 1000 * rate; last = now; if (t >= DURATION) { t = DURATION; playing = false; } draw(); ui(); }
+    requestAnimationFrame(frame);
+  }
+  const RATES = [1, .75, .5];
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) { rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`); try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ } }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('play').addEventListener('click', toggle);
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 3); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 3); }
+    else if (e.key === 'Home') seek(0);
+  });
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frame);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+}
+</script>

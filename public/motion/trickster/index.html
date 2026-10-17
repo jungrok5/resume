@@ -1,0 +1,976 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>트릭스터M 최적화</title>
+<style>
+  /* One stage (16:9, or 4:5 with ?layout=tall), a transport bar, chapter chips, a short note. Single dark look. */
+  :root {
+    --bg: #060a09; --surface: #0e1513; --line: #1f2e29; --fg: #eef6f2; --dim: #93a8a0; --text2: #c4d3cd;
+    --accent: #34f5a6;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center;
+    padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  body.tall .player { width: min(100%, calc((100vh - 170px) * 4 / 5), 640px); }
+  .stage { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  body.tall .stage { aspect-ratio: 4 / 5; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); height: auto; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--accent);
+    background: rgba(6,10,9,.78); color: var(--fg); display: grid; place-items: center; cursor: pointer; transition: transform .15s; }
+  .big[hidden] { display: none; }
+  .big:hover { transform: scale(1.06); }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 14px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--accent); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(52,245,166,.25); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(52,245,166,.12); }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  .notes { width: min(100%, 760px); margin-top: 40px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes h2 { font-size: 20px; line-height: 1.4; margin: 0 0 12px; }
+  .notes p { color: var(--text2); margin: 0 0 14px; }
+  .notes article { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+  .notes article h3 { font-size: 15px; margin: 0 0 4px; color: var(--accent); font-weight: 700; }
+  .notes .fine { font-size: 14px; color: var(--dim); }
+  /* #poster: canvas only, loops (gallery thumbnails) */
+  body.poster { padding: 0; }
+  body.poster .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .big, body.poster .notes, body.poster .set { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+  /* ?embed: the résumé drives renderAt(t); canvas only */
+  html.embed, html.embed body { height: 100%; }
+  html.embed body { padding: 0; margin: 0; display: block; overflow: hidden; }
+  html.embed .player, html.embed .notes { display: none; }
+  html.embed #c { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--bg); }
+</style>
+<script>
+  (function () { var s = location.search; if (/[?&]embed\b/.test(s)) document.documentElement.classList.add('embed'); })();
+</script>
+</head>
+<body>
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="안정 동접 2,000에서 막힌 게임서버 프로세스를 열어 메모리, 패킷 송수신, 메인 디스패처의 병목을 하나씩 걷어 내고 안정 동접 8,000에 이르는 과정을 보여주는 3D 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="32" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:32</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+    <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="이동"><a href="../../interactive.html">← 이력서로</a><a id="alt" href="?layout=tall">세로 화면</a></nav>
+</div>
+<section class="notes" id="notes">
+  <h2>트릭스터M 서버 최적화 파견 · 3개월</h2>
+  <article data-ch="01"><h3>문제</h3>
+    <p>다른 프로젝트(트릭스터M)의 요청으로 3개월간 서버 최적화 지원을 나갔다. 작업을 시작할 때 서버가 안정적으로 받을 수 있는 동시 접속은 약 2,000명이었다.</p></article>
+  <article data-ch="02"><h3>접근</h3>
+    <p>프로파일링으로 메모리·네트워크·DB 쪽 병목을 찾아 하나씩 걷어 냈다. 메모리릭은 객체 생성·소멸 트래킹 기능을 넣어 원인 객체를 찾고, 순환 참조와 잔존 객체를 제거했다.
+    브로드캐스팅은 시야 통합으로 최적화하고, 패킷 송수신에서 동적 할당을 없애 미리 만든 버퍼를 풀로 재사용하게 했다.
+    DB 처리는 메인 디스패처 스레드풀에서 분리하고, 로그 파일 기록은 비동기로 바꿔 메시지마다 파일을 열고 닫던 것을 모아서 한 번에 기록하게 했다.</p></article>
+  <article data-ch="05"><h3>결과</h3>
+    <p>안정 동접을 약 2,000명에서 약 8,000명으로 4배 높인 뒤 파견을 마쳤다.</p>
+    <p class="fine">화면의 블록 크기, 그래프 모양, 개수는 이해를 돕기 위한 개념도다. 실제 수치는 안정 동접 2,000 · 8,000 · 4배, 파견 기간 3개월뿐이다.</p></article>
+</section>
+<script type="importmap">
+{ "imports": { "three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/" } }
+</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  트릭스터M 서버 최적화 — 분해해 들어가기 (open it up).
+//  A live game-server process stuck at 2,000 stable CCU is a closed box. Its walls fold down and the process lies open:
+//  the heap, the packet send/recv path, the main dispatcher's lane. Each beat goes into one part and removes or moves a
+//  block of work; the last beat steps back out and the CCU ceiling breaks to 8,000.
+//  Look: what the optimizer watched — performance-monitor counters (graph paper, one colour per counter) on dark glass.
+//  Only 2,000 / 8,000 / 4배 / 3개월 are real numbers; every size, count and curve is a 개념도.
+//  Every frame is a pure function of t.
+// ─────────────────────────────────────────────────────────────
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const QS = new URLSearchParams(location.search);
+const TALL = QS.get('layout') === 'tall';
+const EMBED = QS.has('embed'), RENDER = QS.has('render');
+const QUAL = EMBED ? clamp(parseFloat(QS.get('q')) || 1, .4, 1) : 1;
+const W = TALL ? 1080 : 1920, H = TALL ? 1350 : 1080, DURATION = 32;
+if (TALL) document.body.classList.add('tall');
+const cv = document.getElementById('c');
+cv.width = Math.round(W * QUAL); cv.height = Math.round(H * QUAL);
+const ctx = cv.getContext('2d');
+const SANS = 'Pretendard, "WenQuanYi Zen Hei", "DejaVu Sans", sans-serif';
+const MONO = '"JetBrains Mono", Pretendard, "DejaVu Sans Mono", monospace';
+// counter colours: users = 동접 · mem = heap · net = packet path · disp = dispatcher work · db · log · red = the problem only
+const C = {
+  bg: '#060a09', text: '#eef6f2', dim: '#93a8a0', faint: '#56685f', line: '#1f2e29',
+  users: '#34f5a6', mem: '#ffb547', net: '#45d4ff', disp: '#8fb0ff', db: '#b896ff', log: '#ff86bd', red: '#ff4d5e',
+  shell: '#16201d', gray: '#5d6a66',
+};
+// type scale per layout (stage is shown small in the résumé: wide ≥ 36 px, tall ≥ 46 px)
+const T = TALL
+  ? { lab: 46, body: 46, head: 70, kick: 46, num: 200, num2: 130, pad: 64 }
+  : { lab: 36, body: 38, head: 64, kick: 38, num: 170, num2: 112, pad: 120 };
+
+// ── math / easing ────────────────────────────────────────────
+const lerp = (a, b, t) => a + (b - a) * t;
+const p = (t, s, d) => clamp((t - s) / d);
+const eo = t => 1 - Math.pow(1 - t, 3);
+const eio = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const ss = u => u * u * u * (u * (u * 6 - 15) + 10);
+const win = (t, s, e, f = .45) => Math.min(eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let x = Math.imul(seed ^ seed >>> 15, 1 | seed); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+const hash = n => rng(n * 7919 + 13)();
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+
+// ── story timeline ───────────────────────────────────────────
+const HEAD = [
+  [0.0, 5.6, '01', '동접 2,000에서 막힘', '3개월 파견 · 서버 프로세스를 열어 본다'],
+  [5.6, 12.6, '02', '메모리릭', '객체 생성·소멸을 트래킹해 원인을 찾는다'],
+  [12.6, 19.4, '03', '브로드캐스팅 · 패킷', '시야 통합 · 송수신 동적 할당 제거 → 풀링'],
+  [19.4, 26.4, '04', '메인 디스패처 비우기', 'DB 처리 분리 · 로그 비동기화'],
+  [26.4, 32.0, '05', '안정 동접 8,000', '2,000 → 8,000, 4배 · 파견 종료'],
+];
+const OPEN0 = 1.8;                     // the process box starts to open
+const TRACK = 7.0, FLAG = 7.7, CUT = 9.9, RM = 10.4;      // 02: tracking on, leaks flagged, links cut, objects removed
+const FIX3 = 15.9;                     // 03: views merged, buffers pooled
+const DBMV = 21.0, LOGMV = 22.6, MERGE = 23.5, PACK = 24.4;   // 04
+const RES = 26.6;                      // 05: ceiling breaks
+
+// ── three.js setup ───────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(Math.round(W * QUAL), Math.round(H * QUAL), false);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(C.bg);
+scene.fog = new THREE.Fog(C.bg, 120, 320);
+const camera = new THREE.PerspectiveCamera(30, W / H, .5, 1200);
+scene.add(camera);
+const hemi = new THREE.HemisphereLight('#d8efe6', '#0b1210', 1.35);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight('#ffffff', 1.7);
+sun.position.set(-40, 90, 50); scene.add(sun);
+const composer = new EffectComposer(renderer);
+composer.setPixelRatio(1); composer.setSize(Math.round(W * QUAL), Math.round(H * QUAL));
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(W * QUAL / 2, H * QUAL / 2), .45, .5, .78);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+// ── builders ─────────────────────────────────────────────────
+function canvasTex(w, h, draw, rep = [1, 1]) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace;
+  tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(rep[0], rep[1]); tx.anisotropy = 8;
+  return tx;
+}
+function boxAO(w, h, d, lo = .55) {           // vertical gradient in vertex colours = cheap ambient occlusion
+  const g = new THREE.BoxGeometry(w, h, d); const pos = g.attributes.position; const col = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) { const k = lo + (1 - lo) * Math.pow(clamp((pos.getY(i) + h / 2) / h), .7); col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = k; }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3)); return g;
+}
+// material groups so a whole module can be dimmed while another is in focus: 0 shell · 1 heap · 2 net · 3 dispatcher
+const MATS = [[], [], [], []], DIMK = [1, 1, 1, 1];
+function reg(G, m) { m.userData.base = m.color.clone(); m.userData.op = m.opacity; if (m.emissive) m.userData.emi = m.emissive.clone(); MATS[G].push(m); return m; }
+function dimGroup(G, k) {
+  if (Math.abs(k - DIMK[G]) < 1e-4) return; DIMK[G] = k; const kk = Math.pow(k, 2.2);
+  for (const m of MATS[G]) { m.color.copy(m.userData.base).multiplyScalar(kk); if (m.userData.emi) m.emissive.copy(m.userData.emi).multiplyScalar(kk); }
+}
+const M = (G, color, o = {}) => reg(G, new THREE.MeshStandardMaterial({ color, roughness: .6, metalness: .2, vertexColors: true, ...o }));
+const MP = (G, color, o = {}) => reg(G, new THREE.MeshStandardMaterial({ color, roughness: .6, metalness: .2, ...o }));
+function glowMat(G, k = .4, o = {}) {        // instance colour also glows a little
+  const m = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: .45, metalness: .05, ...o });
+  m.userData.emiK = { value: k };
+  m.onBeforeCompile = sh => { sh.uniforms.emiK = m.userData.emiK; sh.fragmentShader = 'uniform float emiK;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n\ttotalEmissiveRadiance += diffuseColor.rgb * emiK;'); };
+  return reg(G, m);
+}
+const basic = (G, color, o = {}) => reg(G, new THREE.MeshBasicMaterial({ color, ...o }));
+function mesh(parent, geo, mat, x = 0, y = 0, z = 0) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; }
+const _o = new THREE.Object3D(), _c = new THREE.Color();
+function dynInst(parent, geo, mat, n) {
+  const im = new THREE.InstancedMesh(geo, mat, n);
+  for (let i = 0; i < n; i++) { im.setMatrixAt(i, new THREE.Matrix4()); im.setColorAt(i, _c.set('#ffffff')); }
+  im.count = 0; im.frustumCulled = false; parent.add(im); return im;
+}
+function setI(im, i, x, y, z, sx, sy, sz, col, ry = 0) {
+  _o.position.set(x, y, z); _o.rotation.set(0, ry, 0); _o.scale.set(Math.max(1e-4, sx), Math.max(1e-4, sy), Math.max(1e-4, sz)); _o.updateMatrix();
+  im.setMatrixAt(i, _o.matrix); if (col !== undefined) im.setColorAt(i, typeof col === 'string' ? _c.set(col) : col);
+}
+function done(im, n) { im.count = n; im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; }
+function edges(parent, geo, color, op, G) {
+  const m = reg(G, new THREE.LineBasicMaterial({ color, transparent: true, opacity: op }));
+  const l = new THREE.LineSegments(new THREE.EdgesGeometry(geo), m); parent.add(l); return l;
+}
+// counter-graph paper for module tops: dark glass, fine grid in the module's colour
+const paper = (col, rep) => canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#0a110f'; g.fillRect(0, 0, w, h);
+  g.globalAlpha = .16; g.fillStyle = col; for (let k = 1; k < 8; k++) { g.fillRect(0, k * 32, w, 1); g.fillRect(k * 32, 0, 1, h); }
+  g.globalAlpha = .38; g.fillRect(0, 0, w, 2); g.fillRect(0, 0, 2, h);
+}, rep);
+const UNIT = new THREE.BoxGeometry(1, 1, 1); UNIT.translate(.5, .5, 0);      // origin at min-x, bottom, z-centred (lane blocks)
+const CUBE = new THREE.BoxGeometry(1, 1, 1);
+const TOP = 1.2;                                                            // module top surface
+
+// ═════ floor ════════════════════════════════════════════════
+{
+  const ft = canvasTex(128, 128, (g, w, h) => { g.fillStyle = '#080d0c'; g.fillRect(0, 0, w, h); g.fillStyle = '#0f1715'; g.fillRect(0, 0, w, 2); g.fillRect(0, 0, 2, h); }, [90, 90]);
+  const f = mesh(scene, new THREE.PlaneGeometry(900, 900), new THREE.MeshStandardMaterial({ map: ft, roughness: .95, metalness: 0 }), 0, 0, 0);
+  f.rotation.x = -Math.PI / 2;
+}
+
+// ═════ the closed process box (shell) ════════════════════════
+const SH = { x0: -30, x1: 30, z0: -20.5, z1: 22, h: 7.5 };
+const WALLS = [];
+let LID;
+{
+  const w = SH.x1 - SH.x0, d = SH.z1 - SH.z0, cx = (SH.x0 + SH.x1) / 2, cz = (SH.z0 + SH.z1) / 2;
+  const front = canvasTex(1024, 128, (g, W2, H2) => {
+    g.fillStyle = '#121b18'; g.fillRect(0, 0, W2, H2);
+    g.fillStyle = '#0b1110'; for (let i = 0; i < 46; i++) g.fillRect(380 + i * 13, 34, 6, 60);
+    g.fillStyle = '#34f5a6'; g.fillRect(60, 56, 14, 14); g.fillStyle = '#1d6d4f'; g.fillRect(90, 56, 14, 14);
+    g.fillStyle = '#1b2723'; g.fillRect(0, 0, W2, 4); g.fillRect(0, H2 - 4, W2, 4);
+  });
+  const sideM = M(0, C.shell, { metalness: .45, roughness: .45 });
+  const frontM = MP(0, '#ffffff', { map: front, metalness: .4, roughness: .5, emissive: '#ffffff', emissiveMap: front, emissiveIntensity: .25 });
+  // [pivot x, pivot z, width, axis, sign, material] — each wall folds outward about its bottom edge
+  const defs = [[cx, SH.z1, w, 'x', 1, frontM], [cx, SH.z0, w, 'x', -1, sideM], [SH.x1, cz, d, 'z', -1, sideM], [SH.x0, cz, d, 'z', 1, sideM]];
+  defs.forEach(([px, pz, len, ax, sg, mat]) => {
+    const pv = new THREE.Group(); pv.position.set(px, 0, pz); scene.add(pv);
+    const geo = ax === 'x' ? boxAO(len, SH.h, .5, .7) : boxAO(.5, SH.h, len, .7);
+    const m = mesh(pv, geo, ax === 'x' && sg === 1 ? [sideM, sideM, sideM, sideM, mat, sideM] : mat, 0, SH.h / 2, 0);
+    edges(pv, geo, C.users, .5, 0).position.copy(m.position);
+    WALLS.push({ pv, ax, sg });
+  });
+  LID = new THREE.Group(); scene.add(LID);
+  const lg = boxAO(w + .6, .5, d + .6, .8);
+  const lidTex = canvasTex(512, 384, (g, W2, H2) => { g.fillStyle = '#141e1b'; g.fillRect(0, 0, W2, H2); g.fillStyle = '#0d1412'; for (let i = 0; i < 9; i++) g.fillRect(150 + i * 24, 120, 10, 144); g.strokeStyle = '#22322d'; g.lineWidth = 3; g.strokeRect(14, 14, W2 - 28, H2 - 28); });
+  const lm = MP(0, '#ffffff', { map: lidTex, metalness: .45, roughness: .45, transparent: true });
+  mesh(LID, lg, lm, cx, 0, cz);
+  edges(LID, lg, C.users, .6, 0).position.set(cx, 0, cz);
+  LID.mat = lm;
+}
+
+// ═════ modules ═══════════════════════════════════════════════
+const HC = [-14.5, -10], NC = [14.5, -10], DC = [0, 11];       // heap · net tile centres, dispatcher plate centre
+const MODS = [];
+function tile(G, cx, cz, w, d, col) {
+  const g = new THREE.Group(); g.position.set(cx, 0, cz); scene.add(g);
+  const geo = boxAO(w, TOP, d, .5);
+  const top = MP(G, '#ffffff', { map: paper(col, [w / 4, d / 4]), roughness: .75, metalness: .1 });
+  const side = M(G, '#0f1715', { roughness: .7 });
+  mesh(g, geo, [side, side, top, side, side, side], 0, TOP / 2, 0);
+  edges(g, geo, col, .85, G).position.y = TOP / 2;
+  MODS.push(g); return g;
+}
+tile(1, HC[0], HC[1], 25, 17, C.mem);
+tile(2, NC[0], NC[1], 25, 17, C.net);
+tile(3, DC[0], DC[1], 56, 18, C.disp);
+
+// ── heap: 8 × 5 object slots; most objects are created and destroyed, a few never die ──
+const SLOTS = []; for (let r = 0; r < 5; r++) for (let c = 0; c < 8; c++) SLOTS.push([HC[0] - 9.1 + c * 2.6, HC[1] - 5.2 + r * 2.6]);
+const LEAK = [[9, 'cyc'], [16, 'rem'], [10, 'cyc'], [21, 'cyc'], [3, 'rem'], [22, 'cyc'], [35, 'rem'], [29, 'cyc'], [38, 'rem']]
+  .map(([i, kind], k) => ({ i, kind, s: 5.7 + k * .32, flag: FLAG + k * .07, rm: RM + k * .09 }));
+const LEAKI = new Map(LEAK.map(l => [l.i, l]));
+const CYC = [[9, 10, 1], [10, 9, -1], [21, 22, 1], [22, 29, 1], [29, 21, 1]];          // reference arcs (a → b)
+let HEAPO, RINGS, LINKS = [];
+{
+  HEAPO = dynInst(scene, CUBE, glowMat(1, .38), 40);
+  const rg = new THREE.RingGeometry(.86, 1, 40); rg.rotateX(-Math.PI / 2);
+  RINGS = dynInst(scene, rg, reg(1, new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .9, blending: THREE.AdditiveBlending, depthWrite: false })), 60);
+  CYC.forEach(([a, b, s], k) => {
+    const A = V3(SLOTS[a][0], TOP + 1.6, SLOTS[a][1]), B = V3(SLOTS[b][0], TOP + 1.6, SLOTS[b][1]);
+    const mid = A.clone().add(B).multiplyScalar(.5), dir = B.clone().sub(A), side = V3(-dir.z, 0, dir.x).normalize().multiplyScalar(.7 * s);
+    const ctrl = mid.add(V3(0, 2.4, 0)).add(side);
+    const curve = new THREE.QuadraticBezierCurve3(A, ctrl, B);
+    const m = reg(1, new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false }));
+    const tube = mesh(scene, new THREE.TubeGeometry(curve, 28, .11, 6), m);
+    const tip = curve.getPoint(.94), tan = curve.getTangent(.94);
+    const cone = mesh(scene, new THREE.ConeGeometry(.32, .8, 10), m, tip.x, tip.y, tip.z);
+    cone.quaternion.setFromUnitVectors(V3(0, 1, 0), tan.normalize());
+    LINKS.push({ m, tube, cone, a, b, mid: curve.getPoint(.5), cut: CUT + k * .14 });
+  });
+}
+
+// ── network: one source, six viewers, three overlapping views (merged into one), buffer pool, garbage pile ──
+const NV = [[3.8, -3.6], [6.4, 1.8], [2.6, 5.0], [-5.6, 4.2], [-7.2, -2.6], [-0.6, -5.8]].map(([x, z]) => [NC[0] + x, NC[1] + z]);
+const NSRC = [NC[0] - .6, NC[1] + .2];
+const NRINGS = [[-2.6, -1.6, 7.2], [2.4, .2, 7.0], [-1.0, 2.8, 6.8]].map(([x, z, r]) => [NC[0] + x, NC[1] + z, r]);
+const NUNION = [NC[0] - .4, NC[1] + .2, 8.5];
+const DUP = NV.map(v => NRINGS.map((r, ri) => Math.hypot(v[0] - r[0], v[1] - r[1]) < r[2] ? ri : -1).filter(x => x >= 0));
+const POOL = NV.map((_, k) => [NC[0] - 10.9, NC[1] - 5 + k * 2]);
+const GARB = [NC[0] + 9.2, NC[1] + 5.6];
+let PKT, GPILE, RINGM = [], POOLBED, PEOPLE;
+{
+  const body = new THREE.CylinderGeometry(.62, .72, 1.9, 14); body.translate(0, .95, 0);
+  const head = new THREE.SphereGeometry(.62, 14, 10); head.translate(0, 2.45, 0);
+  const pos = [...body.toNonIndexed().attributes.position.array, ...head.toNonIndexed().attributes.position.array];
+  const nor = [...body.toNonIndexed().attributes.normal.array, ...head.toNonIndexed().attributes.normal.array];
+  const fig = new THREE.BufferGeometry(); fig.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); fig.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  PEOPLE = dynInst(scene, fig, glowMat(2, .35), 7);
+  PKT = dynInst(scene, CUBE, glowMat(2, .9), 40);
+  GPILE = dynInst(scene, CUBE, glowMat(2, .12), 40);
+  for (let k = 0; k < 4; k++) {
+    const rm = mesh(scene, new THREE.RingGeometry(.975, 1, 128), reg(2, new THREE.MeshBasicMaterial({ color: C.net, transparent: true, opacity: .7, side: THREE.DoubleSide, depthWrite: false })), 0, TOP + .06, 0);
+    rm.rotation.x = -Math.PI / 2; RINGM.push(rm);
+  }
+  const pb = boxAO(2.2, .5, 12.4, .6);
+  POOLBED = new THREE.Group(); scene.add(POOLBED); POOLBED.position.set(POOL[0][0], TOP, NC[1]);
+  mesh(POOLBED, pb, M(2, '#14211f'), 0, .25, 0);
+  edges(POOLBED, pb, C.net, .9, 2).position.y = .25;
+}
+
+// ── dispatcher plate: the main lane, and (from 04) the DB and log lanes ──
+const LX0 = -24, LX1 = 24, LANEZ = { main: 5.6, db1: 11.0, db2: 13.4, log: 18.0 };
+const SEQ = (() => {
+  const unit = [['L', 3.0], ['G', .7], ['D', 3.4], ['L', 2.1], ['G', .7], ['G', .7], ['L', 1.5]];
+  const s = []; for (let u = 0; u < 4; u++) unit.forEach(([k, l]) => s.push({ k, l, u }));
+  const gap = .16, tot = s.reduce((a, b) => a + b.l, 0) + gap * (s.length - 1), sc = (LX1 - LX0 - gap * (s.length - 1)) / (tot - gap * (s.length - 1));
+  let x = LX0; s.forEach(b => { b.l *= sc; b.x = x; x += b.l + gap; });
+  // after: logic blocks packed left, DB blocks on two DB lanes at the same moment, log blocks merged into batches
+  let xl = LX0; let di = 0;
+  s.forEach(b => { if (b.k === 'L') { b.ax = xl; xl += b.l + gap; } });
+  s.forEach(b => { if (b.k === 'D') { b.lane = di % 2 ? 'db2' : 'db1'; b.ax = b.x; di++; } });
+  for (let u = 0; u < 4; u++) {                  // each unit's three log writes become one batch written at the unit's end
+    const g = s.filter(b => b.k === 'G' && b.u === u); const end = g[g.length - 1].x + g[g.length - 1].l;
+    const bl = .62 * g.reduce((a, b) => a + b.l, 0) / g.length * 1.6;
+    g.forEach((b, j) => { b.mx = b.x; b.ax = end - bl + j * bl / g.length; b.al = bl / g.length + (j < g.length - 1 ? .02 : 0); });
+  }
+  s.packEnd = xl - gap;
+  return s;
+})();
+let LBLK, BEDS = {}, FREE, FREEE, SATE;
+{
+  LBLK = dynInst(scene, UNIT, glowMat(3, .45), 40);
+  for (const [k, z] of Object.entries(LANEZ)) {
+    const g = new THREE.Group(); g.position.set(LX0 - .5, TOP, DC[1] - 9 + z); scene.add(g);
+    const geo = UNIT.clone(); const m = mesh(g, geo, M(3, '#0c1412'), 0, 0, 0); m.scale.set(LX1 - LX0 + 1, .35, 2.6);
+    const e = edges(g, UNIT, k === 'main' ? C.disp : k === 'log' ? C.log : C.db, .9, 3); e.scale.copy(m.scale);
+    BEDS[k] = { g, e };
+  }
+  SATE = BEDS.main.e;
+  FREE = mesh(scene, UNIT, basic(3, C.users, { transparent: true, opacity: .16, depthWrite: false }), 0, 0, 0);
+  FREEE = edges(scene, UNIT, C.users, .95, 3);
+}
+const laneZ = k => DC[1] - 9 + LANEZ[k];
+
+// ── camera path ──────────────────────────────────────────────
+// [t, target, distance, yaw, pitch, vertical fov, view offset x, view offset y]
+const KW = [
+  [0.0, [0, 3, 0], 118, .62, .42, 30, -380, 30],
+  [1.6, [0, 3, 0], 114, .56, .46, 30, -380, 30],
+  [4.6, [0, 1, 0], 112, .32, .82, 30, -10, 20],
+  [5.5, [0, 1, 0], 110, .3, .84, 30, -10, 20],
+  [6.8, [HC[0], 1, HC[1]], 48, .34, .8, 30, -300, 20],
+  [12.0, [HC[0], 1, HC[1]], 46, .24, .84, 30, -300, 20],
+  [13.4, [NC[0], 1, NC[1]], 47, -.26, .82, 30, -260, 10],
+  [18.8, [NC[0], 1, NC[1]], 45, -.16, .86, 30, -260, 10],
+  [20.2, [0, 1, DC[1]], 74, .02, .98, 30, 0, -60],
+  [25.8, [0, 1, DC[1]], 72, -.03, 1.0, 30, 0, -60],
+  [27.6, [0, 1, 1], 112, .36, .9, 30, -420, 0],
+  [32.0, [0, 1, 1], 108, .42, .9, 30, -420, 0],
+];
+const KT = [
+  [0.0, [0, 3, 0], 150, .62, .45, 40, 0, -300],
+  [1.6, [0, 3, 0], 146, .56, .5, 40, 0, -300],
+  [4.6, [0, 1, 0], 150, .25, .95, 40, 0, -120],
+  [5.5, [0, 1, 0], 148, .22, .96, 40, 0, -120],
+  [6.8, [HC[0], 1, HC[1]], 54, .3, .9, 40, 0, -230],
+  [12.0, [HC[0], 1, HC[1]], 52, .2, .94, 40, 0, -230],
+  [13.4, [NC[0], 1, NC[1]], 54, -.22, .9, 40, 0, -150],
+  [18.8, [NC[0], 1, NC[1]], 52, -.12, .94, 40, 0, -150],
+  [20.2, [0, 1, DC[1]], 104, .0, 1.1, 40, 0, -130],
+  [25.8, [0, 1, DC[1]], 102, -.02, 1.12, 40, 0, -130],
+  [27.6, [0, 1, 1], 150, .3, 1.0, 40, 0, -330],
+  [32.0, [0, 1, 1], 146, .36, 1.0, 40, 0, -330],
+];
+const K = (TALL ? KT : KW).map(([t, T, d, yaw, pitch, fov, ox, oy]) => ({ t, T: V3(...T), d, fov, ox, oy, yaw, pitch }));
+function camAt(t) {
+  let i = 0; while (i < K.length - 2 && t >= K[i + 1].t) i++;
+  const a = K[i], b = K[i + 1], u = ss(p(t, a.t, b.t - a.t));
+  const d = Math.exp(lerp(Math.log(a.d), Math.log(b.d), u));
+  return { T: a.T.clone().lerp(b.T, u), d, yaw: lerp(a.yaw, b.yaw, u), pitch: lerp(a.pitch, b.pitch, u), fov: lerp(a.fov, b.fov, u), ox: lerp(a.ox, b.ox, u), oy: lerp(a.oy, b.oy, u) };
+}
+
+// ── state functions (pure in t) ──────────────────────────────
+const OPENK = t => eio(p(t, OPEN0 + .9, 1.7));            // walls fold down
+const LIDK = t => eio(p(t, OPEN0, 1.3));
+function churn(i, t, t0 = 0) {                              // an ordinary object: created, used, destroyed, again
+  const P = 2.4 + hash(i) * 1.8, ph = t0 ? -t0 : hash(i + 77) * P;
+  const u = (((t + ph) % P) + P) % P / P;
+  const s = u < .1 ? eo(u / .1) : u < .62 ? 1 : u < .72 ? 1 - eio((u - .62) / .1) : 0;
+  return { u, s };
+}
+const memBase = τ => τ < CUT + .3 ? .2 + .05 * Math.max(0, τ - 2) : lerp(.2 + .05 * (CUT + .3 - 2), .24, eio(p(τ, CUT + .3, 1.2)));
+const memAt = τ => memBase(τ) + .1 * ((τ * .8) % 1);
+// garbage left by per-send buffers in 03
+const garbN = t => t < FIX3 + .5 ? clamp(Math.round(6 + (t - 12.6) * 8), 0, 34) : 34;
+const garbK = t => 1 - eio(p(t, FIX3 + .5, 1.1));
+
+function animate(t) {
+  // shell
+  const lk = LIDK(t), ok = OPENK(t);
+  LID.position.y = SH.h + .25 + 22 * lk; LID.mat.opacity = 1 - p(lk, .35, .55); LID.visible = lk < .99;
+  WALLS.forEach(({ pv, ax, sg }) => { const a = ok * Math.PI / 2 * .985; if (ax === 'x') pv.rotation.x = sg * a; else pv.rotation.z = sg * a; });
+  dimGroup(0, 1 - .55 * ok);
+  // focus dimming
+  const f2 = win(t, 6.2, 12.9, .7), f3 = win(t, 13.0, 19.7, .7), f4 = win(t, 19.8, 26.7, .7);
+  dimGroup(1, 1 - .7 * Math.max(f3, f4));
+  dimGroup(2, 1 - .7 * Math.max(f2, f4));
+  dimGroup(3, 1 - .7 * Math.max(f2, f3));
+
+  // heap objects + tracking rings
+  let n = 0, nr = 0;
+  const trk = win(t, TRACK, 12.9, .5);
+  SLOTS.forEach(([x, z], i) => {
+    const L = LEAKI.get(i);
+    let s = 0, col = C.mem, u = -1;
+    if (L && t >= L.s - .01 && t < L.rm + .5) {
+      s = eo(p(t, L.s, .35)) * (1 - eio(p(t, L.rm, .45)));
+      const fk = eo(p(t, L.flag, .3));
+      _c.set(C.mem).lerp(new THREE.Color(C.red), fk);
+      col = _c.clone();
+      if (trk > 0 && fk > 0 && t < L.rm + .3) { const pr = 1.05 + .18 * Math.sin(t * 6 + i); setI(RINGS, nr++, x, TOP + .04, z, pr, 1, pr, new THREE.Color(C.red).multiplyScalar(trk * fk * (1 - p(t, L.rm, .3)))); }
+    } else if (!L || t < L.s) {
+      if (L && t > L.s - .4) s = 0; else ({ s, u } = churn(i, t));
+    } else { ({ s, u } = churn(i, t, L.rm + .5)); }
+    if (s > .002) setI(HEAPO, n++, x, TOP + .78 * s, z, 1.5 * s, 1.5 * s, 1.5 * s, col);
+    if (trk > 0 && u >= 0) {                      // create (+) and destroy (−) marks while tracking is on
+      if (u < .2) { const k = u / .2; setI(RINGS, nr++, x, TOP + .04, z, .9 + 1.0 * k, 1, .9 + 1.0 * k, new THREE.Color(C.users).multiplyScalar(trk * (1 - k))); }
+      else if (u > .6 && u < .8) { const k = (u - .6) / .2; setI(RINGS, nr++, x, TOP + .04, z, 1.4 - .6 * k, 1, 1.4 - .6 * k, new THREE.Color('#9fb2ab').multiplyScalar(trk * .8 * (1 - k))); }
+    }
+  });
+  done(HEAPO, n); done(RINGS, nr);
+  LINKS.forEach(L => {
+    const la = LEAKI.get(L.a), lb = LEAKI.get(L.b);
+    const born = eo(p(t, Math.max(la.s, lb.s) + .3, .5));
+    const fk = eo(p(t, Math.max(la.flag, lb.flag), .3));
+    const cut = p(t, L.cut, .5);
+    const flash = cut > 0 && cut < 1 ? Math.sin(cut * Math.PI) : 0;
+    L.m.color.set(C.mem).lerp(new THREE.Color(C.red), fk).lerp(new THREE.Color('#ffffff'), flash * .8);
+    L.m.userData.base.copy(L.m.color);
+    L.m.color.multiplyScalar(Math.pow(DIMK[1], 2.2));
+    L.m.opacity = born * (.35 + .6 * fk) * (1 - eio(cut));
+    L.tube.visible = L.cone.visible = L.m.opacity > .01;
+  });
+
+  // network: people, views, packets, pool, garbage
+  n = 0;
+  setI(PEOPLE, n++, NSRC[0], TOP, NSRC[1], 1.15, 1.15, 1.15, '#ffffff');
+  NV.forEach(([x, z]) => setI(PEOPLE, n++, x, TOP, z, 1, 1, 1, '#9fe9ff'));
+  done(PEOPLE, n);
+  const mg = eio(p(t, FIX3, .9));
+  NRINGS.forEach(([x, z, r], k) => {
+    const R = RINGM[k]; R.position.set(lerp(x, NUNION[0], mg), TOP + .06 + k * .01, lerp(z, NUNION[1], mg)); const rr = lerp(r, NUNION[2], mg); R.scale.set(rr, rr, 1);
+    R.material.opacity = .75 * (1 - p(mg, .85, .15)); R.visible = R.material.opacity > .01;
+  });
+  { const R = RINGM[3]; R.position.set(NUNION[0], TOP + .1, NUNION[1]); R.scale.set(NUNION[2], NUNION[2], 1); R.material.opacity = .95 * p(mg, .8, .2); R.visible = mg > .8; }
+  n = 0;
+  const pf = 1 - win(t, FIX3 - .35, FIX3 + .75, .35);          // packets fade out while the path is rebuilt
+  const pk = (1 - win(t, FIX3 - .35, FIX3 + .75, .35)) * clamp(eo(p(t, 4.6, .8)));
+  const SRC = V3(NSRC[0], TOP + 2.2, NSRC[1]);
+  const arc = (A, B, h, f) => V3(lerp(A.x, B.x, f), lerp(A.y, B.y, f) + Math.sin(f * Math.PI) * h, lerp(A.z, B.z, f));
+  if (t < FIX3 + .2) {
+    // before: every view sends on its own → a viewer inside two views gets two packets; each packet is a freshly allocated buffer
+    const P = 1.7;
+    NV.forEach(([vx, vz], v) => DUP[v].forEach((ri, c) => {
+      const f = (((t / P + v * .13 + ri * .31) % 1) + 1) % 1;
+      const V = V3(vx, TOP + 1.8, vz), G = V3(GARB[0], TOP + .6, GARB[1]);
+      let q, s = .9, col = C.net;
+      if (f < .1) { q = SRC.clone(); s = .9 * eo(f / .1) * (1 + .5 * (1 - f / .1)); col = '#ffffff'; }
+      else if (f < .52) { q = arc(SRC, V, 2.2, (f - .1) / .42); }
+      else if (f < .86) { q = arc(V, G, 1.6, eio((f - .52) / .34)); col = C.gray; s = .8; }
+      else return;
+      setI(PKT, n++, q.x, q.y, q.z, s * pk, s * pk, s * pk, col);
+    }));
+  } else {
+    // after: one merged packet per viewer; its buffer comes from the pool and goes back to it
+    const P = 2.0;
+    NV.forEach(([vx, vz], v) => {
+      const f = (((t / P + v * .17) % 1) + 1) % 1;
+      const S0 = V3(POOL[v][0], TOP + 1.0, POOL[v][1]), V = V3(vx, TOP + 1.8, vz);
+      let q, s = 1.05;
+      if (f < .3) q = S0;
+      else if (f < .42) q = arc(S0, SRC, 1.2, eio((f - .3) / .12));
+      else if (f < .7) q = arc(SRC, V, 2.2, (f - .42) / .28);
+      else q = arc(V, S0, 2.6, eio((f - .7) / .3));
+      setI(PKT, n++, q.x, q.y, q.z, s * pk, s * pk, s * pk, f < .3 ? '#6fd8f0' : C.net);
+    });
+  }
+  done(PKT, n);
+  const pb = eo(p(t, FIX3 + .2, .6)); POOLBED.visible = pb > .01; POOLBED.scale.set(1, Math.max(.01, pb), Math.max(.01, pb));
+  n = 0;
+  const gn = garbN(t), gk = garbK(t);
+  for (let k = 0; k < gn; k++) {
+    const layer = k < 16 ? 0 : k < 25 ? 1 : k < 31 ? 2 : 3, idx = layer === 0 ? k : layer === 1 ? k - 16 : layer === 2 ? k - 25 : k - 31;
+    const side = [4, 3, 2.4, 2][layer], cx = idx % Math.ceil(side), cz = Math.floor(idx / Math.ceil(side));
+    const off = (Math.ceil(side) - 1) * .45;
+    const s = .8 * gk * eo(clamp((gn - k) * .6));
+    const jx = (hash(k) - .5) * .25, jz = (hash(k + 5) - .5) * .25;
+    setI(GPILE, n++, GARB[0] - off + cx * .9 + jx, TOP + .4 + layer * .78, GARB[1] - off + cz * .9 + jz, s, s, s, C.gray, hash(k + 9));
+  }
+  done(GPILE, n);
+
+  // dispatcher lanes
+  const dbk = eo(p(t, DBMV - .7, .6)), lgk = eo(p(t, LOGMV - .7, .6));
+  for (const [k, B] of Object.entries(BEDS)) {
+    const v = k === 'main' ? 1 : k === 'log' ? lgk : dbk;
+    B.g.visible = v > .01; B.g.scale.set(1, Math.max(.01, v), Math.max(.01, v));
+  }
+  const sat = win(t, 19.6, DBMV + .4, .4);
+  SATE.material.color.set(C.disp).lerp(new THREE.Color(C.red), sat); SATE.material.userData.base.copy(SATE.material.color); SATE.material.color.multiplyScalar(Math.pow(DIMK[3], 2.2));
+  n = 0;
+  SEQ.forEach((b, j) => {
+    let x = b.x, l = b.l, y = TOP + .18, z = laneZ('main'), col = b.k === 'L' ? C.disp : b.k === 'D' ? C.db : C.log;
+    if (b.k === 'D') {
+      const m = eio(p(t, DBMV + j * .025, 1.1));
+      z = lerp(laneZ('main'), laneZ(b.lane), m); y += Math.sin(m * Math.PI) * 2.6;
+    } else if (b.k === 'G') {
+      const m = eio(p(t, LOGMV + j * .02, 1.0)), mm = eio(p(t, MERGE, 1.0));
+      z = lerp(laneZ('main'), laneZ('log'), m); y += Math.sin(m * Math.PI) * 2.6;
+      x = lerp(b.mx, b.ax, mm); l = lerp(b.l, b.al, mm);
+    } else {
+      x = lerp(b.x, b.ax, eio(p(t, PACK, 1.1)));
+    }
+    const hh = 1.2;
+    setI(LBLK, n++, x + .04, y, z, l - .08, hh, 2.0, col);
+  });
+  done(LBLK, n);
+  const fr = eo(p(t, PACK + .9, .6));
+  FREE.visible = FREEE.visible = fr > .01;
+  if (FREE.visible) {
+    const x0 = SEQ.packEnd + .5, len = (LX1 - x0) * fr;
+    for (const o of [FREE, FREEE]) { o.position.set(x0, TOP + .18, laneZ('main')); o.scale.set(Math.max(.01, len), 1.2, 2.0); }
+  }
+}
+
+// ── 2D overlay ───────────────────────────────────────────────
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function font(sz, wt = 500, mono = false) { ctx.font = `${wt} ${sz}px ${mono ? MONO : SANS}`; }
+function txt(s, x, y, o = {}) {
+  const { size = T.lab, weight = 600, color = C.text, align = 'left', mono = false, alpha = 1, shadow = false } = o;
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; font(size, weight, mono);
+  ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  if (shadow) { ctx.shadowColor = 'rgba(0,0,0,.9)'; ctx.shadowBlur = 12; }
+  ctx.fillText(s, x, y); ctx.restore();
+}
+function tw(s, size, weight = 600, mono = false) { font(size, weight, mono); return ctx.measureText(s).width; }
+function runs(parts, x, y, size, weight, o = {}) {
+  const { align = 'left', alpha = 1 } = o;
+  const ws = parts.map(([s, , m, sz]) => tw(s, sz || size, weight, m)); const tot = ws.reduce((a, b) => a + b, 0);
+  let xx = align === 'center' ? x - tot / 2 : align === 'right' ? x - tot : x;
+  parts.forEach(([s, c, m, sz], i) => { txt(s, xx, y, { size: sz || size, weight, color: c || C.text, mono: m, alpha }); xx += ws[i]; });
+  return tot;
+}
+function chip(label, x, y, color, o = {}) {
+  const { alpha = 1, size = T.lab, align = 'left', mono = false, fill = .14 } = o;
+  if (alpha <= 0) return 0;
+  font(size, 700, mono);
+  const w = ctx.measureText(label).width + size * 1.0, h = size * 1.6;
+  const X = align === 'right' ? x - w : align === 'center' ? x - w / 2 : x;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  rr(X, y - h / 2, w, h, 8); ctx.fillStyle = 'rgba(6,10,9,.85)'; ctx.fill(); ctx.fillStyle = rgba(color, fill); ctx.fill(); ctx.strokeStyle = rgba(color, .8); ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, X + w / 2, y + 2); ctx.restore();
+  return w;
+}
+const _v = new THREE.Vector3();
+function project(pt) {
+  _v.set(pt[0], pt[1], pt[2]).project(camera);
+  return { x: (_v.x + 1) / 2 * W, y: (1 - _v.y) / 2 * H, ok: _v.z < 1 && _v.z > -1 && Math.abs(_v.x) < 1.2 && Math.abs(_v.y) < 1.2 };
+}
+// label with a leader line to a point in the scene
+function tag(pt, title, col, a, o = {}) {
+  if (a <= 0) return null; const q = project(pt); if (!q.ok) return null;
+  const { dx = 0, dy = -90, size = T.lab, align = 'center', sub = null } = o;
+  const subSize = Math.round(size * .86);
+  const w = Math.max(tw(title, size, 700), sub ? tw(sub, subSize, 500) : 0) + size * 1.1;
+  const h = sub ? size * 2.5 + 14 : size * 1.75;
+  let bx = q.x + dx - (align === 'center' ? w / 2 : align === 'right' ? w : 0), by = q.y + dy - h / 2;
+  bx = clamp(bx, 20, W - 20 - w); by = clamp(by, 20, H - 20 - h);
+  ctx.save(); ctx.globalAlpha *= a;
+  const ex = clamp(q.x, bx, bx + w), ey = q.y < by ? by : q.y > by + h ? by + h : by + h / 2;
+  ctx.strokeStyle = rgba(col, .85); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(ex, ey); ctx.stroke();
+  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(q.x, q.y, 6, 0, 7); ctx.fill();
+  rr(bx, by, w, h, 8); ctx.fillStyle = 'rgba(6,10,9,.9)'; ctx.fill(); ctx.strokeStyle = rgba(col, .45); ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = col; ctx.fillRect(bx, by + 8, 5, h - 16);
+  txt(title, bx + size * .55 + 4, by + size * 1.22, { size, weight: 700 });
+  if (sub) txt(sub, bx + size * .55 + 4, by + size * 1.22 + subSize + 12, { size: subSize, weight: 500, color: C.dim });
+  ctx.restore();
+  return q;
+}
+// greedy word wrap
+function wrap(s, size, weight, maxW) {
+  const words = s.split(' '); const lines = []; let cur = '';
+  for (const w of words) { const nx = cur ? cur + ' ' + w : w; if (tw(nx, size, weight) > maxW && cur) { lines.push(cur); cur = w; } else cur = nx; }
+  if (cur) lines.push(cur); return lines;
+}
+function vignette() {
+  const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .45, W / 2, H / 2, Math.max(W, H) * .75);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.55)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+// chapter header for beats 02 – 04
+function headers(t) {
+  for (const [s, e, n, title, sub] of HEAD.slice(1, 4)) {
+    const a = win(t, s + .1, e + .1, .45); if (a <= 0) continue;
+    const k = eo(p(t, s + .1, .6));
+    ctx.save(); ctx.globalAlpha = a;
+    const gh = TALL ? 300 : 250;
+    const g = ctx.createLinearGradient(0, 0, 0, gh); g.addColorStop(0, 'rgba(6,10,9,.92)'); g.addColorStop(1, 'rgba(6,10,9,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, gh);
+    const x = T.pad - (1 - k) * 30, y = TALL ? 112 : 108, bs = TALL ? 66 : 60;
+    rr(x, y - bs + 8, bs + 10, bs, 8); ctx.strokeStyle = C.users; ctx.lineWidth = 2.5; ctx.stroke();
+    txt(n, x + (bs + 10) / 2, y - 8, { size: TALL ? 36 : 32, weight: 700, mono: true, color: C.users, align: 'center' });
+    txt(title, x + bs + 34, y, { size: T.head, weight: 800 });
+    const lines = wrap(sub, T.kick, 500, W - T.pad * 2);
+    lines.forEach((l, i) => txt(l, T.pad, y + (TALL ? 76 : 66) + i * (T.kick + 12), { size: T.kick, weight: 500, color: C.dim }));
+    ctx.restore();
+  }
+}
+// small persistent status (wide only): current stable CCU + the 개념도 note
+function status(t) {
+  const a = win(t, 6.0, 26.6, .5); if (a <= 0) return;
+  if (!TALL) {
+    runs([['안정 동접 ', C.dim], ['2,000', C.users, true]], W - T.pad, 104, 36, 700, { align: 'right', alpha: a });
+    txt('블록 · 그래프는 개념도', W - T.pad, 152, { size: 30, weight: 500, color: C.faint, align: 'right', alpha: a });
+  } else {
+    txt('개념도', W - T.pad, 112, { size: 40, weight: 600, color: C.faint, align: 'right', alpha: a });
+  }
+}
+function bottomLine(t, t0, t1, parts) {
+  const a = win(t, t0, t1, .45); if (a <= 0) return;
+  const size = T.body, maxW = W - T.pad * 2 + 40;
+  const total = parts.reduce((s, [x]) => s + tw(x, size, 700), 0);
+  const y = TALL ? H - 72 : H - 72;
+  if (total <= maxW - 56) {
+    ctx.save(); ctx.globalAlpha = a * .9; rr(W / 2 - total / 2 - 28, y - size - 16, total + 56, size + 38, 10); ctx.fillStyle = 'rgba(6,10,9,.92)'; ctx.fill(); ctx.restore();
+    runs(parts, W / 2, y, size, 700, { align: 'center', alpha: a });
+  } else {                                      // two lines: split between the parts (first part on line 1)
+    const l1 = [parts[0]], l2 = parts.slice(1);
+    const w1 = tw(l1[0][0], size, 700), w2 = l2.reduce((s, [x]) => s + tw(x, size, 700), 0), bw = Math.max(w1, w2);
+    ctx.save(); ctx.globalAlpha = a * .9; rr(W / 2 - bw / 2 - 28, y - size * 2 - 32, bw + 56, size * 2 + 54, 10); ctx.fillStyle = 'rgba(6,10,9,.92)'; ctx.fill(); ctx.restore();
+    runs(l1, W / 2, y - size - 14, size, 700, { align: 'center', alpha: a });
+    runs(l2, W / 2, y, size, 700, { align: 'center', alpha: a });
+  }
+}
+
+// perfmon-style counter graph: stable CCU (shape is a 개념도, the 2,000 / 8,000 values are real)
+const ccuAt = u => {                                          // u = 0..1 along the graph
+  const noise = .012 * Math.sin(u * 91) + .008 * Math.sin(u * 37 + 1);
+  if (u < .34) return 2000 * eo(u / .34) + 20 * noise * 2000 / 40;
+  if (u < .62) return 2000 * (1 + noise * 1.2);
+  if (u < .86) return lerp(2000, 8000, eio((u - .62) / .24)) * (1 + noise * .6);
+  return 8000 * (1 + noise * .4);
+};
+function gauge(t, x, y, w, h, a) {
+  if (a <= 0) return;
+  const res = eio(p(t, RES, 1.6));                            // 0: stuck at 2,000 · 1: ceiling broken
+  const ymax = lerp(2600, 9200, eio(p(t, RES - .2, 1.0)));
+  const reveal = t < RES ? .62 : lerp(.62, 1, res);
+  ctx.save(); ctx.globalAlpha = a;
+  rr(x, y, w, h, 10); ctx.fillStyle = 'rgba(5,9,8,.9)'; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.stroke();
+  const px = x + 24, pw = w - 48, py = y + (TALL ? 70 : 62), ph = h - (TALL ? 96 : 86);
+  ctx.save(); ctx.beginPath(); ctx.rect(px, py, pw, ph); ctx.clip();
+  ctx.fillStyle = 'rgba(52,245,166,.07)';
+  for (let k = 1; k < 10; k++) ctx.fillRect(px + pw * k / 10, py, 1, ph);
+  for (let k = 1; k < 5; k++) ctx.fillRect(px, py + ph * k / 5, pw, 1);
+  const Y = v => py + ph - v / ymax * ph;
+  // 2,000 ceiling (red while stuck, dim after it breaks)
+  ctx.setLineDash([12, 9]); ctx.lineWidth = 2.5;
+  ctx.strokeStyle = rgba(C.red, lerp(.95, .45, res)); ctx.beginPath(); ctx.moveTo(px, Y(2000)); ctx.lineTo(px + pw, Y(2000)); ctx.stroke();
+  if (res > 0) { ctx.strokeStyle = rgba(C.users, .8 * res); ctx.beginPath(); ctx.moveTo(px, Y(8000)); ctx.lineTo(px + pw, Y(8000)); ctx.stroke(); }
+  ctx.setLineDash([]);
+  // the counter line
+  const N = 220; ctx.beginPath();
+  for (let i = 0; i <= N * reveal; i++) { const u = i / N; const X = px + u * pw, V = ccuAt(u); i ? ctx.lineTo(X, Y(V)) : ctx.moveTo(X, Y(V)); }
+  ctx.lineWidth = 4; ctx.strokeStyle = C.users; ctx.shadowColor = C.users; ctx.shadowBlur = 12; ctx.stroke(); ctx.shadowBlur = 0;
+  const ue = reveal, ve = ccuAt(ue);
+  ctx.fillStyle = C.users; ctx.beginPath(); ctx.arc(px + ue * pw, Y(ve), 7, 0, 7); ctx.fill();
+  ctx.restore();
+  const ls = TALL ? 40 : 32;
+  txt('안정 동접', x + 24, y + (TALL ? 50 : 44), { size: ls, weight: 700, color: C.users });
+  txt('개념도', x + w - 24, y + (TALL ? 50 : 44), { size: ls, weight: 500, color: C.faint, align: 'right' });
+  txt('2,000', px + 10, Y(2000) - 12, { size: ls, weight: 700, mono: true, color: res > .5 ? C.dim : C.red });
+  if (res > .3) txt('8,000', px + 10, Y(8000) + ls + 6, { size: ls, weight: 700, mono: true, color: C.users, alpha: p(res, .3, .4) });
+  ctx.restore();
+}
+
+// ── 01 · intro: stuck at 2,000, open the box ─────────────────
+function ov01(t) {
+  const a = 1 - eio(p(t, 4.6, .8)); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  if (!TALL) {
+    const g = ctx.createLinearGradient(0, 0, 1150, 0); g.addColorStop(0, 'rgba(6,10,9,.94)'); g.addColorStop(.75, 'rgba(6,10,9,.6)'); g.addColorStop(1, 'rgba(6,10,9,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, 1150, H);
+    const x = T.pad;
+    txt('트릭스터M 서버 최적화 파견 · 3개월', x, 150, { size: T.kick, weight: 600, color: C.dim });
+    txt('안정 동접', x, 250, { size: 64, weight: 800 });
+    const w = runs([['2,000', C.users, true]], x - 6, 420, T.num, 800);
+    chip('한계', x + w + 36, 360, C.red, { size: 40 });
+    gauge(t, x, 480, 800, 320, 1);
+  } else {
+    const g = ctx.createLinearGradient(0, 0, 0, 900); g.addColorStop(0, 'rgba(6,10,9,.95)'); g.addColorStop(.8, 'rgba(6,10,9,.6)'); g.addColorStop(1, 'rgba(6,10,9,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, 900);
+    const x = T.pad;
+    txt('트릭스터M 최적화 파견 · 3개월', x, 112, { size: T.kick, weight: 600, color: C.dim });
+    txt('안정 동접', x, 210, { size: 70, weight: 800 });
+    const w = runs([['2,000', C.users, true]], x - 8, 400, T.num, 800);
+    chip('한계', x + w + 36, 330, C.red, { size: 50 });
+    gauge(t, x, 450, W - 2 * x, 300, 1);
+  }
+  ctx.restore();
+  tag([SH.x0 + 8, SH.h + .3, SH.z1], '게임서버 프로세스', C.users, win(t, .0, OPEN0 + 1.2, .4), { dy: TALL ? 150 : 130, dx: TALL ? 40 : 60 });
+  bottomLine(t, OPEN0 + .4, 5.6, [['서버 프로세스를 열어 ', C.text], ['병목', C.red], ['을 찾는다', C.text]]);
+  // module names once the box is open
+  const m = win(t, 4.2, 6.6, .4);
+  tag([HC[0], TOP, HC[1] - 8.5], '메모리 (힙)', C.mem, m, { dy: TALL ? -70 : -70 });
+  tag([NC[0], TOP, NC[1] - 8.5], '패킷 송수신', C.net, m, { dy: TALL ? -70 : -70 });
+  tag([DC[0], TOP, DC[1] + 9], '메인 디스패처', C.disp, m, { dy: TALL ? 70 : 70 });
+}
+
+// ── 02 · memory leak ─────────────────────────────────────────
+function ov02(t) {
+  const a = win(t, 6.0, 12.7, .5); if (a <= 0) return;
+  // memory counter (concept): rises with every leaked object, flat once they are gone
+  const [x, y, w, h] = TALL ? [T.pad, 282, W - 2 * T.pad, 250] : [T.pad, 290, 640, 300];
+  ctx.save(); ctx.globalAlpha = a;
+  rr(x, y, w, h, 10); ctx.fillStyle = 'rgba(5,9,8,.9)'; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.stroke();
+  const ls = TALL ? 40 : 32;
+  txt('메모리 사용량', x + 24, y + (TALL ? 50 : 46), { size: ls, weight: 700, color: C.mem });
+  txt('개념도', x + w - 24, y + (TALL ? 50 : 46), { size: ls, weight: 500, color: C.faint, align: 'right' });
+  const px = x + 24, pw = w - 48, py = y + (TALL ? 70 : 66), ph = h - (TALL ? 92 : 90);
+  ctx.fillStyle = 'rgba(255,181,71,.07)'; for (let k = 1; k < 10; k++) ctx.fillRect(px + pw * k / 10, py, 1, ph); for (let k = 1; k < 4; k++) ctx.fillRect(px, py + ph * k / 4, pw, 1);
+  const t0 = 3.6, t1 = 12.6, tt = clamp(t, t0, t1);
+  ctx.beginPath();
+  for (let τ = t0; τ <= tt + 1e-6; τ += .03) { const X = px + (τ - t0) / (t1 - t0) * pw, Yv = py + ph - clamp(memAt(τ) / .85) * ph; τ === t0 ? ctx.moveTo(X, Yv) : ctx.lineTo(X, Yv); }
+  const fixed = t > CUT + .6;
+  ctx.lineWidth = 4; ctx.strokeStyle = C.mem; ctx.shadowColor = C.mem; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
+  const ex = px + (tt - t0) / (t1 - t0) * pw, ey = py + ph - clamp(memAt(tt) / .85) * ph;
+  ctx.fillStyle = C.mem; ctx.beginPath(); ctx.arc(ex, ey, 7, 0, 7); ctx.fill();
+  // leak trend (dashed) while it is still climbing
+  const lt = 1 - p(t, CUT + .3, .6);
+  if (lt > 0) { ctx.save(); ctx.globalAlpha *= lt; ctx.setLineDash([10, 8]); ctx.strokeStyle = rgba(C.red, .9); ctx.lineWidth = 2.5; ctx.beginPath();
+    ctx.moveTo(px, py + ph - memBase(t0) / .85 * ph); ctx.lineTo(px + pw, py + ph - (memBase(t0) + .05 * (t1 - t0)) / .85 * ph); ctx.stroke(); ctx.restore(); }
+  ctx.restore();
+  // labels on the heap
+  const kT = win(t, TRACK, 12.6, .4);
+  const tr = [HC[0] + 12.5, TOP, HC[1] + 8.5];
+  tag(tr, '생성·소멸 트래킹', C.users, kT * (1 - win(t, FLAG + .4, 12.6, .4)), { dy: TALL ? 130 : 110, dx: TALL ? -60 : 30 });
+  const lf = win(t, FLAG + .3, RM + .4, .35);
+  tag([(SLOTS[21][0] + SLOTS[22][0] + SLOTS[29][0]) / 3, TOP + 3.4, (SLOTS[21][1] + SLOTS[29][1]) / 2], '순환 참조', C.red, lf, { dy: TALL ? -150 : -140, dx: TALL ? 120 : 140 });
+  tag([SLOTS[35][0], TOP + 1.5, SLOTS[35][1]], '잔존 객체', C.red, lf, { dy: TALL ? 140 : 130, dx: TALL ? -40 : -90 });
+  const ok = win(t, RM + .5, 12.7, .4);
+  tag([HC[0] + 3, TOP + 1.5, HC[1] + 3], '제거', C.users, ok, { dy: TALL ? 170 : 150, dx: 80 });
+  bottomLine(t, 6.4, FLAG + .1, [['소멸되지 않는 객체', C.red], ['가 계속 쌓인다', C.text]]);
+  bottomLine(t, FLAG + .3, RM + .3, [['생성 − 소멸', C.users], [' 추적으로 ', C.text], ['원인 객체', C.red], ['를 찾는다', C.text]]);
+  bottomLine(t, RM + .5, 12.6, [['순환 참조 · 잔존 객체 제거', C.users], [' → 메모리가 더는 쌓이지 않는다', C.text]]);
+}
+
+// ── 03 · broadcast + packet buffers ──────────────────────────
+function ov03(t) {
+  const a = win(t, 13.0, 19.6, .5); if (a <= 0) return;
+  const before = win(t, 13.2, FIX3 - .2, .35), after = win(t, FIX3 + .7, 19.6, .4);
+  tag([NSRC[0], TOP + 3.2, NSRC[1]], '보낼 때마다 new 버퍼', '#ffffff', before, { dy: TALL ? -200 : -170, dx: TALL ? 0 : -60 });
+  tag([GARB[0], TOP + 1.6, GARB[1]], '가비지', C.gray, before, { dy: TALL ? 130 : 110, dx: TALL ? -60 : 40 });
+  tag([NRINGS[1][0] + NRINGS[1][2] * .7, TOP, NRINGS[1][1] - NRINGS[1][2] * .7], '시야마다 따로 전송', C.net, before, { dy: TALL ? -120 : -110, dx: TALL ? -80 : 120 });
+  tag([NUNION[0] + NUNION[2] * .7, TOP, NUNION[1] - NUNION[2] * .7], '시야 통합 · 한 번에 전송', C.net, after, { dy: TALL ? -120 : -110, dx: TALL ? -120 : 120 });
+  tag([POOL[0][0], TOP + .8, POOL[2][1]], '버퍼 풀 · 재사용', C.users, after, { dy: TALL ? 200 : 170, dx: TALL ? 80 : -40 });
+  bottomLine(t, 13.3, FIX3 - .1, [['겹친 시야마다 따로 보내고, ', C.text], ['매번 버퍼를 새로 할당', C.red]]);
+  bottomLine(t, FIX3 + .7, 19.4, [['시야를 합쳐 한 번에 보내고, ', C.text], ['버퍼는 풀에서 꺼내 재사용', C.users]]);
+}
+
+// ── 04 · dispatcher ─────────────────────────────────────────
+function ov04(t) {
+  const a = win(t, 19.8, 26.6, .5); if (a <= 0) return;
+  const zl = k => laneZ(k) - 1.3, dy = TALL ? -34 : -30;
+  const lab = (k, s, col, al, sz = T.lab) => { const q = project([LX0 - .3, TOP + .4, zl(k)]); if (q.ok && al > 0) txt(s, q.x, q.y + dy + 12, { size: sz, weight: 700, color: col, alpha: al * a, shadow: true }); return q; };
+  const sat = win(t, 19.8, DBMV + .3, .35);
+  const q = lab('main', '메인 디스패처', C.disp, 1);
+  if (q.ok && sat > 0) chip('포화', q.x + tw('메인 디스패처', T.lab, 700) + 22, q.y + dy, C.red, { alpha: sat * a, size: T.lab - 4, align: 'left' });
+  lab('db1', 'DB 처리 · 분리', C.db, eo(p(t, DBMV - .4, .6)));
+  lab('log', '로그 · 비동기 일괄 기록', C.log, eo(p(t, LOGMV - .4, .6)));
+  const d0 = SEQ.find(b => b.k === 'D'), g0 = SEQ.filter(b => b.k === 'G')[3];
+  tag([d0.x + d0.l / 2, TOP + 1.4, laneZ('main')], 'DB 처리', C.db, win(t, 20.0, DBMV + .1, .35), { dy: TALL ? 150 : 120, dx: TALL ? 40 : 0 });
+  tag([g0.x + g0.l / 2, TOP + 1.4, laneZ('main')], '로그 파일 기록', C.log, win(t, 20.3, LOGMV + .1, .35), { dy: TALL ? 150 : 120, dx: TALL ? 80 : 60 });
+  const fr = win(t, PACK + 1.0, 26.6, .4);
+  const fx = (SEQ.packEnd + .5 + LX1) / 2;
+  const fq = project([fx, TOP + 1.4, laneZ('main')]);
+  if (fq.ok && fr > 0) chip('여유', fq.x, fq.y - (TALL ? 4 : 0), C.users, { alpha: fr * a, align: 'center', size: T.lab, fill: .2 });
+  bottomLine(t, 19.9, DBMV + .2, [['DB 처리와 로그 기록', C.red], ['까지 메인 디스패처가 떠안는다', C.text]]);
+  bottomLine(t, DBMV + .4, PACK + .9, [['DB는 분리, 로그는 비동기로 ', C.text], ['모아서 일괄 기록', C.log]]);
+  bottomLine(t, PACK + 1.1, 26.5, [['디스패처에는 ', C.text], ['게임 로직', C.disp], ['만 남는다', C.text]]);
+}
+
+// ── 05 · result ──────────────────────────────────────────────
+const FIXES = [['메모리릭 제거', C.mem], ['시야 통합', C.net], ['패킷 풀링', C.net], ['DB 분리', C.db], ['로그 비동기', C.log]];
+function ov05(t) {
+  const a = eo(p(t, 26.5, .8)); if (a <= 0) return;
+  const k2 = eo(p(t, RES + .9, .7));
+  ctx.save(); ctx.globalAlpha = a;
+  if (!TALL) {
+    const g = ctx.createLinearGradient(0, 0, 1180, 0); g.addColorStop(0, 'rgba(6,10,9,.95)'); g.addColorStop(.75, 'rgba(6,10,9,.6)'); g.addColorStop(1, 'rgba(6,10,9,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, 1180, H);
+    const x = T.pad;
+    txt('트릭스터M 서버 최적화 파견 · 3개월', x, 150, { size: T.kick, weight: 600, color: C.dim });
+    txt('안정 동접', x, 250, { size: 64, weight: 800 });
+    const w0 = runs([['2,000', C.dim, true, T.num2]], x - 4, 420, T.num2, 800);
+    runs([['→', C.dim, false, 90]], x + w0 + 22, 410, 90, 700);
+    const w1 = runs([['8,000', C.users, true]], x + w0 + 130, 420, T.num, 800, { alpha: k2 });
+    chip('4배', x + w0 + 130 + w1 + 36, 360, C.users, { size: 64, alpha: k2, fill: .22 });
+    gauge(t, x, 480, 800, 320, 1);
+    txt('개선 후 파견 종료', x, 870, { size: T.body, weight: 600, color: C.dim, alpha: k2 });
+    let cx = x; FIXES.forEach(([s, c], i) => { const kk = eo(p(t, RES + 1.2 + i * .15, .5)); cx += chip(s, cx, 960, c, { size: T.lab, alpha: kk }) + 16; });
+  } else {
+    const g = ctx.createLinearGradient(0, 0, 0, 1000); g.addColorStop(0, 'rgba(6,10,9,.95)'); g.addColorStop(.8, 'rgba(6,10,9,.65)'); g.addColorStop(1, 'rgba(6,10,9,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, 1000);
+    const x = T.pad;
+    txt('트릭스터M 최적화 파견 · 3개월', x, 112, { size: T.kick, weight: 600, color: C.dim });
+    txt('안정 동접', x, 210, { size: 70, weight: 800 });
+    const w0 = runs([['2,000', C.dim, true, T.num2]], x - 4, 360, T.num2, 800);
+    runs([['→', C.dim, false, 100]], x + w0 + 26, 350, 100, 700);
+    const w1 = runs([['8,000', C.users, true]], x - 8, 560, T.num, 800, { alpha: k2 });
+    chip('4배', x + w1 + 40, 488, C.users, { size: 70, alpha: k2, fill: .22 });
+    gauge(t, x, 610, W - 2 * x, 300, 1);
+    txt('개선 후 파견 종료', x, 990, { size: T.body, weight: 600, color: C.dim, alpha: k2 });
+    let cx = x, cy = 1100; FIXES.forEach(([s, c], i) => { const kk = eo(p(t, RES + 1.2 + i * .15, .5)); const wv = tw(s, T.lab, 700) + T.lab; if (cx + wv > W - x) { cx = x; cy += T.lab * 1.6 + 18; } cx += chip(s, cx, cy, c, { size: T.lab, alpha: kk }) + 16; });
+  }
+  ctx.restore();
+}
+
+// ── frame ────────────────────────────────────────────────────
+function renderAt(t) {
+  t = clamp(+t || 0, 0, DURATION);
+  const c = camAt(t);
+  const dir = V3(Math.sin(c.yaw) * Math.cos(c.pitch), Math.sin(c.pitch), Math.cos(c.yaw) * Math.cos(c.pitch));
+  camera.fov = c.fov; camera.near = c.d * .05; camera.far = c.d * 8;
+  camera.setViewOffset(W, H, c.ox, c.oy, W, H);
+  camera.position.copy(c.T).addScaledVector(dir, c.d); camera.up.set(0, 1, 0); camera.lookAt(c.T); camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+  scene.fog.near = c.d * 1.3; scene.fog.far = c.d * 3.4;
+  sun.target.position.copy(c.T); sun.position.copy(c.T).add(V3(-40, 90, 50)); sun.target.updateMatrixWorld();
+  animate(t);
+  composer.render();
+  ctx.setTransform(QUAL, 0, 0, QUAL, 0, 0); ctx.globalAlpha = 1;
+  ctx.drawImage(renderer.domElement, 0, 0, W, H);
+  vignette();
+  ov01(t); ov02(t); ov03(t); ov04(t); ov05(t);
+  headers(t); status(t);
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) {
+    try { document.fonts.add(await new FontFace(family, `url(../assets/fonts/${file})`, { weight }).load()); } catch (e) { /* fall back to system fonts */ }
+  }
+  await document.fonts.ready;
+  renderAt(0);
+})();
+
+// ── player (standalone only) ─────────────────────────────────
+if (!EMBED && !RENDER) {
+  const $ = id => document.getElementById(id);
+  $('alt').href = TALL ? './' : '?layout=tall'; $('alt').textContent = TALL ? '가로 화면' : '세로 화면';
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CHAPTERS = HEAD.map(h => [h[0], h[2], h[3]]);
+  let t = 0, playing = false, started = false, last = 0;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button');
+    b.innerHTML = `<span>${n}</span>` + label;
+    b.addEventListener('click', () => { seek(s + .01); play(); });
+    $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing;
+    $('big').innerHTML = ended ? ICON.replay : ICON.play;
+    $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur && started));
+  }
+  function draw() { renderAt(Math.min(t, DURATION)); }
+  function play() { if (t >= DURATION) t = 0; started = true; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+  function frame(now) {
+    if (playing) { t += (now - last) / 1000 * rate; last = now; if (t >= DURATION) { t = DURATION; playing = false; } draw(); ui(); }
+    requestAnimationFrame(frame);
+  }
+  const RATES = [1, .75, .5];
+  let rate = 1;
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) {
+    rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`);
+    try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ }
+  }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('play').addEventListener('click', toggle);
+  $('fs').addEventListener('click', () => { const el = $('stage'); if (document.fullscreenElement) document.exitFullscreen?.(); else el.requestFullscreen?.().catch(() => {}); });
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+  });
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frame);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+}
+</script>
+</body>
+</html>

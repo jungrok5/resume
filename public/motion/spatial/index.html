@@ -1,0 +1,1085 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>공간 분할 · 시야 전송</title>
+<style>
+  /* One stage (16:9, or 4:5 with ?layout=tall), a slim transport bar, chapter chips, a short note. Single dusk look. */
+  :root {
+    --bg: #0e1524; --surface: #151e30; --line: #2a3650; --fg: #eef2f8; --dim: #9aa8bd; --text2: #c6cfdd;
+    --accent: #4da3ff; --warm: #ffa53a;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding-block: 16px; padding-inline: 16px; box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  body.tall .player { width: min(100%, calc((100vh - 170px) * 4 / 5)); }
+  .stage { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  body.tall .stage { aspect-ratio: 4 / 5; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); height: auto; aspect-ratio: 1; border-radius: 50%;
+    border: 1.5px solid var(--accent); background: rgba(14,21,36,.78); color: var(--fg); display: grid; place-items: center; cursor: pointer; transition: transform .15s; }
+  .big[hidden] { display: none; }
+  .big:hover { transform: scale(1.06); }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 14px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--warm), var(--accent)); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(77,163,255,.25); }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(77,163,255,.12); }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  .notes { width: min(100%, 760px); margin-top: 40px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes h2 { font-size: 20px; line-height: 1.4; margin: 0 0 12px; text-wrap: balance; }
+  .notes p { color: var(--text2); margin: 0 0 14px; }
+  .notes b { color: var(--fg); }
+  .notes .fine { font-size: 13px; color: var(--dim); }
+  /* #poster: canvas only, loops (gallery thumbnails) */
+  body.poster { padding: 0; }
+  body.poster .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .big, body.poster .notes, body.poster .set { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+  /* ?embed: the résumé drives renderAt(t); canvas only */
+  body.embed { margin: 0; padding: 0; display: block; overflow: hidden; height: 100vh; }
+  body.embed .player { width: 100%; height: 100%; gap: 0; }
+  body.embed .bar, body.embed .chapters, body.embed .big, body.embed .notes, body.embed .set { display: none; }
+  body.embed .stage { border: 0; border-radius: 0; width: 100%; height: 100%; aspect-ratio: auto; cursor: default; }
+  body.embed canvas { object-fit: contain; }
+</style>
+
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="유저가 프랍을 쌓은 거대한 공간을 집터, 청크, 셀로 나누고, 바뀐 집터만 저장하며, 플레이어 시야에 처음 들어온 청크만 보내는 과정을 보여주는 3D 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="33" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:33</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+    <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="이동"><a href="../../interactive.html">← 이력서로</a></nav>
+</div>
+<section class="notes" id="notes">
+  <h2>3단 공간 분할 · 시야 전송 <span class="fine">Miniverse UE5 · 2023 – 2024</span></h2>
+  <article data-ch="01"><p><b>문제.</b> 유저가 프랍을 직접 쌓는 하우징 샌드박스에서 최악의 경우를 정량 분석하면 공간 하나에 <b>51억 프랍, 422GB</b>가 나옵니다. 서버가 전부 들고 있을 수도, 클라이언트에 전부 보낼 수도 없는 크기입니다.</p></article>
+  <article data-ch="02"><p><b>접근.</b> 공간을 <b>집터 · 청크 · 셀</b> 3단으로 나눴습니다. 저장은 집터 단위의 계층 구조로 하고, 바뀐 곳에 더티 플래그를 세운 뒤 <b>1초 배치</b>로 바뀐 집터만 써서 수천만 프랍을 영속화했습니다. 전송은 시야 기반으로, 플레이어 시야에 들어온 청크만 보내고 <b>SightIn</b>에 거쳐간 청크를 기록해 다시 들어와도 재전송하지 않습니다.</p></article>
+  <article data-ch="05"><p><b>결과.</b> 처리량이 공간의 총량이 아니라 지금 보이고 바뀌는 부분, 즉 <b>활성량</b>을 따라갑니다. ‘총량 대신 활성량만 처리’.</p></article>
+  <p class="fine">화면 속 칸의 크기와 개수(집터 4×4 청크, 청크 4×4 셀), 프랍 배치, 이동 경로, 배치 주기의 화면 속도는 이해를 돕기 위한 개념도입니다. 수치는 51억 프랍 · 422GB · 1초 배치 · 수천만 프랍만 실제 이력 기준입니다.</p>
+</section>
+<script type="importmap">
+{ "imports": { "three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/" } }
+</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  Spatial Tiers — 분해해 들어가기 (open it up).
+//  A user-built sandbox space at dusk, densely filled with props (houses, block builds, furniture). The worst case is
+//  the opening problem (51억 프랍 · 422GB per space); then we open the space: 공간 → 집터 → 청크 → 셀, save only dirty
+//  lots per 1 s batch, and stream chunks by sight with a SightIn record so a revisited chunk is never sent again.
+//  Look: the world itself — lots with roads between them, toy-coloured props, warm windows, a blue sight disk on the ground.
+//  One world in one unit system (1 unit = 1 cell); per-chunk state lives in a DataTexture that props and ground both read.
+//  Every frame is a pure function of t.
+// ─────────────────────────────────────────────────────────────
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const QS = new URLSearchParams(location.search);
+const EMBED = QS.has('embed'), RENDER = QS.has('render'), TALL = QS.get('layout') === 'tall';
+const W = TALL ? 1080 : 1920, H = TALL ? 1350 : 1080, DURATION = 33;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const Q = EMBED ? clamp(+(QS.get('q') || 1) || 1, .4, 1) : 1;
+if (EMBED) document.body.classList.add('embed');
+if (TALL) document.body.classList.add('tall');
+const cv = document.getElementById('c');
+cv.width = Math.round(W * Q); cv.height = Math.round(H * Q);
+const ctx = cv.getContext('2d');
+const SANS = 'Pretendard, "WenQuanYi Zen Hei", "DejaVu Sans", sans-serif';
+const MONO = '"JetBrains Mono", Pretendard, "DejaVu Sans Mono", monospace';
+// Roles: blue = sight / transfer · mint = SightIn record / saved · orange = dirty / write · red = the problem
+const C = {
+  bg: '#121b2c', void: '#0d1422', text: '#eef2f8', dim: '#a3b0c4', faint: '#6e7c93',
+  blue: '#4da3ff', mint: '#4fe0b0', orange: '#ffa53a', red: '#ff7a6b', line: '#2a3650',
+};
+
+// ── math / easing ────────────────────────────────────────────
+const lerp = (a, b, t) => a + (b - a) * t;
+const p = (t, s, d) => clamp((t - s) / d);
+const eo = t => 1 - Math.pow(1 - t, 3);
+const eio = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const ss = u => u * u * (3 - 2 * u);
+const eback = t => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+const win = (t, s, e, f = .45) => Math.min(eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let x = Math.imul(seed ^ seed >>> 15, 1 | seed); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+
+// ── timeline ─────────────────────────────────────────────────
+const HEAD = [
+  [0.0, 6.5, '01', '최악의 경우', '공간 하나에 쌓이는 유저 프랍'],
+  [6.5, 14.5, '02', '3단 공간 분할', '공간 → 집터 → 청크 → 셀'],
+  [14.5, 21.0, '03', '집터 단위 저장', '더티 플래그 + 1초 배치'],
+  [21.0, 29.0, '04', '시야 기반 전송', 'SightIn: 거쳐간 청크 기록'],
+  [29.0, 33.0, '05', '결과', '총량 대신 활성량만'],
+];
+const END = 29.0;
+
+// ── world: 1 unit = 1 cell · chunk = 4×4 cells · lot (집터) = 4×4 chunks (sizes are 개념도) ──
+const NL = 28, LOT = 16, CHK = 4, NC = NL * 4, HALF = NL * LOT / 2;
+const lotX = i => -HALF + i * LOT;
+const chunkIdx = (x, z) => [clamp(Math.floor((x + HALF) / CHK), 0, NC - 1), clamp(Math.floor((z + HALF) / CHK), 0, NC - 1)];
+const TLI = [14, 14];                                     // the lot we open: x 0..16, z 0..16
+const TCH = [8, 4, 12, 8];                                // its chunk (2,1): x 8..12, z 4..8
+const TCE = [9, 6, 10, 7];                                // one cell in it
+const LOTR = [0, 0, 16, 16];
+
+// beat 3: builders change cells in nearby lots; batches flush every (video) 2 s, labelled 1초
+const E3 = [
+  { t: 15.4, cell: [21, 9], col: '#ff7a59', who: 0 },
+  { t: 16.0, cell: [-6, 5], col: '#5aa9ff', who: 1 },
+  { t: 16.5, cell: [6, -5], col: '#ffc94d', who: 2 },
+  { t: 17.9, cell: [22, 9], col: '#b48cff', who: 0 },
+  { t: 18.4, cell: [11, 21], col: '#7fd36b', who: 3 },
+];
+const FLUSH = [17.2, 19.2];
+const B0 = 15.2, BP = 2.0;
+E3.forEach(e => { e.flush = FLUSH.find(f => f > e.t); e.lot = [Math.floor((e.cell[0] + HALF) / LOT), Math.floor((e.cell[1] + HALF) / LOT)]; e.ch = chunkIdx(e.cell[0] + .5, e.cell[1] + .5); });
+const BUILDERS = [[20.3, 10.6], [-6.9, 6.6], [7.6, -4.2], [12.3, 21.8]];
+
+// beat 4: one player walks east, then back west one row further north (re-entering chunks it has seen)
+const PATH = [[-28, 46], [-6, 46], [4, 46], [8.5, 43], [6, 38.6], [-4, 38], [-20, 38]];
+const SR = 9;                                             // sight radius (개념도)
+const WALK0 = 22.3, WALK1 = 28.3;
+// beat 5: active players across the space
+const ISLES = [[-20, 38], [-118, 70], [96, -86], [142, 118], [-64, -132], [34, 152], [-168, -36], [70, 40], [-30, -60], [170, -160]];
+
+// ── three.js setup ───────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(Math.round(W * Q), Math.round(H * Q), false);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.0;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(C.bg);
+const camera = new THREE.PerspectiveCamera(34, W / H, .1, 3000);
+scene.add(camera);
+const hemi = new THREE.HemisphereLight('#a9bde6', '#2a2f3a', 1.6); scene.add(hemi);
+const sun = new THREE.DirectionalLight('#ffe2c0', 2.2); scene.add(sun, sun.target);
+const rt = new THREE.WebGLRenderTarget(Math.round(W * Q), Math.round(H * Q), { type: THREE.HalfFloatType, samples: 4 });
+const composer = new EffectComposer(renderer, rt);
+composer.setPixelRatio(1); composer.setSize(Math.round(W * Q), Math.round(H * Q));
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(W * Q / 2, H * Q / 2), .42, .45, .86);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+// ── chunk state textures (A: presence, transfer pulse, chunk dirty, lot dirty · B: SightIn record, dim, saved flash) ──
+const SA = new Uint8Array(NC * NC * 4), SB = new Uint8Array(NC * NC * 4);
+const texA = new THREE.DataTexture(SA, NC, NC, THREE.RGBAFormat), texB = new THREE.DataTexture(SB, NC, NC, THREE.RGBAFormat);
+for (const tx of [texA, texB]) { tx.magFilter = tx.minFilter = THREE.NearestFilter; tx.generateMipmaps = false; tx.needsUpdate = true; }
+const col3 = h => new THREE.Color(h);
+const U = {
+  uStA: { value: texA }, uStB: { value: texB }, uNC: { value: NC }, uHalf: { value: HALF },
+  uFocus: { value: new THREE.Vector4(-1e4, -1e4, 1e4, 1e4) }, uFocusK: { value: 0 },
+  uFog: { value: col3(C.bg) }, uFogN: { value: 300 }, uFogF: { value: 1200 },
+  uSun: { value: V3(-.5, .78, .38).normalize() }, uSunCol: { value: col3('#ffd9b4').multiplyScalar(.95) },
+  uSky: { value: col3('#7d93c4').multiplyScalar(.62) }, uGnd: { value: col3('#3a3a44').multiplyScalar(.55) },
+  uBlue: { value: col3(C.blue) }, uOrange: { value: col3(C.orange) }, uMint: { value: col3(C.mint) },
+  uGlowK: { value: 1.6 },
+};
+
+// ── props: one material for every instanced prop (boxes with block seams, roofs, tree crowns) ──
+const PROP_VS = `
+attribute vec2 aChunk; attribute vec4 aInfo;
+uniform sampler2D uStA, uStB; uniform float uNC, uFocusK; uniform vec4 uFocus;
+varying vec3 vCol, vN, vNo, vLocal, vW, vGrid; varying float vGlow, vDim, vPulse, vDirty, vPres;
+void main() {
+  vec2 suv = (aChunk + .5) / uNC;
+  vec4 sa = texture2D(uStA, suv), sb = texture2D(uStB, suv);
+  mat4 im = modelMatrix * instanceMatrix;
+  vec4 wp = im * vec4(position, 1.);
+  float pres = sa.r;
+  wp.y *= max(pres, .001);
+  vec3 c = (im * vec4(0., 0., 0., 1.)).xyz;
+  float outF = 1. - step(uFocus.x, c.x) * step(c.x, uFocus.z) * step(uFocus.y, c.z) * step(c.z, uFocus.w);
+  vDim = max(sb.g, outF * uFocusK);
+  vPulse = sa.g; vDirty = sa.b; vPres = pres;
+  vN = normalize(mat3(im) * normal); vNo = normal;
+  vLocal = position + vec3(.5, 0., .5);
+  vGrid = aInfo.yzw; vGlow = aInfo.x;
+  vCol = instanceColor;
+  vW = wp.xyz;
+  gl_Position = projectionMatrix * viewMatrix * wp;
+}`;
+const PROP_FS = `
+uniform vec3 uSun, uSunCol, uSky, uGnd, uFog, uBlue, uOrange; uniform float uFogN, uFogF, uEdge, uGlowK;
+varying vec3 vCol, vN, vNo, vLocal, vW, vGrid; varying float vGlow, vDim, vPulse, vDirty, vPres;
+void main() {
+  if (vPres < .01) discard;
+  vec3 n = normalize(vN);
+  float dif = max(dot(n, uSun), 0.);
+  vec3 light = mix(uGnd, uSky, .5 + .5 * n.y) + uSunCol * dif;
+  vec3 base = vCol;
+  vec3 col = base * light;
+  col *= mix(.58, 1., smoothstep(0., 1.1, vW.y / max(vPres, .05)));
+  if (uEdge > .5) {
+    vec2 uv, gc;
+    if (abs(vNo.x) > .5) { uv = vLocal.zy; gc = vGrid.zy; }
+    else if (abs(vNo.y) > .5) { uv = vLocal.xz; gc = vGrid.xz; }
+    else { uv = vLocal.xy; gc = vGrid.xy; }
+    vec2 ed = min(uv, 1. - uv); float e = min(ed.x, ed.y); float fw = fwidth(e);
+    float vis = 1. - smoothstep(.06, .3, fw);
+    col *= mix(1., mix(.5, 1., smoothstep(0., fw * 1.6, e)), vis);
+    if (gc.x > 1.5 || gc.y > 1.5) {
+      vec2 q = uv * gc; vec2 f2 = fwidth(q);
+      vec2 gd = abs(fract(q - .5) - .5) / max(f2, vec2(1e-4));
+      float ln = 1. - min(min(gd.x, gd.y), 1.);
+      float v2 = 1. - smoothstep(.18, .45, max(f2.x, f2.y));
+      col *= 1. - .38 * ln * v2;
+    }
+  }
+  col += base * vGlow * uGlowK;
+  col += uBlue * vPulse * .6 + uOrange * vDirty * .22;
+  float l = dot(col, vec3(.3, .59, .11));
+  col = mix(col, vec3(l) * vec3(.42, .5, .68) * .5, vDim * .92);
+  float dist = length(vW - cameraPosition);
+  col = mix(col, uFog, smoothstep(uFogN, uFogF, dist));
+  gl_FragColor = vec4(col, 1.);
+}`;
+const propMat = edge => new THREE.ShaderMaterial({ vertexShader: PROP_VS, fragmentShader: PROP_FS, uniforms: { ...U, uEdge: { value: edge } } });
+const MAT_BOX = propMat(1), MAT_SOFT = propMat(0);
+
+// geometries (origin at the base centre)
+const G_BOX = new THREE.BoxGeometry(1, 1, 1); G_BOX.translate(0, .5, 0);
+const G_ROOF = (() => {                                   // triangular prism, ridge along x
+  const v = [], P = (x, y, z) => v.push(x, y, z);
+  const a = [-.5, 0, -.5], b = [-.5, 0, .5], c = [-.5, 1, 0], d = [.5, 0, -.5], e = [.5, 0, .5], f = [.5, 1, 0];
+  const tri = (x, y, z) => { P(...x); P(...y); P(...z); };
+  tri(a, b, c); tri(d, f, e);                             // gables
+  tri(b, e, f); tri(b, f, c);                             // +z slope
+  tri(a, c, f); tri(a, f, d);                             // -z slope
+  tri(a, d, e); tri(a, e, b);                             // bottom
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.computeVertexNormals(); return g;
+})();
+const G_CROWN = new THREE.IcosahedronGeometry(.5, 0); G_CROWN.translate(0, .5, 0);
+
+// ── world generation (seeded) ────────────────────────────────
+const BX = [], RF = [], CR = [];
+const WALLS = ['#e8dcc6', '#d9e4ec', '#f1cfae', '#cfe0c8', '#e9c9cf', '#d6d0e8', '#f2e6b6', '#c9d6e3'];
+const ROOFS = ['#c45a42', '#3f6ea8', '#4d8a5a', '#8a5c9e', '#d08a3a', '#56687e', '#b8485e', '#2f8f8a'];
+const VIVID = ['#ff7a59', '#ffc94d', '#5ec2a8', '#5aa9ff', '#b48cff', '#ff8fb1', '#7fd36b', '#f0f0f0', '#ffa53a'];
+const LEAF = ['#5f9a5a', '#3f7f56', '#77a85a', '#4c8f6e', '#8fb35c'];
+const TRUNK = '#6b4a35', WIN = '#ffd58a', DOOR = '#5a3d2e', WOOD = '#a8784e', STONE = '#9aa3ad', WATER = '#3d7fc4';
+const pick = (r, a) => a[Math.floor(r() * a.length)];
+const box = (x, y, z, sx, sy, sz, col, g = [1, 1, 1], glow = 0, ry = 0) => BX.push({ x, y, z, sx, sy, sz, col, g, glow, ry });
+const roof = (x, y, z, sx, sy, sz, col, ry = 0) => RF.push({ x, y, z, sx, sy, sz, col, ry });
+const crown = (x, y, z, s, col) => CR.push({ x, y, z, sx: s, sy: s * .95, sz: s, col });
+const tree = (x, z, s, col) => { box(x, 0, z, .22 * s, .8 * s, .22 * s, TRUNK); crown(x, .62 * s, z, 1.25 * s, col); };
+const blk = Math.round;
+
+function house(r, cx, cz, w, d, h) {
+  const wall = pick(r, WALLS), rc = pick(r, ROOFS);
+  box(cx, 0, cz, w, h, d, wall, [blk(w * 1.5), blk(h * 1.5), blk(d * 1.5)]);
+  if (w >= d) roof(cx, h, cz, w + .5, 1.2 + r() * .9, d + .7, rc); else roof(cx, h, cz, d + .5, 1.2 + r() * .9, w + .7, rc, Math.PI / 2);
+  const nw = Math.max(1, Math.floor(w / 1.7)), nd = Math.max(1, Math.floor(d / 1.7));
+  for (let k = 0; k < nw; k++) if (r() < .85) box(cx - w / 2 + (k + .5) * w / nw, h * .42, cz + d / 2 + .03, .55, .6, .06, WIN, [1, 1, 1], r() < .75 ? .9 : 0);
+  for (let k = 0; k < nd; k++) if (r() < .7) box(cx + w / 2 + .03, h * .42, cz - d / 2 + (k + .5) * d / nd, .06, .6, .55, WIN, [1, 1, 1], r() < .6 ? .9 : 0);
+  box(cx + w * (r() - .5) * .5, 0, cz + d / 2 + .04, .7, 1.25, .07, DOOR);
+  if (r() < .4) box(cx + w * .28, h + .2, cz - d * .18, .45, 1.5, .45, STONE, [1, 3, 1]);
+}
+function yard(r, x0, z0, avoid, n) {
+  const ok = (x, z, m = .6) => !avoid.some(([a, b, c, d]) => x > a - m && x < c + m && z > b - m && z < d + m);
+  for (let k = 0, tries = 0; k < n && tries < n * 6; tries++) {
+    const x = x0 + 1.6 + r() * 12.8, z = z0 + 1.6 + r() * 12.8; if (!ok(x, z)) continue; k++;
+    const u = r();
+    if (u < .26) tree(x, z, .9 + r() * .9, pick(r, LEAF));
+    else if (u < .52) {                                   // user-placed toy blocks: a pile or a small stack
+      const c = pick(r, VIVID), s = .6 + r() * .4, m = 1 + Math.floor(r() * 4);
+      for (let j = 0; j < m; j++) box(x + (j % 2) * s * 1.02, Math.floor(j / 2) * s, z + (j % 3 === 2 ? s : 0), s, s, s, j % 2 ? c : pick(r, VIVID));
+    } else if (u < .66) {                                 // table + two chairs
+      box(x, 0, z, .7, .38, .7, WOOD); box(x - .55, 0, z, .28, .28, .3, pick(r, VIVID)); box(x + .55, 0, z, .28, .28, .3, pick(r, VIVID));
+    } else if (u < .76) { box(x, 0, z, .7, .7, .7, WOOD, [2, 2, 2]); if (r() < .5) box(x + .1, .7, z, .55, .55, .55, WOOD, [2, 2, 2]); }
+    else if (u < .86) { box(x, 0, z, .08, 1.5, .08, '#c9c2b0'); box(x, 1.5, z, .24, .2, .24, WIN, [1, 1, 1], 1.4); }
+    else if (u < .94) { box(x, 0, z, 1.6, .05, 1.2, pick(r, VIVID), [4, 1, 3]); }
+    else { for (let j = 0; j < 3; j++) box(x + j * .32, 0, z, .24, .24 + r() * .2, .24, pick(r, ['#ff8fb1', '#ffc94d', '#f0f0f0', '#b48cff'])); }
+  }
+}
+function fence(r, x0, z0) {
+  const c = pick(r, ['#d9cbb0', '#a8784e', '#e8e8e8', '#7a6a58']);
+  if (r() < .7) box(x0 + 8, 0, z0 + 15.1, 13.6, .55, .1, c, [24, 1, 1]);
+  if (r() < .5) box(x0 + 15.1, 0, z0 + 8, .1, .55, 13.6, c, [1, 1, 24]);
+}
+function lotGen(i, j) {
+  const r = rng(i * 977 + j * 131 + 5), x0 = lotX(i), z0 = lotX(j), u = r();
+  if (u < .5) {                                           // house + yard
+    const w = 4.6 + r() * 3.6, d = 4.2 + r() * 3.2, h = 2.4 + r() * 1.5;
+    const cx = x0 + 1.8 + w / 2 + r() * (12.4 - w), cz = z0 + 1.8 + d / 2 + r() * (12.4 - d);
+    house(r, cx, cz, w, d, h);
+    if (r() < .35) { const w2 = w * .6, d2 = d * .6; box(cx - w * .18, h, cz, w2, 1.6, d2, pick(r, WALLS), [blk(w2 * 1.5), 2, blk(d2 * 1.5)]); }
+    fence(r, x0, z0);
+    yard(r, x0, z0, [[cx - w / 2, cz - d / 2, cx + w / 2, cz + d / 2]], 9 + Math.floor(r() * 8));
+  } else if (u < .8) {                                    // a block build
+    const v = r(), pal = [pick(r, VIVID), pick(r, VIVID), pick(r, VIVID)];
+    if (v < .3) {                                         // towers of blocks
+      for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) {
+        if (r() < .25) continue; const hgt = 1 + Math.floor(r() * (2 + (a === 1 || a === 2 ? 6 : 3)));
+        box(x0 + 2.4 + a * 3.4, 0, z0 + 2.4 + b * 3.4, 2, hgt * .8, 2, pal[(a + b) % 3], [3, hgt, 3]);
+      }
+    } else if (v < .55) {                                 // step pyramid
+      for (let k = 0; k < 5; k++) { const s = 11 - k * 2.1; box(x0 + 8, k * .9, z0 + 8, s, .9, s, pal[k % 3], [blk(s * 1.2), 1, blk(s * 1.2)]); }
+      yard(r, x0, z0, [[x0 + 2.5, z0 + 2.5, x0 + 13.5, z0 + 13.5]], 4);
+    } else if (v < .8) {                                  // pixel-tile floor + a statue
+      for (let a = 0; a < 6; a++) for (let b = 0; b < 6; b++) box(x0 + 2.5 + a * 2.2, 0, z0 + 2.5 + b * 2.2, 2.1, .14, 2.1, pal[(a * 3 + b * 5 + (a * b)) % 3], [3, 1, 3]);
+      box(x0 + 8, .14, z0 + 8, 2.2, 2.2, 1.4, pal[1], [3, 3, 2]); box(x0 + 8, 2.34, z0 + 8, 1.6, 1.6, 1.6, '#f0f0f0', [2, 2, 2]);
+    } else {                                              // walls / maze
+      for (let k = 0; k < 9; k++) {
+        const hz = r() < .5, len = 3 + r() * 6, hgt = 1.2 + r() * 1.8, x = x0 + 2 + r() * 12, z = z0 + 2 + r() * 12;
+        box(clamp(x, x0 + 1.5 + (hz ? len / 2 : 0), x0 + 14.5 - (hz ? len / 2 : 0)), 0, clamp(z, z0 + 1.5 + (hz ? 0 : len / 2), z0 + 14.5 - (hz ? 0 : len / 2)),
+          hz ? len : .8, hgt, hz ? .8 : len, pal[k % 3], hz ? [blk(len * 1.25), blk(hgt * 1.25), 1] : [1, blk(hgt * 1.25), blk(len * 1.25)]);
+      }
+    }
+  } else if (u < .92) {                                   // a garden / park
+    box(x0 + 5 + r() * 6, 0, z0 + 5 + r() * 6, 4 + r() * 3, .06, 3 + r() * 2, WATER, [1, 1, 1], .12);
+    for (let k = 0; k < 9; k++) tree(x0 + 2 + r() * 12, z0 + 2 + r() * 12, .9 + r(), pick(r, LEAF));
+    yard(r, x0, z0, [[x0 + 4, z0 + 4, x0 + 12, z0 + 12]], 5);
+  } else {                                                // market stalls
+    for (let k = 0; k < 5; k++) { const x = x0 + 2.8 + (k % 3) * 5, z = z0 + 3.5 + Math.floor(k / 3) * 7; box(x, 0, z, 3.2, 1, 1.6, WOOD, [4, 1, 2]); roof(x, 1.9, z, 3.6, .6, 2.2, pick(r, VIVID)); box(x - 1.5, 0, z - .7, .1, 1.9, .1, '#c9c2b0'); box(x + 1.5, 0, z - .7, .1, 1.9, .1, '#c9c2b0'); }
+    yard(r, x0, z0, [[x0 + 1, z0 + 2, x0 + 15, z0 + 12]], 5);
+  }
+}
+for (let i = 0; i < NL; i++) for (let j = 0; j < NL; j++) if (!(i === TLI[0] && j === TLI[1])) lotGen(i, j);
+// keep the builders' cells open (their new blocks must read)
+for (const list of [BX, RF, CR]) for (let k = list.length - 1; k >= 0; k--) { const it = list[k]; if (E3.some(e => Math.hypot(it.x - e.cell[0] - .5, it.z - e.cell[1] - .5) < 2.2) || BUILDERS.some(([x, z]) => Math.hypot(it.x - x, it.z - z) < 1.2)) list.splice(k, 1); }
+// the lot we open (x 0..16, z 0..16), laid out by hand: a house in the north-west, a yard in chunk (2,1)
+{
+  const r = rng(77);
+  house(r, 4.6, 4.4, 6.4, 5.4, 3.2);
+  box(4.6, 3.2, 4.4, 3.8, 1.6, 3.2, '#e9c9cf', [6, 2, 5]); roof(4.6, 4.8, 4.4, 4.3, 1.1, 3.9, '#3f6ea8');
+  // the cell (9..10, 6..7): a table, two chairs, a lamp, a flower pot, a book
+  box(9.5, 0, 6.5, .58, .34, .58, WOOD, [2, 1, 2]);
+  box(9.47, .34, 6.45, .2, .06, .15, '#5aa9ff');
+  box(9.1, 0, 6.5, .24, .24, .26, '#ff7a59'); box(8.99, .24, 6.5, .04, .3, .26, '#ff7a59');
+  box(9.9, 0, 6.5, .24, .24, .26, '#ffc94d'); box(10.01, .24, 6.5, .04, .3, .26, '#ffc94d');
+  box(9.86, 0, 6.12, .05, .62, .05, '#c9c2b0'); box(9.86, .62, 6.12, .14, .12, .14, WIN, [1, 1, 1], 1.4);
+  box(9.17, 0, 6.86, .2, .17, .2, '#c96f4a'); crown(9.17, .14, 6.86, .26, '#ff8fb1');
+  // the rest of the chunk (8..12, 4..8)
+  box(10.6, 0, 4.7, .7, .7, .7, WOOD, [2, 2, 2]); box(10.65, .7, 4.7, .55, .55, .55, WOOD, [2, 2, 2]); box(11.4, 0, 4.8, .7, .7, .7, WOOD, [2, 2, 2]);
+  tree(8.7, 4.9, 1.2, '#5f9a5a');
+  box(11, 0, 5.9, 1.6, .05, 1.2, '#b48cff', [4, 1, 3]);
+  for (let j = 0; j < 5; j++) box(11.0 + (j % 3) * .5, Math.floor(j / 3) * .5, 7.3, .48, .48, .48, ['#ff7a59', '#5ec2a8', '#ffc94d', '#5aa9ff', '#ff8fb1'][j]);
+  box(8.9, 0, 7.5, 1.3, .3, .4, WOOD, [3, 1, 1]);
+  for (let j = 0; j < 3; j++) box(10.3 + j * .3, 0, 7.6, .22, .3, .22, ['#ff8fb1', '#f0f0f0', '#ffc94d'][j]);
+  // the rest of the lot
+  box(8, 0, 15.1, 13.6, .55, .1, '#d9cbb0', [24, 1, 1]); box(15.1, 0, 8, .1, .55, 13.6, '#d9cbb0', [1, 1, 24]);
+  for (let a = 0; a < 3; a++) box(13.6, 0, 2.6 + a * 2.2, 1.8, (a + 2) * .8, 1.8, ['#5aa9ff', '#ffc94d', '#ff7a59'][a], [2, a + 2, 2]);
+  tree(13.4, 9.5, 1.4, '#3f7f56'); tree(2.6, 11.5, 1.5, '#77a85a'); tree(5.2, 13.2, 1.1, '#4c8f6e');
+  box(7.5, 0, 11.6, 4.2, .06, 2.6, WATER, [1, 1, 1], .12);
+  box(11.2, 0, 12.6, .7, .38, .7, WOOD); box(10.65, 0, 12.6, .28, .28, .3, '#5ec2a8'); box(11.75, 0, 12.6, .28, .28, .3, '#b48cff');
+  box(2.2, 0, 8.6, .08, 1.5, .08, '#c9c2b0'); box(2.2, 1.5, 8.6, .24, .2, .24, WIN, [1, 1, 1], 1.4);
+}
+
+const _o = new THREE.Object3D(), _c = new THREE.Color();
+function propMesh(geo, mat, list) {
+  const n = Math.max(1, list.length), g = geo.clone();
+  const ch = new Float32Array(n * 2), info = new Float32Array(n * 4);
+  const im = new THREE.InstancedMesh(g, mat, n);
+  list.forEach((it, i) => {
+    _o.position.set(it.x, it.y, it.z); _o.rotation.set(0, it.ry || 0, 0); _o.scale.set(it.sx, it.sy, it.sz); _o.updateMatrix();
+    im.setMatrixAt(i, _o.matrix); im.setColorAt(i, _c.set(it.col));
+    const [cx, cz] = chunkIdx(it.x, it.z); ch[i * 2] = cx; ch[i * 2 + 1] = cz;
+    const gg = it.g || [1, 1, 1]; info.set([it.glow || 0, gg[0], gg[1], gg[2]], i * 4);
+  });
+  g.setAttribute('aChunk', new THREE.InstancedBufferAttribute(ch, 2));
+  g.setAttribute('aInfo', new THREE.InstancedBufferAttribute(info, 4));
+  im.frustumCulled = false; scene.add(im); return im;
+}
+propMesh(G_BOX, MAT_BOX, BX); propMesh(G_ROOF, MAT_SOFT, RF); propMesh(G_CROWN, MAT_SOFT, CR);
+const PROP_COUNT = BX.length + RF.length + CR.length;
+
+// beat 3: the blocks the builders place (dynamic, same material)
+const NEW = (() => {
+  const items = []; E3.forEach((e, k) => { for (let j = 0; j < 3; j++) items.push({ e: k, j, x: e.cell[0] + .5, z: e.cell[1] + .5, col: j === 1 ? '#f0f0f0' : e.col }); });
+  const g = G_BOX.clone(), n = items.length, ch = new Float32Array(n * 2), info = new Float32Array(n * 4);
+  const im = new THREE.InstancedMesh(g, MAT_BOX, n);
+  items.forEach((it, i) => { im.setColorAt(i, _c.set(it.col)); const [cx, cz] = chunkIdx(it.x, it.z); ch[i * 2] = cx; ch[i * 2 + 1] = cz; info.set([0, 1, 1, 1], i * 4); });
+  g.setAttribute('aChunk', new THREE.InstancedBufferAttribute(ch, 2));
+  const ia = new THREE.InstancedBufferAttribute(info, 4); ia.setUsage(THREE.DynamicDrawUsage); g.setAttribute('aInfo', ia);
+  im.frustumCulled = false; scene.add(im); im.items = items; return im;
+})();
+
+// ── ground: lots, roads, tier grids, chunk states, sight disks — all in one shader ──
+const groundMat = new THREE.ShaderMaterial({
+  uniforms: {
+    ...U, uLotK: { value: 0 }, uChunkK: { value: 0 }, uCellK: { value: 0 }, uEmptyK: { value: 0 },
+    uGridRect: { value: new THREE.Vector4() }, uCellRect: { value: new THREE.Vector4() },
+    uPl: { value: Array.from({ length: 10 }, () => new THREE.Vector4()) }, uDC: { value: Array.from({ length: 5 }, () => new THREE.Vector4()) },
+    uGrassA: { value: col3('#2c4636') }, uGrassB: { value: col3('#3a5540') }, uRoad: { value: col3('#1f2836') }, uVoid: { value: col3(C.void) },
+    uLotLine: { value: col3('#e6edf6') }, uChunkLine: { value: col3('#bcd6ff') }, uCellLine: { value: col3('#dbe6f5') }, uEmpty: { value: col3('#141c2b') },
+  },
+  vertexShader: `varying vec3 vW; void main() { vec4 w = modelMatrix * vec4(position, 1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+  fragmentShader: `
+uniform sampler2D uStA, uStB; uniform float uNC, uHalf, uLotK, uChunkK, uCellK, uFocusK, uEmptyK, uFogN, uFogF;
+uniform vec4 uGridRect, uCellRect, uFocus; uniform vec4 uPl[10]; uniform vec4 uDC[5];
+uniform vec3 uFog, uGrassA, uGrassB, uRoad, uVoid, uLotLine, uChunkLine, uCellLine, uBlue, uMint, uOrange, uEmpty;
+varying vec3 vW;
+float h21(vec2 q) { return fract(sin(dot(q, vec2(127.1, 311.7))) * 43758.5453); }
+float lineAt(vec2 q0, float s, float px) {
+  vec2 q = q0 / s; vec2 fw = max(fwidth(q), vec2(1e-5));
+  vec2 g = abs(fract(q - .5) - .5) / fw; float l = 1. - clamp(min(g.x, g.y) / px, 0., 1.);
+  return l * (1. - smoothstep(.1, .32, max(fw.x, fw.y)));
+}
+float inR(vec2 q, vec4 r) { return step(r.x, q.x) * step(q.x, r.z) * step(r.y, q.y) * step(q.y, r.w); }
+void main() {
+  vec2 q = vW.xz, g = q + uHalf;
+  float inW = inR(q, vec4(-uHalf, -uHalf, uHalf, uHalf));
+  vec2 li = floor(g / 16.), lf = g - li * 16.;
+  vec3 col = mix(uGrassA, uGrassB, h21(li));
+  col *= .93 + .07 * h21(floor(g));
+  float de = min(min(lf.x, 16. - lf.x), min(lf.y, 16. - lf.y)), fwd = fwidth(de);
+  col = mix(col, uRoad, 1. - smoothstep(.62 - fwd, .62 + fwd, de));
+  col = mix(uVoid, col, inW);
+  vec2 ci = floor(g / 4.), suv = (ci + .5) / uNC;
+  vec4 sa = texture2D(uStA, suv), sb = texture2D(uStB, suv);
+  col = mix(col, uEmpty, (1. - sa.r) * uEmptyK * inW * .8);
+  col *= 1. - .74 * sb.g;
+  float outF = 1. - inR(q, uFocus);
+  col *= 1. - .72 * uFocusK * outF;
+  col = mix(col, uLotLine, lineAt(g, 16., 1.7) * uLotK * inW * .6 * (1. - .7 * outF * uFocusK));
+  col = mix(col, uChunkLine, lineAt(g, 4., 1.3) * uChunkK * inR(q, uGridRect) * .5);
+  col = mix(col, uCellLine, lineAt(g, 1., 1.1) * uCellK * inR(q, uCellRect) * .5);
+  vec2 cf = g - ci * 4. - 2.; float dd = length(cf), fwc = fwidth(dd);
+  col = mix(col, uMint, sb.r * (.13 + .8 * (1. - smoothstep(.36 - fwc, .36 + fwc, dd))));
+  col = mix(col, uBlue, sa.g * .6);
+  float ce = 2. - max(abs(cf.x), abs(cf.y)), fwe = fwidth(ce);
+  col = mix(col, uOrange, sa.b * (.2 + .75 * (1. - smoothstep(.1 - fwe, .1 + fwe, ce))));
+  float band = (1. - smoothstep(.98 - fwd, .98 + fwd, de)) * smoothstep(.62 - fwd, .62 + fwd, de);
+  col = mix(col, uOrange, sa.a * band);
+  col = mix(col, uMint, sb.b * band);
+  for (int i = 0; i < 5; i++) { vec4 c = uDC[i]; if (c.z > 0.) col = mix(col, uOrange, inR(q, vec4(c.x, c.y, c.x + 1., c.y + 1.)) * c.z * .9); }
+  for (int i = 0; i < 10; i++) {
+    vec4 pl = uPl[i]; if (pl.w <= 0.) continue;
+    float d = length(q - pl.xy), fw = fwidth(d);
+    float fill = 1. - smoothstep(pl.z - fw, pl.z + fw, d);
+    float ring = 1. - smoothstep(0., fw * 1.5, abs(d - pl.z) - max(.14, fw * .8));
+    col = mix(col, uBlue, (fill * .17 + ring * .9) * pl.w);
+  }
+  float dist = length(vW - cameraPosition);
+  col = mix(col, uFog, smoothstep(uFogN, uFogF, dist));
+  gl_FragColor = vec4(col, 1.);
+}`,
+});
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), groundMat);
+ground.rotation.x = -Math.PI / 2; ground.frustumCulled = false; scene.add(ground);
+const GU = groundMat.uniforms;
+
+// ── avatars (builders, the walking player, the active players at the end) ──
+const G_AV = (() => {
+  const a = new THREE.CapsuleGeometry(.24, .5, 3, 10); a.translate(0, .5, 0);
+  const b = new THREE.SphereGeometry(.22, 14, 10); b.translate(0, 1.16, 0);
+  const A = a.toNonIndexed(), B = b.toNonIndexed(), g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute([...A.attributes.position.array, ...B.attributes.position.array], 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute([...A.attributes.normal.array, ...B.attributes.normal.array], 3));
+  return g;
+})();
+const AV = new THREE.InstancedMesh(G_AV, new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: .45, metalness: .05, emissive: '#26354d' }), 16);
+for (let i = 0; i < 16; i++) AV.setColorAt(i, _c.set('#ffffff'));
+AV.frustumCulled = false; scene.add(AV);
+// transfer particles: chunk → player
+const PT = new THREE.InstancedMesh(new THREE.BoxGeometry(.32, .32, .32), new THREE.MeshBasicMaterial({ color: new THREE.Color(C.blue).multiplyScalar(2.2) }), 240);
+PT.frustumCulled = false; scene.add(PT);
+function setI(im, i, x, y, z, s, col) { _o.position.set(x, y, z); _o.rotation.set(0, 0, 0); _o.scale.set(s, s, s); _o.updateMatrix(); im.setMatrixAt(i, _o.matrix); if (col) im.setColorAt(i, _c.set(col)); }
+function done(im, n) { im.count = n; im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; }
+
+// ── the walk: path, sight intervals per chunk (precomputed once, so state is a pure function of t) ──
+const SEG = PATH.slice(1).map((q, i) => Math.hypot(q[0] - PATH[i][0], q[1] - PATH[i][1]));
+const PLEN = SEG.reduce((a, b) => a + b, 0);
+function along(s) {                                       // s = distance along the polyline, corners softened
+  s = clamp(s, 0, PLEN);
+  const at = d => { let i = 0; while (i < SEG.length - 1 && d > SEG[i]) { d -= SEG[i]; i++; } const k = clamp(d / SEG[i]); return [lerp(PATH[i][0], PATH[i + 1][0], k), lerp(PATH[i][1], PATH[i + 1][1], k)]; };
+  const a = at(s - 1.5), b = at(s), c = at(s + 1.5);
+  return [(a[0] + 2 * b[0] + c[0]) / 4, (a[1] + 2 * b[1] + c[1]) / 4];
+}
+const walkS = t => { const u = p(t, WALK0, WALK1 - WALK0); const e = u < .1 ? 5 * u * u : u > .9 ? 1 - 5 * (1 - u) * (1 - u) : u - .05; return PLEN * clamp(e / .9); };
+const playerAt = t => along(walkS(t));
+const SEEN = new Map();                                    // chunk key → { first, ints: [[in, out]] }
+{
+  const inside = new Map();
+  const visit = (t, [px, pz]) => {
+    const [c0, r0] = chunkIdx(px - SR - 4, pz - SR - 4), [c1, r1] = chunkIdx(px + SR + 4, pz + SR + 4), now = new Set();
+    for (let cx = c0; cx <= c1; cx++) for (let cz = r0; cz <= r1; cz++) {
+      const x = -HALF + cx * CHK + 2, z = -HALF + cz * CHK + 2;
+      if (Math.hypot(x - px, z - pz) < SR) now.add(cz * NC + cx);
+    }
+    for (const k of now) if (!inside.has(k)) { inside.set(k, t); if (!SEEN.has(k)) SEEN.set(k, { first: t, ints: [] }); }
+    for (const [k, t0] of inside) if (!now.has(k)) { SEEN.get(k).ints.push([t0, t]); inside.delete(k); }
+  };
+  visit(-1, playerAt(WALK0));
+  for (let t = WALK0; t <= WALK1 + .001; t += 1 / 90) visit(t, playerAt(t));
+  for (const [k, t0] of inside) SEEN.get(k).ints.push([t0, 99]);
+}
+// beat 5: chunks near an active player
+const ACTIVE = new Float32Array(NC * NC);
+for (let cx = 0; cx < NC; cx++) for (let cz = 0; cz < NC; cz++) {
+  const x = -HALF + cx * CHK + 2, z = -HALF + cz * CHK + 2;
+  let a = 0; for (const [px, pz] of ISLES) a = Math.max(a, clamp((SR + 1.5 - Math.hypot(x - px, z - pz)) / 3));
+  ACTIVE[cz * NC + cx] = a;
+}
+
+// ── state per frame ──────────────────────────────────────────
+function lotDirtyK(t, e) { if (t < e.t + .7) return 0; return 1 - p(t, e.flush + .1, .35); }
+function chunkDirtyK(t, e) { if (t < e.t + .35) return 0; return 1 - p(t, e.flush + .05, .35); }
+function updateState(t) {
+  const k4 = eio(p(t, 21.0, 1.2)) * (1 - eio(p(t, 29.0, 1.2)));
+  const k5 = eio(p(t, 29.2, 1.2));
+  const walking = k4 > 0;
+  const base = Math.round(255 * (1 - k4));
+  for (let i = 0, n = NC * NC; i < n; i++) {
+    const o = i * 4;
+    SA[o] = base; SA[o + 1] = 0; SA[o + 2] = 0; SA[o + 3] = 0;
+    SB[o] = 0; SB[o + 1] = Math.round(255 * k5 * (1 - ACTIVE[i])); SB[o + 2] = 0; SB[o + 3] = 0;
+  }
+  if (walking) for (const [k, s] of SEEN) {
+    const o = k * 4;
+    const got = s.first < 0 ? 1 : eback(p(t, s.first, .4));
+    SA[o] = Math.round(255 * clamp(lerp(1, got, k4)));
+    if (t >= s.first) SB[o] = Math.round(255 * k4);
+    if (s.first > 0 && t >= s.first && t < s.first + 1) SA[o + 1] = Math.round(255 * (1 - p(t, s.first, 1)) * k4);
+  }
+  for (const e of E3) {
+    const [cx, cz] = e.ch, o = (cz * NC + cx) * 4;
+    SA[o + 2] = Math.max(SA[o + 2], Math.round(255 * chunkDirtyK(t, e)));
+    const ld = lotDirtyK(t, e), sv = t > e.flush ? 1 - p(t, e.flush + .2, 1.0) : 0;
+    for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) {
+      const q = ((e.lot[1] * 4 + b) * NC + e.lot[0] * 4 + a) * 4;
+      SA[q + 3] = Math.max(SA[q + 3], Math.round(255 * ld));
+      SB[q + 2] = Math.max(SB[q + 2], Math.round(255 * sv * (t > e.t ? 1 : 0)));
+    }
+  }
+  texA.needsUpdate = texB.needsUpdate = true;
+  // cells that just changed
+  E3.forEach((e, i) => { const k = t >= e.t ? 1 - p(t, e.flush + .05, .35) : 0; GU.uDC.value[i].set(e.cell[0], e.cell[1], k, 0); });
+}
+
+// ── camera keys: [t, target x, y, z, distance, yaw°, pitch°, fov, dive?, ox, oy] — wide; tall derives d / fov / offsets ──
+const KEYS = [
+  [0.0, 6, 0, -16, 205, 21, 25, 34, 0, -300, 40],
+  [6.2, 6, 0, -12, 186, 25, 29, 34, 1, -300, 40],
+  [7.9, 8, 0, 8, 74, 22, 45, 34, 1, -60, 30],
+  [9.3, 8, 0, 8, 30, 18, 55, 34, 1, -60, 30],
+  [10.5, 8, 0, 8, 28.5, 14, 56, 34, 1, -60, 30],
+  [11.6, 10, 0, 6, 9.4, 12, 54, 34, 1, -60, 30],
+  [12.4, 10, 0, 6, 9.0, 10, 54, 34, 1, -60, 30],
+  [13.2, 9.5, .2, 6.5, 4.5, 8, 47, 34, 1, -60, 30],
+  [14.5, 9.5, .2, 6.5, 4.35, 6, 46, 34, 1, -60, 30],
+  [15.7, 7, 0, 6, 84, 26, 52, 34, 0, -40, 60],
+  [20.6, 7, 0, 6, 80, 22, 53, 34, 0, -40, 60],
+  [22.0, -9, 0, 42, 76, 14, 58, 34, 0, -140, 50],
+  [28.6, -9, 0, 42, 73, 10, 59, 34, 0, -140, 50],
+  [30.4, 0, 0, -10, 345, 22, 50, 34, 0, -360, 20],
+  [33.0, 0, 0, -10, 345, 22, 50, 34, 0, -360, 20],
+];
+const TALLK = t => t < 6.4 ? { d: 1.32, fov: 44, ox: 0, oy: -150 } : t < 14.6 ? { d: 1.18, fov: 44, ox: 0, oy: -20 }
+  : t < 21 ? { d: 1.25, fov: 44, ox: 0, oy: -10 } : t < 29.4 ? { d: 1.3, fov: 46, ox: 0, oy: 20 } : { d: 1.15, fov: 46, ox: 0, oy: -150 };
+function spline(xs, ys) {
+  const n = xs.length, d = [], m = new Array(n).fill(0);
+  for (let i = 0; i < n - 1; i++) d.push((ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]));
+  m[0] = d[0]; m[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (d[i] === 0) { m[i] = 0; m[i + 1] = 0; continue; }
+    const a = m[i] / d[i], b = m[i + 1] / d[i], s = a * a + b * b;
+    if (s > 9) { const k = 3 / Math.sqrt(s); m[i] = k * a * d[i]; m[i + 1] = k * b * d[i]; }
+  }
+  return x => {
+    if (x <= xs[0]) return ys[0]; if (x >= xs[n - 1]) return ys[n - 1];
+    let i = 0; while (x > xs[i + 1]) i++;
+    const h = xs[i + 1] - xs[i], u = (x - xs[i]) / h, u2 = u * u, u3 = u2 * u;
+    return (2 * u3 - 3 * u2 + 1) * ys[i] + (u3 - 2 * u2 + u) * h * m[i] + (-2 * u3 + 3 * u2) * ys[i + 1] + (u3 - u2) * h * m[i + 1];
+  };
+}
+const KT = KEYS.map(k => k[0]);
+const CHN = [1, 2, 3, 4, 5, 6, 7, 9, 10].map(c => spline(KT, KEYS.map(k => c === 4 ? Math.log(k[4]) : k[c])));
+function camAt(t) {
+  let [tx, ty, tz, ld, yaw, pitch, fov, ox, oy] = CHN.map(f => f(t));
+  let i = 0; while (i < KEYS.length - 2 && t > KEYS[i + 1][0]) i++;
+  const A = KEYS[i], Z = KEYS[i + 1];
+  if (t > A[0] && t < Z[0] && A[8] && Z[8] && Math.abs(Math.log(Z[4] / A[4])) > .2) {   // a dive: the target follows the distance
+    const f = clamp((ld - Math.log(A[4])) / (Math.log(Z[4]) - Math.log(A[4])));
+    tx = lerp(A[1], Z[1], f); ty = lerp(A[2], Z[2], f); tz = lerp(A[3], Z[3], f);
+  }
+  // beat 4: follow the walker a little
+  const k4 = win(t, 21.6, 29.2, .8);
+  if (k4 > 0) { const [px, pz] = playerAt(t); tx += (px + 9) * .22 * k4; tz += (pz - 42) * .22 * k4; }
+  let d = Math.exp(ld);
+  if (TALL) { const tk = TALLK(t); d *= tk.d; fov = tk.fov; ox = tk.ox; oy = tk.oy; }
+  yaw += .6 * Math.sin(t * .23); pitch += .3 * Math.sin(t * .19);
+  const yr = yaw * Math.PI / 180, pr = pitch * Math.PI / 180;
+  return { T: V3(tx, ty, tz), d, fov, ox, oy, dir: V3(Math.sin(yr) * Math.cos(pr), Math.sin(pr), Math.cos(yr) * Math.cos(pr)) };
+}
+const _v = new THREE.Vector3();
+function proj(x, y, z) { _v.set(x, y, z).project(camera); return { x: (_v.x + 1) / 2 * W, y: (1 - _v.y) / 2 * H, ok: _v.z < 1 && Math.abs(_v.x) < 1.3 && Math.abs(_v.y) < 1.3 }; }
+
+// ── per-beat scene parameters ────────────────────────────────
+const rectLerp = (a, b, k) => a.map((v, i) => lerp(v, b[i], k));
+const WORLDR = [-HALF - 50, -HALF - 50, HALF + 50, HALF + 50];
+function sceneAt(t) {
+  GU.uLotK.value = eio(p(t, 6.6, 1.0)) * (1 - eio(p(t, 29.3, 1.0))) * (1 - .45 * win(t, 21.2, 29.2, .8));
+  GU.uChunkK.value = Math.max(eio(p(t, 9.4, .7)) * (1 - eio(p(t, 14.6, .6))), .4 * win(t, 15.2, 21.1, .6), win(t, 21.0, 29.3, .9));
+  const c2 = t < 14.9 ? LOTR : WORLDR; GU.uGridRect.value.set(...c2);
+  GU.uCellK.value = eio(p(t, 11.6, .6)) * (1 - eio(p(t, 14.5, .5))); GU.uCellRect.value.set(...TCH);
+  GU.uEmptyK.value = eio(p(t, 21.0, 1.2)) * (1 - eio(p(t, 29.0, 1.2)));
+  // focus: world → lot → chunk → cell, then open again
+  let r = WORLDR;
+  if (t < 9.3) r = rectLerp(WORLDR.map(v => v * .4), LOTR, eio(p(t, 8.0, 1.3)));
+  else if (t < 11.6) r = rectLerp(LOTR, TCH, eio(p(t, 10.6, 1.0)));
+  else r = rectLerp(TCH, TCE, eio(p(t, 12.4, .8)));
+  U.uFocus.value.set(...r);
+  U.uFocusK.value = .82 * eio(p(t, 8.0, 1.0)) * (1 - eio(p(t, 14.5, .8)));
+  // sight disks
+  const pl = GU.uPl.value; pl.forEach(v => v.set(0, 0, 0, 0));
+  const k4 = win(t, 21.3, 29.3, .7), k5 = eo(p(t, 29.4, 1.0));
+  if (k4 > 0) { const [px, pz] = playerAt(t); pl[0].set(px, pz, SR, k4); }
+  if (k5 > 0) ISLES.forEach(([x, z], i) => pl[i].set(x, z, SR, Math.max(i === 0 ? k4 : 0, k5)));
+}
+
+// ── 2D overlay helpers ───────────────────────────────────────
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function font(sz, wt = 500, mono = false) { ctx.font = `${wt} ${sz}px ${mono ? MONO : SANS}`; }
+function tw(s, size, weight = 500, mono = false) { font(size, weight, mono); return ctx.measureText(s).width; }
+function txt(s, x, y, o = {}) {
+  const { size = 36, weight = 600, color = C.text, align = 'left', mono = false, alpha = 1, shadow = true } = o;
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; font(size, weight, mono); ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  if (shadow) { ctx.shadowColor = 'rgba(5,9,18,.9)'; ctx.shadowBlur = size * .35; }
+  ctx.fillText(s, x, y); ctx.restore();
+}
+function runs(parts, x, y, size, weight, o = {}) {
+  const { align = 'left', alpha = 1 } = o;
+  const ws = parts.map(([s, , m, sz]) => tw(s, sz || size, weight, m)); const tot = ws.reduce((a, b) => a + b, 0);
+  let xx = align === 'center' ? x - tot / 2 : align === 'right' ? x - tot : x;
+  parts.forEach(([s, c, m, sz], i) => { txt(s, xx, y, { size: sz || size, weight, color: c || C.text, mono: m, alpha }); xx += ws[i]; });
+  return tot;
+}
+function chip(label, x, y, color, o = {}) {
+  const { alpha = 1, size = 36, align = 'left', fill = .16, on = 1 } = o;
+  if (alpha <= 0) return 0;
+  font(size, 700);
+  const w = ctx.measureText(label).width + size * 1.0, h = size * 1.6;
+  const X = align === 'right' ? x - w : align === 'center' ? x - w / 2 : x;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  rr(X, y - h / 2, w, h, h * .22); ctx.fillStyle = on ? rgba(color, fill) : 'rgba(14,21,36,.7)'; ctx.fill();
+  ctx.strokeStyle = on ? rgba(color, .85) : rgba('#6e7c93', .6); ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = on ? color : C.faint; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, X + w / 2, y + 1); ctx.restore();
+  return w;
+}
+// in-scene label: dot on the anchor, a leader, a dark plate with a colour bar
+function tag(pt, title, col, a, o = {}) {
+  if (a <= 0) return null; const q = proj(...pt); if (!q.ok) return null;
+  const { dx = 0, dy = -90, size = TALL ? 46 : 36, sub = '', subSize = TALL ? 40 : 32 } = o;
+  const w = Math.max(tw(title, size, 800), sub ? tw(sub, subSize, 600) : 0) + size * 1.1;
+  const h = sub ? size + subSize + size * .95 : size * 1.75;
+  let bx = q.x + dx - w / 2, by = q.y + dy - h / 2;
+  bx = clamp(bx, 24, W - 24 - w); by = clamp(by, 24, H - 24 - h);
+  ctx.save(); ctx.globalAlpha *= a;
+  const ex = clamp(q.x, bx + 8, bx + w - 8), ey = q.y < by ? by : q.y > by + h ? by + h : by + h / 2;
+  ctx.strokeStyle = rgba(col, .85); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(ex, ey); ctx.stroke();
+  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(q.x, q.y, 6, 0, 7); ctx.fill();
+  rr(bx, by, w, h, 8); ctx.fillStyle = 'rgba(10,15,27,.88)'; ctx.fill(); ctx.strokeStyle = rgba(col, .5); ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = col; ctx.fillRect(bx, by + 8, 5, h - 16);
+  txt(title, bx + size * .55, by + size * 1.18, { size, weight: 800, shadow: false });
+  if (sub) txt(sub, bx + size * .55, by + size * 1.18 + subSize * 1.25, { size: subSize, weight: 600, color: C.dim, shadow: false });
+  ctx.restore();
+  return q;
+}
+function topShade(a, h = 330) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(10,15,27,.88)'); g.addColorStop(1, 'rgba(10,15,27,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, h); ctx.restore();
+}
+function bottomShade(a, h = 300) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; const g = ctx.createLinearGradient(0, H - h, 0, H); g.addColorStop(0, 'rgba(10,15,27,0)'); g.addColorStop(1, 'rgba(10,15,27,.9)');
+  ctx.fillStyle = g; ctx.fillRect(0, H - h, W, h); ctx.restore();
+}
+function vignette() {
+  const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .45, W / 2, H / 2, Math.max(W, H) * .75);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.45)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+const L = TALL
+  ? { mx: 60, hy: 118, hs: 66, sy: 186, ss: 46, lab: 46 }
+  : { mx: 96, hy: 112, hs: 56, sy: 168, ss: 38, lab: 36 };
+
+// header for beats 02–04: number, title, subtitle
+function header(t) {
+  for (const [s, e, n, title, sub] of HEAD.slice(1, 4)) {
+    const a = win(t, s, e, .45); if (a <= 0) continue;
+    topShade(a, TALL ? 360 : 300);
+    const k = eo(p(t, s, .6));
+    ctx.save(); ctx.globalAlpha = a;
+    const x = L.mx - (1 - k) * 24;
+    const nw = runs([[n + ' ', C.blue, true]], x, L.hy, L.hs * .62, 700);
+    txt(title, x + nw + 6, L.hy, { size: L.hs, weight: 800 });
+    txt(sub, L.mx, L.sy, { size: L.ss, weight: 600, color: C.dim });
+    ctx.restore();
+  }
+}
+// the tiers, with the one in play lit (beats 02–04)
+function tiers(t) {
+  const a = win(t, 6.7, 29.0, .5); if (a <= 0) return;
+  let cur = 0;
+  if (t < 8.6) cur = 0; else if (t < 10.9) cur = 1; else if (t < 12.8) cur = 2; else if (t < 14.6) cur = 3; else if (t < 21) cur = 1; else cur = 2;
+  const names = ['공간', '집터', '청크', '셀'], size = TALL ? 40 : 34;
+  const gap = TALL ? 12 : 10, arrow = TALL ? 30 : 26;
+  const ws = names.map(s => tw(s, size, 700) + size);
+  const tot = ws.reduce((a2, b) => a2 + b, 0) + (names.length - 1) * (gap * 2 + arrow);
+  let x = TALL ? L.mx : W - 96 - tot; const y = TALL ? 266 : L.hy - 14;
+  names.forEach((s, i) => {
+    const on = i === cur, past = i < cur;
+    chip(s, x, y, on ? C.blue : past ? '#8fb3e6' : '#6e7c93', { size, alpha: a, on: on || past ? 1 : 0, fill: on ? .28 : .08 });
+    x += ws[i];
+    if (i < names.length - 1) { txt('›', x + gap + arrow / 2, y + size * .36, { size, weight: 700, color: C.faint, align: 'center', alpha: a }); x += gap * 2 + arrow; }
+  });
+}
+function footnote(t) {
+  const a = win(t, 6.8, 29.2, .5); if (a <= 0) return;
+  const s = '* 칸 크기·개수, 배치, 경로는 개념도';
+  if (TALL) txt(s, W - 40, H - 34, { size: 32, weight: 500, color: C.faint, align: 'right', alpha: a });
+  else txt(s, W - 60, H - 40, { size: 30, weight: 500, color: C.faint, align: 'right', alpha: a });
+}
+
+// ── 01 · the worst case (t = 0 is the thumbnail: no fade-in) ──
+function ov01(t) {
+  const a = 1 - eio(p(t, 6.0, .55)); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const k1 = eo(p(t, 1.4, .7)), k2 = eo(p(t, 2.1, .7));
+  if (!TALL) {
+    const g = ctx.createLinearGradient(0, 0, 1150, 0); g.addColorStop(0, 'rgba(10,15,27,.9)'); g.addColorStop(.7, 'rgba(10,15,27,.55)'); g.addColorStop(1, 'rgba(10,15,27,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 1150, H);
+    txt('Miniverse · 유저 창작 하우징 MMO', 104, 196, { size: 34, weight: 600, color: C.faint });
+    txt('최악의 경우 정량 분석 · 공간 하나에', 104, 272, { size: 40, weight: 700, color: C.dim });
+    runs([['51억', C.text, false, 190], [' 프랍', C.text, false, 84]], 96, 470, 190, 800);
+    runs([['422', C.red, false, 140], ['GB', C.red, false, 96]], 98, 628, 140, 800);
+    txt('전부 들고 있을 수도, 전부 보낼 수도 없다', 104, 760, { size: 40, weight: 700, alpha: k1 });
+    chip('✕  서버 메모리에 전부', 104, 850, C.red, { size: 36, alpha: k2 });
+    chip('✕  클라이언트에 전부', 104 + tw('✕  서버 메모리에 전부', 36, 700) + 36 + 24, 850, C.red, { size: 36, alpha: k2 });
+  } else {
+    topShade(1, 640);
+    txt('최악의 경우 정량 분석 · 공간 하나에', 60, 118, { size: 46, weight: 700, color: C.dim });
+    runs([['51억', C.text, false, 170], [' 프랍', C.text, false, 84]], 54, 300, 170, 800);
+    runs([['422', C.red, false, 140], ['GB', C.red, false, 100]], 56, 450, 140, 800);
+    bottomShade(1, 340);
+    txt('전부 들고 있을 수도,', 60, H - 210, { size: 50, weight: 700, alpha: k1 });
+    txt('전부 보낼 수도 없다', 60, H - 140, { size: 50, weight: 700, alpha: k1 });
+    chip('✕ 메모리에 전부', 60, H - 60, C.red, { size: 40, alpha: k2 });
+    chip('✕ 전송 전부', 60 + tw('✕ 메모리에 전부', 40, 700) + 40 + 20, H - 60, C.red, { size: 40, alpha: k2 });
+  }
+  ctx.restore();
+}
+
+// ── 02 · the tiers, one tag per level ────────────────────────
+function ov02(t) {
+  if (t < 6.5 || t > 15) return;
+  tag([8, 0, 0], '집터', C.blue, win(t, 8.9, 11.0, .4), { dy: TALL ? -120 : -100, sub: '저장 단위' });
+  tag([10, 0, 4], '청크', C.blue, win(t, 11.2, 12.9, .35), { dy: TALL ? -150 : -120, sub: '전송 단위' });
+  tag([9.0, .02, 6.0], '셀', C.blue, win(t, 13.0, 14.7, .35), { dy: TALL ? -150 : -130, dx: TALL ? -60 : -120, sub: '가장 작은 칸' });
+  const a = win(t, 7.0, 8.9, .4);
+  if (a > 0) for (const [x, z] of [[-24, 8], [40, 8], [8, -24]]) tag([x, 0, z], '집터', C.blue, a, { dy: -70 });
+}
+
+// ── 03 · dirty flags + 1 s batch ─────────────────────────────
+const DB = TALL ? { x: 900, y: 600 } : { x: 1660, y: 600 };
+function dbIcon(x, y, a, hot) {
+  ctx.save(); ctx.globalAlpha *= a;
+  const w = TALL ? 120 : 132, h = TALL ? 120 : 132, ry = 22;
+  ctx.fillStyle = 'rgba(10,15,27,.92)'; ctx.strokeStyle = hot > 0 ? rgba(C.orange, .5 + .5 * hot) : 'rgba(170,185,210,.7)'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.ellipse(x, y - h / 2, w / 2, ry, 0, Math.PI, 0); ctx.lineTo(x + w / 2, y + h / 2); ctx.ellipse(x, y + h / 2, w / 2, ry, 0, 0, Math.PI); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(x, y - h / 2, w / 2, ry, 0, 0, Math.PI * 2); ctx.stroke();
+  for (const yy of [-h / 6, h / 6]) { ctx.beginPath(); ctx.ellipse(x, y + yy, w / 2, ry, 0, 0, Math.PI); ctx.stroke(); }
+  ctx.restore();
+  txt('저장소', x, y + h / 2 + (TALL ? 76 : 70), { size: TALL ? 46 : 36, weight: 700, align: 'center', alpha: a });
+}
+function ov03(t) {
+  const a = win(t, 14.9, 21.0, .5); if (a <= 0) return;
+  // dirty propagation: cell → chunk → lot (first event)
+  const e0 = E3[0];
+  const steps = [['셀 변경', e0.t], ['청크 더티', e0.t + .35], ['집터 더티', e0.t + .7]];
+  {
+    const size = TALL ? 40 : 34; let x = L.mx; const y = TALL ? 1160 : 270;
+    steps.forEach(([s, ts], i) => {
+      const on = t >= ts && t < e0.flush + .1 ? 1 : 0;
+      x += chip(s, x, y, C.orange, { size, alpha: a, on, fill: .22 }) + 10;
+      if (i < 2) { txt('→', x + 18, y + size * .36, { size, weight: 700, color: C.faint, align: 'center', alpha: a }); x += 46; }
+    });
+  }
+  // batch timer
+  const tx = TALL ? 900 : 1660, ty = TALL ? 390 : 330, R = TALL ? 62 : 66;
+  const ph = t < B0 ? 0 : ((t - B0) % BP) / BP, fl = FLUSH.some(f => t >= f && t < f + .45);
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.beginPath(); ctx.arc(tx, ty, R, 0, 7); ctx.fillStyle = 'rgba(10,15,27,.9)'; ctx.fill(); ctx.lineWidth = 9; ctx.strokeStyle = 'rgba(120,135,160,.35)'; ctx.stroke();
+  ctx.beginPath(); ctx.arc(tx, ty, R, -Math.PI / 2, -Math.PI / 2 + ph * Math.PI * 2); ctx.strokeStyle = fl ? C.mint : C.orange; ctx.stroke();
+  ctx.restore();
+  txt('1초', tx, ty + 14, { size: TALL ? 46 : 40, weight: 800, align: 'center', alpha: a, mono: false });
+  txt('배치', tx, ty + R + (TALL ? 60 : 54), { size: TALL ? 46 : 36, weight: 700, align: 'center', color: C.dim, alpha: a });
+  // writes: dirty lots → storage at each flush
+  let hot = 0;
+  for (const f of FLUSH) {
+    const k = p(t, f, .9); if (k <= 0 || k >= 1) continue; hot = Math.max(hot, 1 - k);
+    const lots = E3.filter(e => e.flush === f).map(e => e.lot.join(',')).filter((v, i, arr) => arr.indexOf(v) === i);
+    lots.forEach((key, li) => {
+      const [i, j] = key.split(',').map(Number), q = proj(lotX(i) + 8, 0, lotX(j) + 8); if (!q.ok) return;
+      const x1 = DB.x - (TALL ? 64 : 70), y1 = DB.y + (li - 1) * 22, cx = (q.x + x1) / 2, cy = Math.min(q.y, y1) - 140;
+      ctx.save(); ctx.globalAlpha = a * (1 - p(k, .7, .3)); ctx.strokeStyle = rgba(C.orange, .8); ctx.lineWidth = 4; ctx.setLineDash([12, 10]); ctx.lineDashOffset = -t * 80;
+      ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.quadraticCurveTo(cx, cy, x1, y1); ctx.stroke(); ctx.setLineDash([]);
+      const u = eio(clamp(k * 1.4)), bx = (1 - u) * (1 - u) * q.x + 2 * u * (1 - u) * cx + u * u * x1, by = (1 - u) * (1 - u) * q.y + 2 * u * (1 - u) * cy + u * u * y1;
+      ctx.fillStyle = C.orange; ctx.shadowColor = C.orange; ctx.shadowBlur = 18; rr(bx - 14, by - 14, 28, 28, 5); ctx.fill();
+      ctx.restore();
+    });
+  }
+  dbIcon(DB.x, DB.y, a, hot);
+  // the takeaway
+  const b = win(t, 17.6, 21.0, .5);
+  if (TALL) {
+    txt('바뀐 집터만 1초마다 묶어 쓴다', L.mx, H - 104, { size: 46, weight: 800, alpha: b });
+    txt('→ 수천만 프랍 영속화', L.mx, H - 44, { size: 46, weight: 800, color: C.mint, alpha: b });
+  } else {
+    runs([['바뀐 집터만 1초마다 묶어 쓴다  →  ', C.text], ['수천만 프랍 영속화', C.mint]], W / 2, H - 100, 42, 800, { align: 'center', alpha: b });
+  }
+}
+
+// ── 04 · sight-based transfer + SightIn ──────────────────────
+function ov04(t) {
+  const a = win(t, 21.2, 29.0, .5); if (a <= 0) return;
+  const [px, pz] = playerAt(t), s = walkS(t), [nx, nz] = along(s + 2), dx = nx - px, dz = nz - pz, dl = Math.hypot(dx, dz) || 1;
+  if (!TALL) {
+    const y0 = 262, sz = 34;
+    ctx.save(); ctx.globalAlpha = a;
+    ctx.fillStyle = rgba(C.blue, .75); rr(L.mx, y0 - 24, 30, 30, 4); ctx.fill();
+    ctx.fillStyle = C.mint; ctx.beginPath(); ctx.arc(L.mx + 15, y0 + 58 - 9, 11, 0, 7); ctx.fill();
+    ctx.restore();
+    txt('처음 들어온 청크 → 전송', L.mx + 48, y0, { size: sz, weight: 700, alpha: a });
+    txt('SightIn 기록 → 다시 와도 재전송 없음', L.mx + 48, y0 + 58, { size: sz, weight: 700, alpha: a });
+  }
+  tag([px, 1.2, pz], '플레이어 시야', C.blue, win(t, 21.6, 23.4, .4), { dy: TALL ? 150 : 130 });
+  // outbound: the leading edge meets new chunks
+  const ka = win(t, 23.0, 25.4, .35);
+  tag([px + dx / dl * SR, 0, pz + dz / dl * SR], '새 청크 → 전송', C.blue, ka, { dy: TALL ? -150 : -120, dx: TALL ? -60 : 0 });
+  // return: the west edge re-enters recorded chunks; the north edge still meets new ones
+  const kb = win(t, 26.2, 29.0, .4);
+  tag([px - SR, 0, pz], 'SightIn 기록 → 재전송 없음', C.mint, kb, { dy: TALL ? 190 : 150, dx: TALL ? 120 : 60 });
+  tag([px + 2, 0, pz - SR], '새 청크만 전송', C.blue, win(t, 26.8, 29.0, .4), { dy: TALL ? -130 : -110, dx: TALL ? 80 : 120 });
+}
+
+// ── 05 · result ──────────────────────────────────────────────
+function ov05(t) {
+  const a = eo(p(t, 29.4, .9)); if (a <= 0) return;
+  const k2 = eo(p(t, 29.9, .8)), k3 = eo(p(t, 30.4, .8));
+  ctx.save(); ctx.globalAlpha = a;
+  if (!TALL) {
+    const g = ctx.createLinearGradient(0, 0, 1180, 0); g.addColorStop(0, 'rgba(10,15,27,.92)'); g.addColorStop(.72, 'rgba(10,15,27,.6)'); g.addColorStop(1, 'rgba(10,15,27,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 1180, H);
+    txt('최악 51억 프랍 · 422GB를 다 다루지 않고', 104, 250, { size: 40, weight: 700, color: C.dim });
+    txt('총량 대신', 98, 400, { size: 110, weight: 800, color: C.dim });
+    runs([['활성량', C.blue], ['만 처리', C.text]], 96, 540, 124, 800, { alpha: k2 });
+    let x = 104;
+    [['집터', '저장 단위', C.orange], ['청크', '전송 단위', C.blue], ['SightIn', '재전송 없음', C.mint]].forEach(([n, s, c], i) => {
+      const kk = eo(p(t, 30.3 + i * .2, .5)); if (kk <= 0) return;
+      ctx.save(); ctx.globalAlpha *= kk; ctx.fillStyle = c; ctx.fillRect(x, 640, 300, 6); ctx.restore();
+      txt(n, x, 704, { size: 40, weight: 800, alpha: kk }); txt(s, x, 756, { size: 36, weight: 600, color: C.dim, alpha: kk });
+      x += 330;
+    });
+    txt('불이 켜진 곳 = 플레이어 시야 안 · 나머지는 손대지 않는다', 104, 880, { size: 36, weight: 600, color: C.faint, alpha: k3 });
+  } else {
+    topShade(1, 700);
+    txt('51억 프랍 · 422GB를 다 다루지 않고', 60, 116, { size: 46, weight: 700, color: C.dim });
+    txt('총량 대신', 56, 270, { size: 130, weight: 800, color: C.dim });
+    runs([['활성량', C.blue], ['만 처리', C.text]], 54, 420, 134, 800, { alpha: k2 });
+    bottomShade(1, 330);
+    let x = 60;
+    [['집터', '저장', C.orange], ['청크', '전송', C.blue], ['SightIn', '재전송 ✕', C.mint]].forEach(([n, s, c], i) => {
+      const kk = eo(p(t, 30.3 + i * .2, .5)); if (kk <= 0) return;
+      ctx.save(); ctx.globalAlpha *= kk; ctx.fillStyle = c; ctx.fillRect(x, H - 200, 300, 6); ctx.restore();
+      txt(n, x, H - 132, { size: 48, weight: 800, alpha: kk }); txt(s, x, H - 70, { size: 46, weight: 600, color: C.dim, alpha: kk });
+      x += 330;
+    });
+  }
+  ctx.restore();
+}
+
+// ── animate dynamic parts ────────────────────────────────────
+function animate(t) {
+  updateState(t);
+  sceneAt(t);
+  // new blocks (03)
+  const ia = NEW.geometry.attributes.aInfo;
+  NEW.items.forEach((it, i) => {
+    const e = E3[it.e], k = eback(p(t, e.t + it.j * .12, .35)) * (1 - eio(p(t, 29.0, .8)));
+    const s = .9 * Math.max(k, 0);
+    _o.position.set(it.x + (it.j === 2 ? .0 : 0), it.j * .9 * Math.min(1, k), it.z); _o.rotation.set(0, 0, 0); _o.scale.set(Math.max(s, 1e-4), Math.max(s, 1e-4), Math.max(s, 1e-4)); _o.updateMatrix();
+    NEW.setMatrixAt(i, _o.matrix);
+    ia.array[i * 4] = t >= e.t ? 1.4 * (1 - p(t, e.t + .2, 1.2)) : 0;
+  });
+  NEW.instanceMatrix.needsUpdate = true; ia.needsUpdate = true;
+  // avatars
+  let n = 0;
+  const kb = win(t, 14.8, 21.0, .5);
+  if (kb > 0) BUILDERS.forEach(([x, z], i) => { const busy = E3.some(e => e.who === i && t > e.t - .4 && t < e.t + .5); setI(AV, n++, x, busy ? .12 * Math.sin(t * 30) ** 2 : 0, z, 1.25 * kb, ['#ffd6a5', '#bde0fe', '#ffc8dd', '#caffbf'][i]); });
+  const kw = win(t, 21.2, 29.4, .5);
+  if (kw > 0) { const [px, pz] = playerAt(t); const bob = Math.abs(Math.sin(walkS(t) * 1.6)) * .15; setI(AV, n++, px, bob, pz, 1.6 * kw, '#ffffff'); }
+  const k5 = eo(p(t, 29.6, .8));
+  if (k5 > 0) ISLES.slice(1).forEach(([x, z]) => setI(AV, n++, x, 0, z, 2.6 * k5, '#ffffff'));
+  done(AV, n);
+  // transfer particles: chunk → player for chunks seen for the first time
+  n = 0;
+  if (kw > 0) {
+    const [px, pz] = playerAt(t);
+    for (const [k, s] of SEEN) {
+      if (s.first < 0 || t < s.first || t > s.first + .9 || n > 232) continue;
+      const cx = k % NC, cz = Math.floor(k / NC), x = -HALF + cx * CHK + 2, z = -HALF + cz * CHK + 2;
+      for (let j = 0; j < 3; j++) {
+        const f = clamp((t - s.first) / .9 * 1.25 - j * .12); if (f <= 0 || f >= 1) continue;
+        setI(PT, n++, lerp(x, px, f), 1.2 + Math.sin(f * Math.PI) * 2.2, lerp(z, pz, f), (1 - f * .5) * kw);
+      }
+    }
+  }
+  done(PT, n);
+}
+
+// ── frame ────────────────────────────────────────────────────
+function renderAt(t) {
+  t = clamp(+t || 0, 0, DURATION);
+  const c = camAt(t);
+  camera.fov = c.fov; camera.aspect = W / H; camera.near = Math.max(.05, c.d * .02); camera.far = c.d * 12 + 800;
+  camera.setViewOffset(W, H, c.ox, c.oy, W, H);
+  camera.position.copy(c.T).addScaledVector(c.dir, c.d); camera.up.set(0, 1, 0); camera.lookAt(c.T); camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+  U.uFogN.value = c.d * 1.25; U.uFogF.value = c.d * 3.6 + 60;
+  scene.background.set(C.bg);
+  sun.target.position.copy(c.T); sun.position.copy(c.T).add(V3(-.5, .78, .38).multiplyScalar(100));
+  animate(t);
+  composer.render();
+  ctx.setTransform(Q, 0, 0, Q, 0, 0); ctx.globalAlpha = 1;
+  ctx.drawImage(renderer.domElement, 0, 0, W, H);
+  vignette();
+  ov02(t); ov04(t);
+  header(t); tiers(t); ov03(t);
+  ov01(t); ov05(t);
+  footnote(t);
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+window.PROP_COUNT = PROP_COUNT;
+
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) {
+    try { document.fonts.add(await new FontFace(family, `url(../assets/fonts/${file})`, { weight }).load()); } catch (e) { /* fall back */ }
+  }
+  await document.fonts.ready;
+  renderAt(0);
+})();
+
+// ── player (standalone only) ─────────────────────────────────
+if (!EMBED && !RENDER) {
+  const $ = id => document.getElementById(id);
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CHAPTERS = HEAD.map(h => [h[0], h[2], h[3]]);
+  $('scrub').setAttribute('aria-valuemax', Math.round(DURATION));
+  let t = 0, playing = false, started = false, last = 0;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button');
+    b.innerHTML = `<span>${n}</span>` + label;
+    b.addEventListener('click', () => { seek(s + .01); play(); });
+    $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing;
+    $('big').innerHTML = ended ? ICON.replay : ICON.play;
+    $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur && started));
+  }
+  function draw() { renderAt(Math.min(t, DURATION)); }
+  function play() { if (t >= DURATION) t = 0; started = true; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+  function frame(now) {
+    if (playing) {
+      t += (now - last) / 1000 * rate; last = now;
+      if (t >= DURATION) { t = DURATION; playing = false; }
+      draw(); ui();
+    }
+    requestAnimationFrame(frame);
+  }
+  const RATES = [1, .75, .5];
+  let rate = 1;
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) {
+    rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`);
+    try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ }
+  }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('play').addEventListener('click', toggle);
+  $('fs').addEventListener('click', () => { const el = $('stage'); if (document.fullscreenElement) document.exitFullscreen?.(); else el.requestFullscreen?.().catch(() => {}); });
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+  });
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frame);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+}
+</script>

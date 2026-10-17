@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>렌더링 · 물리 최적화</title>
+<style>
+  /* Look source: an Unreal Engine viewport — neutral editor greys, engine stat text (FPS / draw calls) in
+     stat-red / stat-green, debug view modes. The scene is a pastel user-built housing town. */
+  :root {
+    --bg: #0c0d0f; --surface: #17181b; --line: #2b2d33; --fg: #eef0f3; --dim: #9aa0aa; --text2: #c6cad1;
+    --accent: #3d8bff; --ok: #4cff7a;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --ar: 16 / 9; --arw: 16; --arh: 9;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 16px; box-sizing: border-box; overflow-x: hidden; }
+  body.tall { --ar: 4 / 5; --arw: 4; --arh: 5; }
+  .player { width: min(100%, calc((100vh - 170px) * var(--arw) / var(--arh))); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .stage { position: relative; width: 100%; aspect-ratio: var(--ar); border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--line); background: #1b1d21; cursor: pointer; }
+  canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
+  .big { position: absolute; inset: auto 0 6% 0; margin: 0 auto; width: clamp(44px, 10%, 80px); aspect-ratio: 1; border-radius: 50%;
+    border: 1.5px solid var(--accent); background: rgba(16,17,20,.8); color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .big[hidden] { display: none; }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 12px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--accent); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(61,139,255,.12); }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 6px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  .notes { width: min(100%, 760px); margin-top: 40px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes h2 { font-size: 20px; margin: 0 0 12px; }
+  .notes p { color: var(--text2); margin: 0 0 14px; }
+  .notes b { color: var(--fg); }
+  .notes .fine { font-size: 14px; color: var(--dim); }
+  /* ?embed / ?render: canvas only, filling the frame */
+  body.bare { padding: 0; margin: 0; background: #1b1d21; overflow: hidden; }
+  body.bare .player { width: 100vw; height: 100vh; gap: 0; }
+  body.bare .stage { width: 100%; height: 100%; aspect-ratio: auto; border: 0; border-radius: 0; cursor: default; }
+  body.bare .bar, body.bare .chapters, body.bare .set, body.bare .big, body.bare .notes { display: none; }
+  /* #poster: gallery thumbnail loop */
+  body.poster { padding: 0; }
+  body.poster .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .set, body.poster .big, body.poster .notes { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+</style>
+<script>
+  { const q = new URLSearchParams(location.search);
+    if (q.get('layout') === 'tall') document.documentElement.classList.add('tall');
+    document.addEventListener('DOMContentLoaded', () => {
+      if (q.get('layout') === 'tall') document.body.classList.add('tall');
+      if (q.has('embed') || q.has('render')) document.body.classList.add('bare');
+    }); }
+</script>
+<body>
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="유저가 지은 밀집 마을을 언리얼 뷰포트로 재현해, 드로우콜과 물리 바디가 줄어드는 과정을 디버그 뷰로 보여 주는 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="33" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:33</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+    <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="이동"><a href="../../interactive.html">← 이력서로</a></nav>
+</div>
+<section class="notes" id="notes">
+  <h2>Miniverse UE5 · 렌더링 · 물리 최적화</h2>
+  <article data-ch="01"><p><b>문제.</b> 유저가 프랍을 촘촘히 지어 올리는 하우징 공간에서는 화면 안 프랍 수가 곧 부하였습니다. 프랍 10만 개 스폰 실측에서 드로우콜 20,967회, 16.5 FPS였습니다.</p></article>
+  <article data-ch="03"><p><b>렌더링.</b> 논리와 표현을 나눴습니다. 정적 프랍은 ISM 인스턴스로 바꾸고, 상호작용하는 프랍만 액터로 남겼습니다. 유저가 고른 색은 인스턴스별 GPU 커스텀 데이터로 넘겨, 색이 달라도 같은 메시는 한 배치로 그립니다.</p></article>
+  <article data-ch="04"><p><b>물리.</b> 플레이어 인접 27칸(Prop Chunk)만 충돌 바디를 만들고, 플레이어가 움직이면 새로 들어온 칸은 생성, 벗어난 칸은 파괴합니다. 프랍이 1억 개라도 물리 씬에 상주하는 바디 수는 상수입니다.</p></article>
+  <article data-ch="05"><p><b>결과.</b> 10만 개 스폰 실측 기준 드로우콜 20,967 → 503회, FPS 16.5 → 47.4, 스폰 49.8s → 2.6s. 한 시야 128만 프랍(콜리전 ON) 렌더링 유지를 실측했습니다.</p>
+  <p class="fine">영상 속 마을과 디버그 뷰는 원리를 보여 주기 위한 재현(개념도)이고, 장면의 프랍 수는 실측 조건과 다릅니다. 화면의 수치는 모두 실측값입니다.</p></article>
+</section>
+<script type="importmap">{"imports": {"three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/"}}</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  renderopt — Miniverse UE5 렌더링 · 물리 최적화 (33 s)
+//  Approach "게임 화면 재현": a dense user-built town in an Unreal-style viewport with engine stats
+//  (FPS, draw calls), first as the player sees it (choppy: the scene clock is quantised to 16.5 fps),
+//  then replayed in debug view modes:
+//    01  0.0– 6.0  player view, 16.5 FPS · 20,967 draw calls
+//    02  6.0–13.0  draw-call replay: the frame is rebuilt one prop at a time, each its own call
+//    03 13.0–21.2  ISM: static → instances, interactive → actors; per-mesh batches; colour = PerInstanceCustomData
+//    04 21.2–28.5  physics chunking: only the 27 cells around the player hold collision bodies
+//    05 28.5–33.0  result hold: 20,967 → 503 · 16.5 → 47.4 (measured, 100k-prop spawn)
+//  Every frame is a pure function of t. Modes: ?embed (driven by renderAt), ?render, ?layout=tall, ?q=0.4–1.
+// ─────────────────────────────────────────────────────────────
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const p = (t, s, d) => clamp((t - s) / d);
+const eo = k => 1 - Math.pow(1 - k, 3);
+const eio = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const win = (t, s, e, f = .35) => Math.min(eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let x = Math.imul(seed ^ seed >>> 15, 1 | seed); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+
+const QS = new URLSearchParams(location.search);
+const EMBED = QS.has('embed'), RENDER = QS.has('render'), TALL = QS.get('layout') === 'tall';
+const Q = EMBED ? clamp(parseFloat(QS.get('q')) || 1, .4, 1) : 1;
+const W = TALL ? 1080 : 1920, H = TALL ? 1350 : 1080, DURATION = 33;
+const cv = document.getElementById('c');
+cv.width = Math.round(W * Q); cv.height = Math.round(H * Q);
+const ctx = cv.getContext('2d');
+const SANS = 'Pretendard, "Noto Sans KR", "WenQuanYi Zen Hei", "DejaVu Sans", sans-serif';
+const MONO = '"JetBrains Mono", "DejaVu Sans Mono", monospace';
+
+// ── timeline ─────────────────────────────────────────────────
+const BEATS = [
+  [0.0, 6.0, '01', '플레이어 화면'],
+  [6.0, 13.0, '02', '드로우콜 재생'],
+  [13.0, 21.2, '03', 'ISM 인스턴싱'],
+  [21.2, 28.5, '04', '물리 청킹'],
+  [28.5, DURATION, '05', '결과'],
+];
+const FLIP = 15.9;          // ISM batches in → stats flip to the measured after-values
+const SWEEP = [6.6, 12.2];  // draw-call replay window
+
+// ── UI palette (Unreal-ish greys, engine stat colours) ───────
+const C = {
+  text: '#f2f3f5', dim: '#a9aeb7', faint: '#6f747d', red: '#ff5252', green: '#4cff7a', blue: '#3d8bff',
+  actor: '#ff8a3d', body: '#3cf0c8', born: '#7dff6a', die: '#ff5a5a', panel: 'rgba(16,17,20,.80)', line: 'rgba(255,255,255,.12)',
+};
+
+// ── three ────────────────────────────────────────────────────
+const gl = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+gl.setPixelRatio(1); gl.setSize(Math.round(W * Q), Math.round(H * Q), false);
+gl.shadowMap.enabled = true; gl.shadowMap.type = THREE.PCFSoftShadowMap;
+gl.toneMapping = THREE.NeutralToneMapping;
+const scene = new THREE.Scene();
+const FOG_DAY = new THREE.Color('#dfe8f2'), FOG_DBG = new THREE.Color('#15171b');
+scene.fog = new THREE.Fog(FOG_DAY.clone(), 70, 230);
+const camera = new THREE.PerspectiveCamera(36, W / H, .5, 900);
+const composer = new EffectComposer(gl);
+composer.setPixelRatio(1); composer.setSize(Math.round(W * Q), Math.round(H * Q));
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(W * Q / 2, H * Q / 2), .55, .4, .92);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+const hemi = new THREE.HemisphereLight('#eaf2ff', '#8d8a7a', 1.15);
+const sun = new THREE.DirectionalLight('#fff3e2', 2.2);
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -60, right: 60, top: 60, bottom: -60, near: 1, far: 200 });
+sun.shadow.bias = -.0006; sun.shadow.normalBias = .04;
+scene.add(hemi, sun, sun.target);
+
+const sky = new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), new THREE.ShaderMaterial({
+  side: THREE.BackSide, depthWrite: false, fog: false,
+  uniforms: { dim: { value: 0 } },
+  vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: 'uniform float dim; varying vec3 vP; void main(){ float h = clamp(vP.y * 2.0 + .05, 0., 1.); vec3 day = mix(vec3(.87,.91,.95), vec3(.46,.66,.9), pow(h, .8)); vec3 dbg = mix(vec3(.083,.09,.106), vec3(.05,.055,.065), h); gl_FragColor = vec4(mix(day, dbg, dim), 1.); }',
+}));
+scene.add(sky);
+
+// ── town layout: 9 × 7 chunks of 12 u (3 u road + 9 u plot) ──
+const CS = 12, OX = -54, OZ = -42, COLS = 9, ROWS = 7;
+const ROAD_Z = OZ + 3 * CS + 1.5;      // the street the player walks (-4.5)
+
+// ground: town base with roads, grass beyond
+function canvasTex(w, h, draw) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8; return tex;
+}
+const PPU = 12;
+const townTex = canvasTex(COLS * CS * PPU + 3 * PPU, ROWS * CS * PPU + 3 * PPU, (g, w, h) => {
+  const R = rng(5);
+  g.fillStyle = '#c9c4b8'; g.fillRect(0, 0, w, h);
+  for (let n = 0; n < 6000; n++) { g.fillStyle = `rgba(${R() < .5 ? '90,85,75' : '255,255,250'},${.05 + R() * .06})`; g.fillRect(R() * w, R() * h, 2, 2); }
+  for (let i = 0; i < COLS; i++) for (let j = 0; j < ROWS; j++) {
+    const x = (i * CS + 3) * PPU, y = (j * CS + 3) * PPU, s = 9 * PPU;
+    g.fillStyle = '#e6e0d2'; g.fillRect(x - 5, y - 5, s + 10, s + 10);
+    g.fillStyle = `hsl(${92 + R() * 18}, ${36 + R() * 10}%, ${58 + R() * 6}%)`; g.fillRect(x, y, s, s);
+    for (let n = 0; n < 160; n++) { g.fillStyle = `rgba(${R() < .5 ? '60,100,40' : '220,240,190'},${.08 + R() * .1})`; g.fillRect(x + R() * s, y + R() * s, 3, 3); }
+  }
+  g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2; g.setLineDash([14, 14]);
+  for (let i = 0; i <= COLS; i++) { const x = (i * CS + 1.5) * PPU; g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+  for (let j = 0; j <= ROWS; j++) { const y = (j * CS + 1.5) * PPU; g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+});
+const TW = COLS * CS + 3, TD = ROWS * CS + 3;
+const groundMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: .97 });
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(700, 700), groundMat);
+groundMat.color.set('#93bd72');
+ground.rotation.x = -Math.PI / 2; ground.position.y = -.02; ground.receiveShadow = true; scene.add(ground);
+const townMat = new THREE.MeshStandardMaterial({ map: townTex, roughness: .96 });
+const town = new THREE.Mesh(new THREE.PlaneGeometry(TW, TD), townMat);
+town.rotation.x = -Math.PI / 2; town.position.set(OX + TW / 2, 0, OZ + TD / 2); town.receiveShadow = true; scene.add(town);
+
+// ── prop geometries (one InstancedMesh per mesh = what ISM batches look like) ──
+const wedgeGeo = (() => {
+  const s = new THREE.Shape(); s.moveTo(-.5, -.5); s.lineTo(.5, -.5); s.lineTo(.5, .5); s.closePath();
+  const g = new THREE.ExtrudeGeometry(s, { depth: 1, bevelEnabled: false }); g.rotateY(Math.PI / 2); g.translate(-.5, 0, 0); return g;
+})();
+const poleGeo = new THREE.CylinderGeometry(.1, .12, 1, 6); poleGeo.translate(0, .5, 0);
+const TYPES = [
+  { key: 'block', name: '블록', geo: new THREE.BoxGeometry(1, 1, 1), batch: '#3d9bff' },
+  { key: 'wedge', name: '지붕', geo: wedgeGeo, batch: '#ff4f9a' },
+  { key: 'plank', name: '울타리', geo: new THREE.BoxGeometry(1, .55, .14), batch: '#ffd23f' },
+  { key: 'pole', name: '기둥', geo: poleGeo, batch: '#3ee08f' },
+  { key: 'crown', name: '나무', geo: new THREE.IcosahedronGeometry(1, 0), batch: '#a173ff' },
+  { key: 'crate', name: '상자', geo: new THREE.BoxGeometry(.7, .7, .7), batch: '#b9f04a' },
+  { key: 'door', name: '문', geo: new THREE.BoxGeometry(.86, 1.9, .16), actor: true },
+  { key: 'lamp', name: '조명', geo: new THREE.OctahedronGeometry(.32, 0), actor: true },
+];
+const TI = Object.fromEntries(TYPES.map((d, i) => [d.key, i]));
+
+const P = [];   // every prop: {ti, x, y, z, sx, sy, sz, ry, col, bx, by, bz, hx, hy, hz}
+const col = h => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
+function add(key, x, y, z, sx = 1, sy = 1, sz = 1, ry = 0, hex = '#ffffff') {
+  const ti = TI[key], q = { ti, x, y, z, sx, sy, sz, ry, col: col(hex) };
+  // collision AABB (centre + half extents)
+  const g = TYPES[ti].geo; if (!g.boundingBox) g.computeBoundingBox();
+  const bb = g.boundingBox, ex = (bb.max.x - bb.min.x) * sx, ey = (bb.max.y - bb.min.y) * sy, ez = (bb.max.z - bb.min.z) * sz;
+  const rot = Math.abs(Math.sin(ry)) > .5;
+  q.hx = (rot ? ez : ex) / 2; q.hy = ey / 2; q.hz = (rot ? ex : ez) / 2;
+  q.bx = x; q.by = y + (bb.max.y + bb.min.y) / 2 * sy; q.bz = z;
+  P.push(q); return P.length - 1;
+}
+const WALLS = ['#f4b6bd', '#f7d98b', '#a4dcc4', '#9cc2f0', '#cdb3ec', '#f8c09a', '#eef0f2', '#ffd8e4', '#c2e79a', '#b0cbff', '#ffbcae', '#d8f5c7'];
+const ROOFS = ['#d4525e', '#2f86b8', '#6b5a4e', '#3e4466', '#e0805f', '#4c9a6a'];
+const PIX = ['#ff5c7a', '#ffc93c', '#4ad6a8', '#4ba3ff', '#a77bff', '#ffffff', '#ff8f40'];
+let wallPlot = null;   // the pixel-art wall used for the custom-data callout
+
+function house(R, x0, z0) {
+  const w = 4 + Math.floor(R() * 3), d = 4 + Math.floor(R() * 2), h = 2 + Math.floor(R() * 3);
+  const ox = x0 + 1 + Math.floor(R() * (8 - w)), oz = z0 + 1 + Math.floor(R() * (8 - d));
+  const theme = WALLS[Math.floor(R() * WALLS.length)], acc = WALLS[Math.floor(R() * WALLS.length)];
+  const roof = ROOFS[Math.floor(R() * ROOFS.length)], stripe = R() < .3;
+  const doorX = 1 + Math.floor(R() * (w - 2));
+  for (let y = 0; y < h; y++) for (let i = 0; i < w; i++) for (let k = 0; k < d; k++) {
+    if (i > 0 && i < w - 1 && k > 0 && k < d - 1) continue;
+    if (k === d - 1 && i === doorX && y < 2) continue;
+    if (y === 1 && i > 0 && i < w - 1 && k > 0 && k < d - 1) continue;
+    if (y === 1 && (i === 0 || i === w - 1 || k === 0 || k === d - 1) && !(i % (w - 1) === 0 && k % (d - 1) === 0) && R() < .22) continue;  // windows
+    const c = (stripe && y % 2) || R() < .12 ? acc : theme;
+    add('block', ox + i + .5, y + .5, oz + k + .5, 1, 1, 1, 0, c);
+  }
+  add('door', ox + doorX + .5, .95, oz + d - .5 + .08, 1, 1, 1, 0, '#8a5a3c');
+  for (let r = 0; r < Math.ceil(d / 2); r++) {
+    const kf = d - 1 - r, kb = r, y = h + r + .5;
+    for (let i = 0; i < w; i++) {
+      if (kf === kb) add('block', ox + i + .5, y, oz + kf + .5, 1, 1, 1, 0, roof);
+      else { add('wedge', ox + i + .5, y, oz + kf + .5, 1, 1, 1, 0, roof); add('wedge', ox + i + .5, y, oz + kb + .5, 1, 1, 1, Math.PI, roof); }
+    }
+  }
+  return { ox, oz, w, d };
+}
+function tree(R, x, z, s = 1) {
+  add('pole', x, 0, z, 1, 1.3 * s, 1, 0, '#6a4a33');
+  add('crown', x, 1.9 * s, z, .95 * s, 1.05 * s, .95 * s, R() * 6, ['#62a84a', '#4f9663', '#86bf4f'][Math.floor(R() * 3)]);
+}
+function fence(R, x0, z0) {
+  const wood = R() < .5 ? '#b38a62' : '#f0eee8';
+  for (let i = 0; i < 9; i++) {
+    if (R() < .75) add('plank', x0 + i + .5, .3, z0 + .15, 1, 1, 1, 0, wood);
+    if (R() < .75) add('plank', x0 + i + .5, .3, z0 + 8.85, 1, 1, 1, 0, wood);
+    if (R() < .6) add('plank', x0 + .15, .3, z0 + i + .5, 1, 1, 1, Math.PI / 2, wood);
+    if (R() < .6) add('plank', x0 + 8.85, .3, z0 + i + .5, 1, 1, 1, Math.PI / 2, wood);
+  }
+}
+function crates(R, x0, z0, n) {
+  for (let c = 0; c < n; c++) {
+    const x = x0 + 1 + R() * 7, z = z0 + 1 + R() * 7, k = R() < .3 ? 2 : 1;
+    for (let s = 0; s < k; s++) add('crate', x, .35 + s * .7, z, 1, 1, 1, R() < .5 ? 0 : Math.PI / 2, ['#c79d63', '#a87f4d', '#7fb0d8', '#e06a5a'][Math.floor(R() * 4)]);
+  }
+}
+{
+  const R = rng(1234);
+  for (let i = 0; i < COLS; i++) for (let j = 0; j < ROWS; j++) {
+    const x0 = OX + i * CS + 3, z0 = OZ + j * CS + 3;
+    let kind = R();
+    if (i === 4 && j === 4) kind = 'pix';
+    else kind = kind < .62 ? 'house' : kind < .74 ? 'tower' : kind < .84 ? 'pix' : 'park';
+    fence(R, x0, z0);
+    if (kind === 'house') {
+      const hs = house(R, x0, z0);
+      const nt = 1 + Math.floor(R() * 3);
+      for (let n = 0; n < nt; n++) { const tx = x0 + 1 + R() * 7, tz = z0 + 1 + R() * 7; if (tx > hs.ox - .8 && tx < hs.ox + hs.w + .8 && tz > hs.oz - .8 && tz < hs.oz + hs.d + .8) continue; tree(R, tx, tz, .8 + R() * .4); }
+      crates(R, x0, z0, 2 + Math.floor(R() * 3));
+    } else if (kind === 'tower') {
+      const a = WALLS[Math.floor(R() * WALLS.length)], b = PIX[Math.floor(R() * PIX.length)], hh = 7 + Math.floor(R() * 5);
+      const tx = x0 + 3 + Math.floor(R() * 3), tz = z0 + 3 + Math.floor(R() * 3);
+      for (let y = 0; y < hh; y++) for (let q = 0; q < 4; q++) add('block', tx + (q % 2) + .5, y + .5, tz + (q >> 1) + .5, 1, 1, 1, 0, y % 3 === 2 ? b : a);
+      add('lamp', tx + 1, hh + .4, tz + 1, 1.3, 1.3, 1.3, 0, '#ffe08a');
+      crates(R, x0, z0, 3 + Math.floor(R() * 3)); tree(R, x0 + 1.5, z0 + 7.5, 1);
+    } else if (kind === 'pix') {
+      const ART = ['..XX.XX..', '.XXXXXXX.', '.XXXXXXX.', '..XXXXX..', '...XXX...', '....X....'];
+      const bg = WALLS[Math.floor(R() * WALLS.length)], zf = z0 + 7.5;
+      for (let y = 0; y < 6; y++) for (let i2 = 0; i2 < 9; i2++) {
+        const on = ART[5 - y][i2] === 'X';
+        add('block', x0 + i2 + .5, y + .5, zf, 1, 1, 1, 0, on ? PIX[(i2 * 3 + y * 5 + Math.floor(R() * 2)) % PIX.length] : bg);
+      }
+      if (i === 4 && j === 4) wallPlot = { x0, x1: x0 + 9, y0: 0, y1: 6, z: zf + .5 };
+      for (let n = 0; n < 3; n++) tree(R, x0 + 1.5 + n * 3, z0 + 2 + R() * 2, .8 + R() * .4);
+      crates(R, x0, z0, 2);
+    } else {
+      for (let n = 0; n < 6; n++) tree(R, x0 + 1 + R() * 7, z0 + 1 + R() * 7, .7 + R() * .6);
+      for (let n = 0; n < 5; n++) add('crown', x0 + 1 + R() * 7, .35, z0 + 1 + R() * 7, .55, .45, .55, R() * 6, '#5c9e4a');
+      const fx = x0 + 3, fz = z0 + 3;
+      for (let q = 0; q < 12; q++) { const a = q / 12 * Math.PI * 2; add('block', fx + 1.5 + Math.cos(a) * 1.8, .3, fz + 1.5 + Math.sin(a) * 1.8, .9, .6, .9, a, '#d9dde2'); }
+      crates(R, x0, z0, 2);
+    }
+  }
+  // street lamps at every crossing (pole = static ISM, light = interactive actor)
+  for (let i = 0; i <= COLS; i++) for (let j = 0; j <= ROWS; j++) {
+    const x = OX + i * CS + .4, z = OZ + j * CS + .4;
+    add('pole', x, 0, z, 1, 2.6, 1, 0, '#3b4048'); add('lamp', x, 2.85, z, 1, 1, 1, 0, '#ffe08a');
+  }
+}
+const N = P.length;
+
+// per-type InstancedMesh
+const propMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: .82, metalness: 0, flatShading: true });
+const U = { unlit: { value: 0 } };
+propMat.onBeforeCompile = sh => {
+  sh.uniforms.uUnlit = U.unlit;
+  sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uUnlit;')
+    .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * uUnlit;');
+};
+const MESH = TYPES.map((d, ti) => {
+  const list = P.map((q, i) => q.ti === ti ? i : -1).filter(i => i >= 0);
+  const m = new THREE.InstancedMesh(d.geo, propMat, list.length);
+  const o = new THREE.Object3D();
+  list.forEach((pi, k) => { const q = P[pi]; o.position.set(q.x, q.y, q.z); o.rotation.set(0, q.ry, 0); o.scale.set(q.sx, q.sy, q.sz); o.updateMatrix(); m.setMatrixAt(k, o.matrix); q.k = k; });
+  m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(list.length * 3), 3);
+  m.castShadow = m.receiveShadow = true; m.frustumCulled = false; scene.add(m);
+  return { m, list, arr: m.instanceColor.array };
+});
+
+// per-prop derived colours: hash (one colour per draw call), batch (per mesh), actor highlight
+{
+  const R = rng(77), c = new THREE.Color();
+  for (const q of P) {
+    c.setHSL(R(), .78 + R() * .2, .5 + R() * .12); q.hash = [c.r, c.g, c.b];
+    q.actor = !!TYPES[q.ti].actor;
+    q.batch = q.actor ? col(C.actor) : col(TYPES[q.ti].batch);
+    q.wx = (q.x - OX) / TW;
+    q.cx = Math.floor((q.x - OX) / CS); q.cz = Math.floor((q.z - OZ) / CS);
+  }
+  // draw order: a random permutation (first three picked later for the slow start)
+  const ord = P.map((_, i) => i); for (let i = N - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [ord[i], ord[j]] = [ord[j], ord[i]]; }
+  ord.forEach((pi, o) => P[pi].order = o);
+}
+
+// ── collision bodies, chunk tiles, 3×3×3 lattice ──────────────
+const edgeMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+  vertexShader: 'varying vec2 vUv; varying vec3 vC; void main(){ vUv = uv; vC = instanceColor; gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); }',
+  fragmentShader: 'varying vec2 vUv; varying vec3 vC; void main(){ float e = min(min(vUv.x, 1. - vUv.x), min(vUv.y, 1. - vUv.y)); float w = fwidth(e); float a = 1. - smoothstep(w * .6, w * 2.0, e); gl_FragColor = vec4(vC * (a * 1.1 + .16), 1.); }',
+});
+const STATIC = P.map((q, i) => q.actor ? -1 : i).filter(i => i >= 0);
+const bodies = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), edgeMat, STATIC.length);
+bodies.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(STATIC.length * 3), 3);
+bodies.frustumCulled = false; bodies.renderOrder = 5; scene.add(bodies);
+const tileMat = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+const tileGeo = new THREE.PlaneGeometry(CS - .3, CS - .3); tileGeo.rotateX(-Math.PI / 2);
+const tiles = new THREE.InstancedMesh(tileGeo, tileMat, 40);
+tiles.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(40 * 3), 3);
+tiles.frustumCulled = false; tiles.renderOrder = 4; scene.add(tiles);
+// chunk grid over the whole town
+const gridMat = new THREE.LineBasicMaterial({ color: '#7fe8ff', transparent: true, opacity: 0, depthWrite: false, fog: false });
+{
+  const v = [];
+  for (let i = 0; i <= COLS; i++) v.push(OX + i * CS, .05, OZ, OX + i * CS, .05, OZ + ROWS * CS);
+  for (let j = 0; j <= ROWS; j++) v.push(OX, .05, OZ + j * CS, OX + COLS * CS, .05, OZ + j * CS);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+  scene.add(new THREE.LineSegments(g, gridMat));
+}
+const latMat = new THREE.LineBasicMaterial({ color: '#7dffd8', transparent: true, opacity: 0, depthWrite: false, fog: false, blending: THREE.AdditiveBlending });
+const lattice = new THREE.LineSegments((() => {
+  const v = [], Y = [0, 1, 2, 3];
+  for (const a of Y) for (const b of Y) { v.push(0, a, b, 3, a, b); v.push(a, 0, b, a, 3, b); v.push(a, b, 0, a, b, 3); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); return g;
+})(), latMat);
+lattice.scale.setScalar(CS); lattice.renderOrder = 6; scene.add(lattice);
+
+// ── the player avatar ────────────────────────────────────────
+const avatar = new THREE.Group(); scene.add(avatar);
+const AV = {};
+{
+  const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: .7, flatShading: true, ...o });
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(.42, .7, 4, 8), M('#2bb3c4')); body.position.y = 1.25; avatar.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.42, 12, 10), M('#f2c7a1')); head.position.y = 2.2; avatar.add(head);
+  const hair = new THREE.Mesh(new THREE.SphereGeometry(.45, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), M('#3a2a20')); hair.position.y = 2.25; avatar.add(hair);
+  const pack = new THREE.Mesh(new THREE.BoxGeometry(.5, .6, .3), M('#ffb23f')); pack.position.set(-.42, 1.35, 0); avatar.add(pack);
+  AV.legs = [-1, 1].map(s => { const g = new THREE.Group(); g.position.set(0, .75, s * .2); const l = new THREE.Mesh(new THREE.BoxGeometry(.22, .7, .22), M('#30374a')); l.position.y = -.35; g.add(l); avatar.add(g); return g; });
+  avatar.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  const ring = new THREE.Mesh(new THREE.RingGeometry(.75, .9, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffffff').multiplyScalar(1.4), transparent: true, depthWrite: false, fog: false }));
+  ring.rotation.x = -Math.PI / 2; ring.position.y = .04; avatar.add(ring); AV.ring = ring;
+}
+// B4 walk: along ROAD_Z, x = X0 + V·s
+const WALK = { x0: -37, v: 4.2, t0: 21.5 };
+function avatarAt(t) {
+  if (t < 6.0) return { x: -9 + .85 * t, vis: 1 };
+  if (t < 21.0) return { x: -9 + .85 * 6, vis: 0 };
+  if (t < 28.6) return { x: WALK.x0 + WALK.v * Math.max(0, t - WALK.t0), vis: 1 };
+  return { x: -3 + 1.3 * (t - 28.6), vis: 1 };
+}
+function poseAvatar(t, tq) {
+  const a = avatarAt(tq); avatar.visible = a.vis > 0;
+  const walkPh = a.x / 1.6 * Math.PI * 2;
+  avatar.position.set(a.x, Math.abs(Math.sin(walkPh)) * .08, ROAD_Z);
+  avatar.rotation.y = 0;
+  AV.legs[0].rotation.z = .55 * Math.sin(walkPh); AV.legs[1].rotation.z = -.55 * Math.sin(walkPh);
+  return a;
+}
+
+// ── camera ───────────────────────────────────────────────────
+const LAY = TALL ? { fov: 1.42, dist: 1.0 } : { fov: 1, dist: 1 };
+const CAM = {
+  g0: { tx: -6, ty: 1, tz: -1, yaw: .66, pitch: .44, dist: 46, fov: 36 },
+  g1: { tx: -4, ty: 1, tz: -1, yaw: .46, pitch: .44, dist: 45, fov: 36 },
+  d1: { tx: -2, ty: 1, tz: 0, yaw: .38, pitch: .47, dist: 45, fov: 36 },
+  wall: { tx: 1.5, ty: 3, tz: 14, yaw: .16, pitch: .2, dist: 25, fov: 36 },
+  phys: { tx: 0, ty: 0, tz: ROAD_Z + 2, yaw: .22, pitch: .98, dist: 50, fov: 38 },
+  r0: { tx: 2, ty: 1, tz: -1, yaw: -.30, pitch: .42, dist: 46, fov: 36 },
+  r1: { tx: 4, ty: 1, tz: -1, yaw: -.42, pitch: .42, dist: 45, fov: 36 },
+};
+const mixC = (a, b, k) => { const o = {}; for (const key in a) o[key] = lerp(a[key], b[key], k); return o; };
+function camAt(t) {
+  const follow = x => ({ ...CAM.phys, tx: x + 6 });
+  if (t < 6) return mixC(CAM.g0, CAM.g1, t / 6);
+  if (t < 17.2) return mixC(CAM.g1, CAM.d1, eio(p(t, 6, 11.2)));
+  if (t < 21.0) return mixC(CAM.d1, { ...CAM.wall, yaw: CAM.wall.yaw - .05 * p(t, 18.4, 2.6) }, eio(p(t, 17.2, 1.3)));
+  if (t < 28.3) { const f = follow(WALK.x0 + WALK.v * Math.max(0, t - WALK.t0)); return mixC({ ...CAM.wall, yaw: CAM.wall.yaw - .05 }, f, eio(p(t, 21.0, 1.4))); }
+  const f = follow(WALK.x0 + WALK.v * (28.3 - WALK.t0));
+  return mixC(f, mixC(CAM.r0, CAM.r1, p(t, 29.6, 3.4)), eio(p(t, 28.3, 1.3)));
+}
+const tgt = new THREE.Vector3();
+function camSet(c) {
+  const fov = c.fov * LAY.fov, dist = c.dist * LAY.dist;
+  tgt.set(c.tx, c.ty, c.tz);
+  camera.position.set(tgt.x + dist * Math.cos(c.pitch) * Math.sin(c.yaw), tgt.y + dist * Math.sin(c.pitch), tgt.z + dist * Math.cos(c.pitch) * Math.cos(c.yaw));
+  camera.lookAt(tgt); camera.fov = fov; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+  sun.target.position.copy(tgt); sun.position.copy(tgt).add(new THREE.Vector3(-26, 48, 22)); sun.target.updateMatrixWorld();
+  sky.position.copy(camera.position);
+}
+const _v = new THREE.Vector3();
+function proj(x, y, z) { _v.set(x, y, z).project(camera); return [(_v.x + 1) / 2 * W, (1 - _v.y) / 2 * H, _v.z]; }
+
+// pick props to label: the first three draw calls, an actor door/lamp and a static block (screen-centred, near camera)
+function pick(t, filter, box, n = 1, minGap = 160) {
+  camSet(camAt(t));
+  const cand = [];
+  P.forEach((q, i) => {
+    if (!filter(q)) return;
+    const [X, Y, Z] = proj(q.bx, q.by + q.hy * .4, q.bz); if (Z > 1 || X < box[0] || X > box[2] || Y < box[1] || Y > box[3]) return;
+    const front = q.ti === TI.block || q.ti === TI.door ? 1 : 0;
+    cand.push([camera.position.distanceTo(_v.set(q.x, q.y, q.z)) - front * 2, i, X, Y]);
+  });
+  cand.sort((a, b) => a[0] - b[0]);
+  const out = [];
+  for (const c of cand) { if (out.every(o => Math.hypot(o[2] - c[2], o[3] - c[3]) > minGap)) out.push(c); if (out.length >= n) break; }
+  return out.map(c => c[1]);
+}
+const BOXW = TALL ? [180, 520, 900, 900] : [520, 300, 1300, 760];
+const FIRST3 = pick(7.4, q => !q.actor && (q.ti === TI.block || q.ti === TI.crate || q.ti === TI.wedge), BOXW, 3, TALL ? 220 : 260);
+{ // move them to the front of the draw order
+  const swap = (pi, o) => { const other = P.find(q => q.order === o); const old = P[pi].order; other.order = old; P[pi].order = o; };
+  FIRST3.forEach((pi, o) => swap(pi, o));
+}
+const TAG_DOOR = pick(13.8, q => q.ti === TI.door, BOXW, 1)[0];
+const TAG_LAMP = pick(13.8, q => q.ti === TI.lamp, TALL ? [140, 460, 940, 920] : [380, 220, 1400, 760], 1)[0];
+const TAG_ISM = pick(13.8, q => q.ti === TI.block && Math.abs(q.cx - P[TAG_DOOR].cx) + Math.abs(q.cz - P[TAG_DOOR].cz) >= 1, BOXW, 1)[0];
+
+// ═════════════════════════════════════════════════════════════
+//  per-frame 3D state (pure functions of t)
+// ═════════════════════════════════════════════════════════════
+const sweepN = u => {      // props drawn so far in the replay (u = 0…1)
+  if (u <= 0) return 0;
+  if (u < .27) return Math.min(3, 1 + Math.floor(u / .09));
+  const k = (u - .27) / .73, a = 4.2;
+  return Math.min(N, 3 + (N - 3) * (Math.exp(a * k) - 1) / (Math.exp(a) - 1));
+};
+const DARK = [.035, .038, .045];
+function propColor(q, t, out) {
+  const u = q.col, ac = q.actor;
+  const lamp = q.ti === TI.lamp ? 1.5 : 1;
+  const user0 = u[0] * lamp, user1 = u[1] * lamp, user2 = u[2] * lamp;
+  let r, g, b;
+  if (t < 6.0) { r = user0; g = user1; b = user2; }
+  else if (t < 13.0) {
+    const n = sweepN(p(t, SWEEP[0], SWEEP[1] - SWEEP[0]));
+    const dn = (sweepN(p(t + .05, SWEEP[0], SWEEP[1] - SWEEP[0])) - n) / .05;
+    const k0 = eo(p(t, 6.0, .45));
+    if (q.order < n) {
+      const age = n - 1 - q.order, w = Math.max(.7, dn * .1), f = Math.exp(-age / w) * 2.6;
+      r = q.hash[0] + f; g = q.hash[1] + f; b = q.hash[2] + f;
+    } else { r = lerp(user0, DARK[0], k0); g = lerp(user1, DARK[1], k0); b = lerp(user2, DARK[2], k0); }
+  } else if (t < 17.2) {
+    const kd = eo(p(t, 13.0, .5));
+    if (ac) {
+      const pul = 1.25 + .35 * Math.sin(t * 6 + q.order);
+      r = lerp(q.hash[0], q.batch[0] * pul, kd); g = lerp(q.hash[1], q.batch[1] * pul, kd); b = lerp(q.hash[2], q.batch[2] * pul, kd);
+    } else {
+      const dimk = lerp(1, .26, kd), kb = eio(p(t, 14.6 + q.wx * 1.1, .45));
+      r = lerp(q.hash[0] * dimk, q.batch[0], kb); g = lerp(q.hash[1] * dimk, q.batch[1], kb); b = lerp(q.hash[2] * dimk, q.batch[2], kb);
+    }
+  } else if (t < 21.0) {
+    const k = eio(p(t, 17.2, .6)), pul = ac ? 1.25 : 1;
+    r = lerp(q.batch[0] * pul, user0, k); g = lerp(q.batch[1] * pul, user1, k); b = lerp(q.batch[2] * pul, user2, k);
+  } else {
+    const k = t < 28.3 ? eo(p(t, 21.0, .8)) : 1 - eio(p(t, 28.3, .6));
+    const gr = (user0 + user1 + user2) / 3;
+    r = lerp(user0, gr * .42 + .02, k); g = lerp(user1, gr * .44 + .02, k); b = lerp(user2, gr * .48 + .03, k);
+  }
+  out[0] = r; out[1] = g; out[2] = b;
+}
+// physics chunking: chunk column i holds bodies while the player's column is within ±1
+const pcol = x => Math.floor((x - OX) / CS);
+const PROW = Math.floor((ROAD_Z - OZ) / CS);
+const tEnter = i => (OX + (i - 1) * CS - WALK.x0) / WALK.v + WALK.t0;   // player reaches column i-1
+const tLeave = i => (OX + (i + 2) * CS - WALK.x0) / WALK.v + WALK.t0;   // player reaches column i+2
+function chunkState(i, j, t) {     // → [alpha, born flash 0…1, dying 0…1]
+  if (Math.abs(j - PROW) > 1) return [0, 0, 0];
+  const te = tEnter(i), tl = tLeave(i);
+  if (t < te) return [0, 0, 0];
+  if (t < tl) return [1, te > WALK.t0 + .05 ? 1 - p(t, te, .9) : 0, 0];
+  const k = p(t, tl, .8); return k >= 1 ? [0, 0, 0] : [1 - k, 0, 1];
+}
+const _o = new THREE.Object3D(), _c = [0, 0, 0];
+function physFrame(t, vis) {
+  let nb = 0, nt = 0;
+  latMat.opacity = 0; gridMat.opacity = .5 * vis;
+  if (vis > .01) {
+    const ba = bodies.instanceColor.array, B = new THREE.Color(C.body), Bn = new THREE.Color(C.born), Bd = new THREE.Color(C.die);
+    const cache = {};
+    for (const pi of STATIC) {
+      const q = P[pi], key = q.cx * 16 + q.cz;
+      const st = cache[key] || (cache[key] = chunkState(q.cx, q.cz, t));
+      if (st[0] <= .01) continue;
+      const s = st[1] > 0 ? lerp(1, 1.25, st[1]) : 1;
+      _o.position.set(q.bx, q.by, q.bz); _o.rotation.set(0, 0, 0); _o.scale.set(q.hx * 2 * s + .06, q.hy * 2 * s + .06, q.hz * 2 * s + .06); _o.updateMatrix();
+      bodies.setMatrixAt(nb, _o.matrix);
+      const c = st[2] ? Bd : st[1] > 0 ? B.clone().lerp(Bn, st[1]) : B, a = st[0] * vis * (1 + st[1] * 1.2);
+      ba[nb * 3] = c.r * a; ba[nb * 3 + 1] = c.g * a; ba[nb * 3 + 2] = c.b * a; nb++;
+    }
+    const ta = tiles.instanceColor.array;
+    for (let i = 0; i < COLS; i++) for (let j = PROW - 1; j <= PROW + 1; j++) {
+      const st = chunkState(i, j, t); if (st[0] <= .01 || nt >= 40) continue;
+      _o.position.set(OX + (i + .5) * CS, .06, OZ + (j + .5) * CS); _o.scale.set(1, 1, 1); _o.updateMatrix(); tiles.setMatrixAt(nt, _o.matrix);
+      const c = st[2] ? Bd : B.clone().lerp(Bn, st[1]), a = st[0] * vis * (.13 + .2 * st[1]);
+      ta[nt * 3] = c.r * a; ta[nt * 3 + 1] = c.g * a; ta[nt * 3 + 2] = c.b * a; nt++;
+    }
+    // lattice: the 3×3×3 neighbourhood around the player's chunk, sliding when the player crosses a border
+    const x = WALK.x0 + WALK.v * Math.max(0, t - WALK.t0), pc = pcol(x), tc = (OX + pc * CS - WALK.x0) / WALK.v + WALK.t0;
+    const slide = tc > WALK.t0 ? eo(p(t, tc, .45)) : 1;
+    lattice.position.set(OX + (pc - 2 + slide) * CS, -CS + .02, OZ + (PROW - 1) * CS);
+    latMat.opacity = .55 * vis;
+    tiles.instanceColor.needsUpdate = bodies.instanceColor.needsUpdate = true;
+    tiles.instanceMatrix.needsUpdate = bodies.instanceMatrix.needsUpdate = true;
+  }
+  bodies.count = nb; tiles.count = nt; bodies.visible = nb > 0; tiles.visible = nt > 0; lattice.visible = vis > .01;
+}
+
+// ── environment by beat ──────────────────────────────────────
+function envAt(t) {
+  // dbg: draw-call debug view (dark world, unlit-ish props), phy: collision view (dimmed day)
+  const dbg = t < 17.2 ? eo(p(t, 6.0, .45)) : 1 - eio(p(t, 17.2, .6));
+  const phy = t < 28.3 ? eo(p(t, 21.0, .8)) : 1 - eio(p(t, 28.3, .6));
+  return { dbg: t < 6 ? 0 : dbg, phy: t < 21 ? 0 : phy };
+}
+function applyEnv(e) {
+  const d = e.dbg, ph = e.phy;
+  sky.material.uniforms.dim.value = Math.max(d, ph * .55);
+  scene.fog.color.copy(FOG_DAY).lerp(FOG_DBG, Math.max(d, ph * .55));
+  townMat.color.setRGB(1, 1, 1).lerp(new THREE.Color('#25282e'), Math.max(d, ph * .6));
+  groundMat.color.set('#93bd72').lerp(new THREE.Color('#1c1e22'), Math.max(d, ph * .6));
+  hemi.intensity = 1.15 - .55 * d - .35 * ph; sun.intensity = 2.2 - 1.3 * d - .9 * ph;
+  U.unlit.value = .55 * d;
+  bloom.strength = .5 + .25 * d + .2 * ph;
+}
+
+// ═════════════════════════════════════════════════════════════
+//  2D overlay
+// ═════════════════════════════════════════════════════════════
+function font(sz, wt = 600, mono = false) { ctx.font = `${wt} ${sz}px ${mono ? MONO : SANS}`; }
+function tw(s, size, weight = 600, mono = false) { font(size, weight, mono); return ctx.measureText(s).width; }
+function txt(s, x, y, o = {}) {
+  const { size = 36, weight = 600, mono = false, color = C.text, align = 'left', alpha = 1, sh = 10 } = o;
+  if (alpha <= .01) return;
+  ctx.save(); ctx.globalAlpha *= alpha; font(size, weight, mono); ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  if (sh) { ctx.shadowColor = 'rgba(0,0,0,.75)'; ctx.shadowBlur = sh; ctx.shadowOffsetY = 2; }
+  ctx.fillStyle = color; ctx.fillText(s, x, y); ctx.restore();
+}
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function panel(x, y, w, h, a = 1, o = {}) {
+  if (a <= .01) return;
+  ctx.save(); ctx.globalAlpha *= a; rr(x, y, w, h, o.r ?? 12); ctx.fillStyle = o.fill || C.panel; ctx.fill();
+  ctx.strokeStyle = o.stroke || C.line; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+}
+function wrapLines(s, maxW, size, weight = 600) {
+  font(size, weight); const words = s.split(' '), out = []; let cur = '';
+  for (const w of words) { const nx = cur ? cur + ' ' + w : w; if (ctx.measureText(nx).width > maxW && cur) { out.push(cur); cur = w; } else cur = nx; }
+  if (cur) out.push(cur); return out;
+}
+function scrim(y0, y1, a, dir = 1) {
+  if (a <= .01) return;
+  const g = ctx.createLinearGradient(0, y0, 0, y1);
+  g.addColorStop(dir > 0 ? 0 : 1, 'rgba(6,7,9,0)'); g.addColorStop(dir > 0 ? 1 : 0, `rgba(6,7,9,${.78 * a})`);
+  ctx.fillStyle = g; ctx.fillRect(0, y0, W, y1 - y0);
+}
+function swatch(x, y, s, color, a = 1) { ctx.save(); ctx.globalAlpha *= a; rr(x, y, s, s, 6); ctx.fillStyle = color; ctx.fill(); ctx.restore(); }
+
+// engine stat block (what a UE developer reads: stat fps · stat rhi)
+const fpsVal = t => t < FLIP ? ['16.5', C.red] : ['47.4', C.green];
+const dcVal = t => t < FLIP ? '20,967' : '503';
+function flipText(oldS, newS, k, x, y, o, oldCol, newCol) {
+  if (k <= 0) { txt(oldS, x, y, { ...o, color: oldCol }); return; }
+  if (k >= 1) { txt(newS, x, y, { ...o, color: newCol }); return; }
+  const d = o.size * .55;
+  txt(oldS, x, y - d * eo(k), { ...o, color: oldCol, alpha: 1 - eo(k) });
+  txt(newS, x, y + d * (1 - eo(k)), { ...o, color: newCol, alpha: eo(k) });
+}
+function statBlock(t, a) {
+  if (a <= .01) return;
+  const k = p(t, FLIP, .5), pulse = Math.exp(-Math.max(0, t - FLIP) * 2.2) * (t >= FLIP ? 1 : 0);
+  ctx.save(); ctx.globalAlpha = a;
+  if (!TALL) {
+    const x = 1252, y = 44, w = 624, h = 356;
+    panel(x, y, w, h, 1, { stroke: pulse > .02 ? `rgba(76,255,122,${.25 + .6 * pulse})` : C.line });
+    txt('stat fps', x + 32, y + 66, { size: 36, mono: true, color: C.dim, weight: 500 });
+    flipText('16.5', '47.4', k, x + w - 140, y + 140, { size: 124, weight: 800, mono: true, align: 'right' }, C.red, C.green);
+    txt('FPS', x + w - 32, y + 140, { size: 44, weight: 800, mono: true, align: 'right', color: k < .5 ? C.red : C.green });
+    txt('드로우콜', x + 32, y + 270, { size: 38, weight: 700, color: C.dim });
+    flipText('20,967', '503', k, x + w - 32, y + 282, { size: 112, weight: 800, mono: true, align: 'right' }, C.text, C.green);
+    ctx.fillStyle = C.line; ctx.fillRect(x + 32, y + 304, w - 64, 2);
+    txt('실측값 · 프랍 10만 개 스폰', x + 32, y + 342, { size: 32, color: C.dim, weight: 500 });
+  } else {
+    const x = 36, y = 32, w = 1008, h = 330;
+    panel(x, y, w, h, 1, { stroke: pulse > .02 ? `rgba(76,255,122,${.25 + .6 * pulse})` : C.line });
+    txt('FPS', x + 40, y + 74, { size: 46, weight: 700, mono: true, color: C.dim });
+    flipText('16.5', '47.4', k, x + 40, y + 222, { size: 136, weight: 800, mono: true }, C.red, C.green);
+    txt('드로우콜', x + w - 40, y + 74, { size: 46, weight: 700, color: C.dim, align: 'right' });
+    flipText('20,967', '503', k, x + w - 40, y + 222, { size: 136, weight: 800, mono: true, align: 'right' }, C.text, C.green);
+    txt('실측값 · 프랍 10만 개 스폰', x + 40, y + 300, { size: 46, color: C.dim, weight: 500 });
+  }
+  ctx.restore();
+}
+function viewChip(t) {
+  const segs = [
+    [-1, 6.0, '▶  플레이 화면 · 재현', C.text],
+    [6.0, 17.4, '◉  디버그 뷰 · 드로우콜 (개념도)', C.blue],
+    [17.4, 21.2, '▶  라이팅 뷰 · 재현', C.text],
+    [21.2, 28.5, '◉  디버그 뷰 · 충돌 바디 (개념도)', C.body],
+    [28.5, 99, '▶  플레이 화면 · 재현', C.text],
+  ];
+  const size = TALL ? 46 : 36, x = TALL ? 36 : 44, y = TALL ? 384 : 44;
+  for (const [s, e, label, c] of segs) {
+    const a = win(t, s, e, .25); if (a <= .01) continue;
+    const w = tw(label, size, 700) + 48;
+    panel(x, y, w, size + 30, a, { r: 10 });
+    txt(label, x + 24, y + size + 4, { size, weight: 700, color: c, alpha: a, sh: 0 });
+  }
+}
+function caption(num, title, sub, a, subA = a) {
+  if (a <= .01) return;
+  if (!TALL) {
+    const x = 64, y = H - 70;
+    txt(num, x, y - 82, { size: 40, weight: 800, mono: true, color: C.blue, alpha: a });
+    txt(title, x + 70, y - 82, { size: 56, weight: 800, alpha: a });
+    txt(sub, x, y, { size: 40, weight: 600, color: '#dfe3ea', alpha: subA });
+  } else {
+    const x = 44, lines = wrapLines(sub, W - 88, 48, 600);
+    const yB = H - 56 - (lines.length - 1) * 62;
+    txt(num, x, yB - 90, { size: 50, weight: 800, mono: true, color: C.blue, alpha: a });
+    txt(title, x + 86, yB - 90, { size: 60, weight: 800, alpha: a });
+    lines.forEach((l, i) => txt(l, x, yB + i * 62, { size: 48, weight: 600, color: '#dfe3ea', alpha: subA }));
+  }
+}
+function worldTag(pi, label, color, a, { dx = 0, dy = -120, size } = {}) {
+  if (a <= .01 || pi == null) return;
+  const q = P[pi], [X, Y] = proj(q.bx, q.by + q.hy, q.bz);
+  size = size || (TALL ? 46 : 36);
+  const w = tw(label, size, 700) + 36, h = size + 26;
+  let bx = X + dx - w / 2, by = Y + dy - h;
+  bx = clamp(bx, 16, W - w - 16);
+  ctx.save(); ctx.globalAlpha *= a;
+  ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X, Y - 6); ctx.lineTo(clamp(X + dx, bx + 12, bx + w - 12), by + h); ctx.stroke();
+  ctx.beginPath(); ctx.arc(X, Y - 6, 7, 0, 7); ctx.fillStyle = color; ctx.fill();
+  rr(bx, by, w, h, 10); ctx.fillStyle = 'rgba(12,13,16,.88)'; ctx.fill(); ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.restore();
+  txt(label, bx + 18, by + size + 6, { size, weight: 700, color, alpha: a, sh: 0 });
+}
+
+// side panel geometry (wide: right column under the stats; tall: band above the caption)
+const SIDE = TALL ? { x: 36, y: 880, w: 1008 } : { x: 1252, y: 424, w: 624 };
+
+function overlay02(t) {
+  const a = win(t, 6.0, 13.0, .3); if (a <= .01) return;
+  const u = p(t, SWEEP[0], SWEEP[1] - SWEEP[0]), n = sweepN(u);
+  // first three calls: tags
+  FIRST3.forEach((pi, i) => {
+    const on = n > i ? 1 : 0, fade = 1 - p(t, 8.9, .5);
+    worldTag(pi, `Draw #${i + 1}`, C.text, a * on * fade, { dx: (i - 1) * 40, dy: -90 - i * 26 });
+  });
+  const s = SIDE, size = TALL ? 46 : 36;
+  const h = TALL ? 190 : 200;
+  panel(s.x, s.y, s.w, h, a);
+  txt('이 프레임을 그리는 순서대로', s.x + 32, s.y + size + 26, { size, weight: 700, alpha: a, sh: 0 });
+  const by = s.y + size + 62, bw = s.w - 64;
+  ctx.save(); ctx.globalAlpha = a;
+  rr(s.x + 32, by, bw, 22, 6); ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.fill();
+  if (n > 0) { rr(s.x + 32, by, Math.max(10, bw * n / N), 22, 6); const g = ctx.createLinearGradient(s.x + 32, 0, s.x + 32 + bw, 0); g.addColorStop(0, '#ff4f9a'); g.addColorStop(.5, '#ffd23f'); g.addColorStop(1, '#3d9bff'); ctx.fillStyle = g; ctx.fill(); }
+  ctx.restore();
+  txt('프랍 1개 = 드로우콜 1회 (개념도)', s.x + 32, by + 22 + size + 16, { size: TALL ? 46 : 34, weight: 500, color: C.dim, alpha: a, sh: 0 });
+}
+function overlay03(t) {
+  const a = win(t, 13.0, 17.4, .3); if (a <= .01) return;
+  const s = SIDE, size = TALL ? 46 : 36;
+  // a: logic / presentation split
+  const aA = win(t, 13.0, 14.9, .3), aB = win(t, 14.6, 17.4, .3);
+  worldTag(TAG_DOOR, '액터 · 문', C.actor, aA * a, { dx: TALL ? -120 : -160, dy: -110 });
+  worldTag(TAG_LAMP, '액터 · 조명', C.actor, aA * a, { dx: TALL ? 120 : 160, dy: -90 });
+  worldTag(TAG_ISM, 'ISM 인스턴스', '#c9d3e0', aA * a, { dx: 0, dy: TALL ? -210 : -200 });
+  if (aA > .01) {
+    const h = TALL ? 210 : 214;
+    panel(s.x, s.y, s.w, h, aA);
+    txt('논리 / 표현 이원화', s.x + 32, s.y + size + 24, { size, weight: 800, alpha: aA, sh: 0 });
+    swatch(s.x + 32, s.y + size + 54, size * .9, '#4b5361', aA);
+    txt('정적 프랍 → ISM 인스턴스', s.x + 32 + size * 1.3, s.y + size * 1.8 + 54, { size, weight: 600, alpha: aA, sh: 0 });
+    swatch(s.x + 32, s.y + size * 2 + 78, size * .9, C.actor, aA);
+    txt('상호작용 → 액터', s.x + 32 + size * 1.3, s.y + size * 2.8 + 78, { size, weight: 600, alpha: aA, sh: 0 });
+  }
+  if (aB > .01) {
+    const cols = TALL ? 3 : 2, rows = Math.ceil(7 / cols), rh = TALL ? 64 : 58;
+    const h = 92 + rows * rh + (TALL ? 0 : 10);
+    panel(s.x, s.y, s.w, h, aB);
+    txt('메시마다 한 배치', s.x + 32, s.y + size + 26, { size, weight: 800, alpha: aB, sh: 0 });
+    const items = TYPES.filter(d => !d.actor).map(d => [d.name, d.batch]).concat([['액터', C.actor]]);
+    items.forEach(([name, c], i) => {
+      const cx = s.x + 32 + (i % cols) * ((s.w - 64) / cols), cy = s.y + 92 + Math.floor(i / cols) * rh;
+      const kk = eo(p(t, 14.6 + i * .12, .4));
+      swatch(cx, cy + 4, size * .85, c, aB * kk);
+      txt(name, cx + size * 1.2, cy + size * .85, { size, weight: 600, alpha: aB * kk, sh: 0 });
+    });
+  }
+}
+function overlay03c(t) {
+  const a = win(t, 17.6, 21.2, .4); if (a <= .01 || !wallPlot) return;
+  const wp = wallPlot;
+  const pts = [[wp.x0, wp.y0, wp.z], [wp.x1, wp.y0, wp.z], [wp.x0, wp.y1, wp.z], [wp.x1, wp.y1, wp.z]].map(v => proj(...v));
+  const x0 = Math.min(...pts.map(q => q[0])) - 14, x1 = Math.max(...pts.map(q => q[0])) + 14;
+  const y0 = Math.min(...pts.map(q => q[1])) - 14, y1 = Math.max(...pts.map(q => q[1])) + 14;
+  const k = eo(p(t, 18.2, .6));
+  ctx.save(); ctx.globalAlpha = a * k; ctx.setLineDash([18, 10]); ctx.lineWidth = 4; ctx.strokeStyle = C.green;
+  rr(x0, y0, x1 - x0, y1 - y0, 10); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+  const size = TALL ? 52 : 44;
+  const label = '드로우콜 1회';
+  const lw = tw(label, size, 800) + 40;
+  panel(x0, y0 - size - 44, lw, size + 32, a * k, { stroke: C.green });
+  txt(label, x0 + 20, y0 - 30, { size, weight: 800, color: C.green, alpha: a * k, sh: 0 });
+  const code = 'PerInstanceCustomData = (R, G, B)', cs = TALL ? 40 : 36;
+  const cw = tw(code, cs, 600, true) + 40;
+  const cx = TALL ? clamp((x0 + x1) / 2 - cw / 2, 20, W - cw - 20) : clamp(x0, 20, W - cw - 20), cy = y1 + 22;
+  const k2 = eo(p(t, 18.8, .6));
+  panel(cx, cy, cw, cs + 34, a * k2);
+  txt(code, cx + 20, cy + cs + 8, { size: cs, weight: 600, mono: true, color: '#ffd23f', alpha: a * k2, sh: 0 });
+}
+function overlay04(t) {
+  const a = win(t, 21.8, 28.5, .4); if (a <= .01) return;
+  // create / destroy events at column borders
+  for (let i = 0; i < COLS; i++) {
+    const te = tEnter(i), tl = tLeave(i);
+    const ka = te > WALK.t0 + .05 ? win(t, te, te + 1.6, .25) : 0, kd = win(t, tl, tl + 1.6, .25);
+    const tag = (label, color, k) => {
+      if (k <= .01) return;
+      const [X, Y] = proj(OX + (i + .5) * CS, 7, ROAD_Z - CS * .2);
+      const size = TALL ? 46 : 38, w = tw(label, size, 800) + 36;
+      panel(X - w / 2, Y - size - 20, w, size + 30, a * k, { stroke: color });
+      txt(label, X, Y - 4, { size, weight: 800, color, align: 'center', alpha: a * k, sh: 0 });
+    };
+    tag('＋ 바디 생성', C.born, ka); tag('－ 바디 파괴', C.die, kd);
+  }
+  const x = WALK.x0 + WALK.v * Math.max(0, t - WALK.t0);
+  const [AX, AY] = proj(x, 3.2, ROAD_Z);
+  const lab = '인접 27칸 (3×3×3)', size = TALL ? 46 : 36, lw = tw(lab, size, 800) + 36;
+  const ky = TALL ? 150 : 160;
+  panel(AX - lw / 2, AY - ky - size, lw, size + 30, a, { stroke: C.body });
+  txt(lab, AX, AY - ky + 12, { size, weight: 800, color: C.body, align: 'center', alpha: a, sh: 0 });
+  // concept bars: total props grows, resident bodies stay constant
+  const s = SIDE, bA = win(t, 24.6, 28.5, .4);
+  if (bA > .01) {
+    const h = TALL ? 236 : 250, lx = s.x + 32, bx = s.x + (TALL ? 290 : 232), bw = s.w - (bx - s.x) - 40;
+    panel(s.x, s.y, s.w, h, bA);
+    txt('개념도', s.x + s.w - 32, s.y + size + 22, { size: TALL ? 40 : 30, weight: 600, color: C.dim, align: 'right', alpha: bA, sh: 0 });
+    const grow = eo(p(t, 24.8, 2.6));
+    txt('프랍 총량', lx, s.y + size + 82, { size, weight: 700, alpha: bA, sh: 0 });
+    ctx.save(); ctx.globalAlpha = bA;
+    rr(bx, s.y + 70 + size * .2, Math.max(8, bw * lerp(.18, 1, grow)), 26, 6); ctx.fillStyle = '#8b93a1'; ctx.fill(); ctx.restore();
+    txt('→ 1억', bx + bw * lerp(.18, 1, grow), s.y + 32 + size * .2, { size, weight: 800, align: 'right', alpha: bA * grow, sh: 0 });
+    txt('상주 바디', lx, s.y + size + 172, { size, weight: 700, color: C.body, alpha: bA, sh: 0 });
+    ctx.save(); ctx.globalAlpha = bA;
+    rr(bx, s.y + 160 + size * .2, bw * .16, 26, 6); ctx.fillStyle = C.body; ctx.fill(); ctx.restore();
+    txt('상수', bx + bw * .16 + 20, s.y + 160 + size * .2 + 24, { size, weight: 800, color: C.body, alpha: bA, sh: 0 });
+  }
+}
+function overlay05(t) {
+  const a = eo(p(t, 29.0, .7)); if (a <= .01) return;
+  const note = '한 시야 128만 프랍 (콜리전 ON) 렌더링 유지 실측';
+  if (!TALL) {
+    const x = 64, y = 196, w = 900, h = 660;
+    ctx.save(); ctx.globalAlpha = a;
+    const g = ctx.createLinearGradient(0, 0, 1100, 0); g.addColorStop(0, 'rgba(6,7,9,.72)'); g.addColorStop(1, 'rgba(6,7,9,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 1100, H); ctx.restore();
+    panel(x, y, w, h, a);
+    txt('결과 · 실측 (프랍 10만 개 스폰)', x + 40, y + 70, { size: 38, weight: 700, color: C.dim, alpha: a, sh: 0 });
+    const row = (label, from, to, yy, d) => {
+      const k = eo(p(t, 29.2 + d, .6));
+      txt(label, x + 40, yy - 128, { size: 38, weight: 700, color: C.dim, alpha: a * k, sh: 0 });
+      txt(from, x + 40, yy, { size: 110, weight: 800, mono: true, color: '#8f96a3', alpha: a * k, sh: 0 });
+      const fw = tw(from, 110, 800, true);
+      txt('→', x + 60 + fw, yy - 14, { size: 72, weight: 700, color: C.dim, alpha: a * k, sh: 0 });
+      txt(to, x + 150 + fw, yy, { size: 136, weight: 800, mono: true, color: C.green, alpha: a * k, sh: 0 });
+    };
+    row('드로우콜', '20,967', '503', y + 262, 0);
+    row('FPS', '16.5', '47.4', y + 452, .25);
+    ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = C.line; ctx.fillRect(x + 40, y + 494, w - 80, 2); ctx.restore();
+    const k3 = eo(p(t, 29.8, .6));
+    txt('스폰  49.8s → 2.6s', x + 40, y + 560, { size: 44, weight: 800, mono: true, alpha: a * k3, sh: 0 });
+    txt(note, x + 40, y + 624, { size: 36, weight: 600, color: '#dfe3ea', alpha: a * k3, sh: 0 });
+  } else {
+    const x = 36, y = 32, w = 1008, h = 640;
+    panel(x, y, w, h, a, { fill: 'rgba(16,17,20,.92)' });
+    txt('결과 · 실측 (프랍 10만 개 스폰)', x + 40, y + 76, { size: 46, weight: 700, color: C.dim, alpha: a, sh: 0 });
+    const row = (label, from, to, yy, d) => {
+      const k = eo(p(t, 29.2 + d, .6));
+      txt(label, x + 40, yy - 150, { size: 46, weight: 700, color: C.dim, alpha: a * k, sh: 0 });
+      txt(from, x + 40, yy, { size: 130, weight: 800, mono: true, color: '#8f96a3', alpha: a * k, sh: 0 });
+      const fw = tw(from, 130, 800, true);
+      txt('→', x + 60 + fw, yy - 18, { size: 80, weight: 700, color: C.dim, alpha: a * k, sh: 0 });
+      txt(to, x + 160 + fw, yy, { size: 150, weight: 800, mono: true, color: C.green, alpha: a * k, sh: 0 });
+    };
+    row('드로우콜', '20,967', '503', y + 320, 0);
+    row('FPS', '16.5', '47.4', y + 580, .25);
+    const k3 = eo(p(t, 29.8, .6));
+    scrim(H - 360, H, a * k3);
+    txt('스폰  49.8s → 2.6s', 44, H - 196, { size: 60, weight: 800, mono: true, alpha: a * k3 });
+    wrapLines(note, W - 88, 48).forEach((l, i) => txt(l, 44, H - 116 + i * 62, { size: 48, weight: 600, color: '#dfe3ea', alpha: a * k3 }));
+  }
+}
+function captions(t) {
+  const sw = (s, e) => win(t, s, e, .3);
+  caption('01', '유저가 지은 밀집 마을', '프랍 10만 개 스폰 — 화면이 끊긴다', sw(-1, 6.0));
+  caption('02', '프랍 하나 = 드로우콜 하나', '프랍마다 따로 그려서, 그리기 요청이 프랍 수만큼', sw(6.0, 13.0));
+  const a3 = sw(13.0, 17.4);
+  if (a3 > .01) {
+    caption('03', 'ISM 인스턴싱', '정적 프랍 = 인스턴스 · 상호작용하는 것만 액터', a3, a3 * win(t, 13.0, 14.9, .3));
+    caption('03', 'ISM 인스턴싱', '같은 메시는 한 번에 — 메시별 단일 배치', 0, a3 * win(t, 14.6, 17.4, .3));
+  }
+  caption('03', '인스턴스 색상 = GPU 커스텀 데이터', '색이 달라도 같은 배치 그대로', sw(17.4, 21.2));
+  const a4 = sw(21.2, 28.5);
+  if (a4 > .01) {
+    caption('04', '플레이어 주변 물리 청킹', '인접 27칸만 충돌 바디 생성 · 벗어나면 파괴', a4, a4 * win(t, 21.2, 24.9, .3));
+    caption('04', '플레이어 주변 물리 청킹', '프랍이 1억 개라도 물리 씬 상주 바디는 상수', 0, a4 * win(t, 24.6, 28.5, .3));
+  }
+}
+
+// ── frame ────────────────────────────────────────────────────
+function renderAt(t) {
+  t = clamp(t, 0, DURATION);
+  const fps = t < FLIP ? 16.5 : 47.4, tq = Math.floor(t * fps + 1e-6) / fps;   // the game's own frame clock
+  camSet(camAt(tq));
+  poseAvatar(t, tq);
+  AV.ring.material.opacity = .8;
+  const env = envAt(t); applyEnv(env);
+  // prop colours
+  for (const M of MESH) {
+    const arr = M.arr;
+    for (let k = 0; k < M.list.length; k++) { propColor(P[M.list[k]], t, _c); arr[k * 3] = _c[0]; arr[k * 3 + 1] = _c[1]; arr[k * 3 + 2] = _c[2]; }
+    M.m.instanceColor.needsUpdate = true;
+  }
+  physFrame(tq, env.phy * (t > 21.4 ? 1 : 0) * eo(p(t, 21.4, .5)));
+  composer.render();
+  ctx.setTransform(Q, 0, 0, Q, 0, 0); ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  ctx.drawImage(gl.domElement, 0, 0, W, H);
+  // view-mode switch: a scanline sweeping down at 6.0 (debug on) and 17.2 (debug off) / 21.0 / 28.3
+  for (const c of [6.0, 17.2, 21.0, 28.3]) {
+    const k = p(t, c, .45); if (k <= 0 || k >= 1) continue;
+    const y = eio(k) * H; ctx.fillStyle = 'rgba(120,180,255,.18)'; ctx.fillRect(0, y - 40, W, 40); ctx.fillStyle = 'rgba(190,225,255,.75)'; ctx.fillRect(0, y - 3, W, 3);
+  }
+  scrim(H - (TALL ? 560 : 300), H, TALL ? 1 : .95);
+  statBlock(t, TALL ? 1 - eo(p(t, 29.0, .5)) : 1);
+  viewChip(t);
+  overlay02(t); overlay03(t); overlay03c(t); overlay04(t);
+  captions(t);
+  overlay05(t);
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) {
+    try { document.fonts.add(await new FontFace(family, `url(../assets/fonts/${file})`, { weight }).load()); } catch (e) { /* fallback font */ }
+  }
+  await document.fonts.ready;
+  renderAt(0);
+})();
+
+// ── player (standalone only) ─────────────────────────────────
+if (!EMBED && !RENDER) {
+  const $ = id => document.getElementById(id);
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CHAPTERS = BEATS.map(b => [b[0], b[2], b[3]]);
+  $('scrub').setAttribute('aria-valuemax', DURATION);
+  const POSTER = 0;
+  let t = 0, playing = false, started = false, last = 0;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button');
+    b.innerHTML = `<span>${n}</span>${label}`;
+    b.addEventListener('click', e => { e.stopPropagation(); seek(s + .01); play(); });
+    $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing;
+    $('big').innerHTML = ended ? ICON.replay : ICON.play;
+    $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur && started));
+  }
+  function draw() { renderAt(started ? Math.min(t, DURATION) : POSTER); }
+  function play() { if (t >= DURATION) t = 0; started = true; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+  function frame(now) {
+    if (playing) {
+      t += (now - last) / 1000 * rate; last = now;
+      if (t >= DURATION) { t = DURATION; playing = false; }
+      draw(); ui();
+    }
+    requestAnimationFrame(frame);
+  }
+  const RATES = [1, .75, .5];
+  let rate = 1;
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) {
+    rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`);
+    try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ }
+  }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('big').addEventListener('click', e => { e.stopPropagation(); toggle(); });
+  $('play').addEventListener('click', toggle);
+  $('fs').addEventListener('click', () => {
+    const el = $('stage');
+    if (document.fullscreenElement) document.exitFullscreen?.(); else el.requestFullscreen?.().catch(() => {});
+  });
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+  });
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frame);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+}
+</script>
+</body>
+</html>
