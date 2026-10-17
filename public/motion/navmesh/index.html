@@ -1,0 +1,971 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>다이나믹 네비메시</title>
+<style>
+  /* One stage (16:9, or 4:5 with ?layout=tall), a slim transport bar, chapter chips, a short note. Godot server-viewer look. */
+  :root {
+    --bg: #1d2128; --surface: #262b34; --line: #39404d; --fg: #e6e9ee; --dim: #9aa3b0; --text2: #c4cad3;
+    --accent: #5aa0e0; --warm: #ff9a3c;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding-block: 16px; padding-inline: 16px; box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  body.tall .player { width: min(100%, calc((100vh - 170px) * 4 / 5)); }
+  .stage { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  body.tall .stage { aspect-ratio: 4 / 5; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); height: auto; aspect-ratio: 1; border-radius: 50%;
+    border: 1.5px solid var(--accent); background: rgba(29,33,40,.85); color: var(--fg); display: grid; place-items: center; cursor: pointer; transition: transform .15s; }
+  .big[hidden] { display: none; }
+  .big:hover { transform: scale(1.06); }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 14px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--accent); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(90,160,224,.25); }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 6px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(90,160,224,.12); }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 6px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  .notes { width: min(100%, 760px); margin-top: 40px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes h2 { font-size: 20px; line-height: 1.4; margin: 0 0 12px; text-wrap: balance; }
+  .notes p { color: var(--text2); margin: 0 0 14px; }
+  .notes b { color: var(--fg); }
+  .notes .fine { font-size: 13px; color: var(--dim); }
+  /* #poster: canvas only, loops (gallery thumbnails) */
+  body.poster { padding: 0; }
+  body.poster .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .big, body.poster .notes, body.poster .set { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+  /* ?embed: the résumé drives renderAt(t); canvas only */
+  body.embed { margin: 0; padding: 0; display: block; overflow: hidden; height: 100vh; }
+  body.embed .player { width: 100%; height: 100%; gap: 0; }
+  body.embed .bar, body.embed .chapters, body.embed .big, body.embed .notes, body.embed .set { display: none; }
+  body.embed .stage { border: 0; border-radius: 0; width: 100%; height: 100%; aspect-ratio: auto; cursor: default; }
+  body.embed canvas { object-fit: contain; }
+</style>
+
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="유저가 프랍을 놓고 치우자 NPC 경로가 프랍을 관통하는 문제, 영향받은 타일만 골라 복셀(Recast HeightField)에서 네비메시를 다시 만드는 과정, 재빌드는 백그라운드 스레드에서 돌고 메인 스레드는 계속 틱하다가 메인 스레드 Job이 새 타일을 교체하는 흐름, 교체된 네비메시 위에서 NPC가 다시 길을 찾아 돌아가는 모습을 Godot 서버 뷰어처럼 보여주는 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="33" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:33</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+    <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="이동"><a href="../../interactive.html">← 이력서로</a></nav>
+</div>
+<section class="notes" id="notes">
+  <h2>서버사이드 다이나믹 네비메시 <span class="fine">NCSOFT · Miniverse UE5 · 2023 – 2024</span></h2>
+  <article data-ch="01"><p><b>문제.</b> Miniverse는 유저가 월드를 실시간으로 짓고 바꾸는 UGC 샌드박스 MMO입니다. 프랍 하나를 놓거나 치우면 서버의 네비메시가 더 이상 월드와 맞지 않고, NPC 경로가 새 프랍을 그대로 관통합니다. 게임을 멈추지 않고 네비메시를 다시 만들어 바꿔 끼워야 합니다.</p></article>
+  <article data-ch="02"><p><b>접근.</b> 복셀(<b>Recast HeightField</b>) 기반으로 <b>DotRecast</b>(Recast/Detour .NET 포팅)를 써서, 프랍이 바뀌면 <b>영향받은 타일만</b> 다시 계산합니다. 재빌드는 <b>백그라운드 스레드</b>에서 돌고, 그동안 메인 스레드는 계속 틱합니다. 결과 교체는 <b>메인 스레드 Job</b>이 맡아 쓰기는 한 스레드에서만 일어나게 했습니다(쓰기 단일 스레드 원칙). 짧은 시간에 몰린 변경은 리빌드를 <b>배치</b>로 묶어 처리하고, NPC는 교체된 네비메시 위에서 다시 길을 찾습니다. 지형·길찾기·충돌을 실시간으로 보는 <b>Godot 기반 서버 뷰어</b>도 직접 만들어 개발·디버깅에 썼습니다.</p></article>
+  <article data-ch="05"><p><b>결과.</b> 프랍 변경 시 영향 타일만 재계산해 <b>수~수십 ms</b> 안에 반영합니다.</p></article>
+  <p class="fine">화면 속 타일 크기와 개수, 프랍, 지형, 경로, 스레드 타임라인의 길이와 비율은 이해를 돕기 위한 개념도·예시입니다. 수치는 영향 타일 재계산 시간 수~수십 ms만 실제 이력 기준입니다.</p>
+</section>
+<script type="importmap">
+{ "imports": { "three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/" } }
+</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  Navmesh — 서버사이드 다이나믹 네비메시 (Miniverse UE5). 게임 화면 재현 + 분해해 들어가기.
+//  Look: the owner's own tool, a Godot-based server viewer: slate editor viewport with Godot's red/blue axis grid,
+//  a tiled navmesh drawn in Godot's debug style (blue faces with per-polygon random tint, light edges, tile borders),
+//  UGC block props, NPC capsules and debug paths, plus a bottom dock with two thread lanes (main ticks / background).
+//  Story: a user places / removes props → the old mesh no longer matches the world (path cuts through the wall) →
+//  only the affected tiles are marked, lifted out and rebuilt from voxels (HeightField → walkable → polygons) on a
+//  background lane while the main lane keeps ticking → a main-thread Job swaps the tiles in → the NPC repaths around.
+//  Every frame is a pure function of t (all simulation is precomputed at load).
+// ─────────────────────────────────────────────────────────────
+import * as THREE from 'three';
+
+const QS = new URLSearchParams(location.search);
+const EMBED = QS.has('embed'), RENDER = QS.has('render'), TALL = QS.get('layout') === 'tall';
+const W = TALL ? 1080 : 1920, H = TALL ? 1350 : 1080, DURATION = 33;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const Q = EMBED ? clamp(+(QS.get('q') || 1) || 1, .4, 1) : 1;
+if (EMBED) document.body.classList.add('embed');
+if (TALL) document.body.classList.add('tall');
+const cv = document.getElementById('c');
+cv.width = Math.round(W * Q); cv.height = Math.round(H * Q);
+const ctx = cv.getContext('2d');
+const SANS = 'Pretendard, "WenQuanYi Zen Hei", "DejaVu Sans", sans-serif';
+const MONO = '"JetBrains Mono", Pretendard, "DejaVu Sans Mono", monospace';
+// Roles: blue = navmesh / main thread · orange = affected tiles / background rebuild · green = new tiles / walkable
+//        yellow = the NPC and its path · red = mismatch (old mesh under a new prop)
+const C = {
+  bg: '#22262e', panel: '#1b1f26', plate: 'rgba(30,34,42,.94)', line: '#3a414d', text: '#e8ebf0', dim: '#a2abb8', faint: '#737d8b',
+  blue: '#5aa0e0', nav: '#478cbf', orange: '#ff9a3c', green: '#6fe08f', yellow: '#ffd84a', red: '#ff5d5d',
+};
+
+// ── math / easing ────────────────────────────────────────────
+const lerp = (a, b, t) => a + (b - a) * t;
+const p = (t, s, d) => clamp((t - s) / d);
+const eo = t => 1 - Math.pow(1 - t, 3);
+const eio = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+// fade window; a window that starts at 0 is fully on at t = 0 (thumbnail)
+const win = (t, s, e, f = .45) => Math.min(s <= 0 ? 1 : eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+function hash2(x, z) { let h = Math.imul(x | 0, 374761393) + Math.imul(z | 0, 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+
+// ── timeline ─────────────────────────────────────────────────
+const HEAD = [
+  [0.0, 6.6, '01', '유저가 월드를 바꾼다', TALL ? '네비메시가 월드와 어긋남' : '프랍 배치·제거 → 네비메시가 월드와 어긋남'],
+  [6.6, 13.2, '02', '영향 타일만 재계산', '복셀(Recast HeightField) → 네비메시'],
+  [13.2, 16.6, '03', '비동기 빌드 → 메인 스레드 교체', TALL ? '쓰기는 메인 스레드 하나만' : '빌드는 백그라운드, 쓰기는 메인 스레드 하나만'],
+  [16.6, 26.6, '04', 'NPC 재경로', TALL ? '교체된 네비메시로 길찾기' : '교체된 네비메시 위에서 다시 길찾기'],
+  [26.6, 33.0, '05', '결과', ''],
+];
+const T_P1 = 1.0, T_P2 = 2.2, T_P3 = 3.4;          // user edits
+const T_BATCH = [1.3, 6.4], T_BUILD = [6.7, 13.3];  // batch window, background rebuild (dock lanes)
+const T_JOB = [13.6, 15.4];                         // main-thread swap job
+const T_REPATH = 16.9, T_GO = 18.0, T_ARRIVE = 26.0;
+
+// ── the world: 40 × 24 cells, 8 × 8 cell tiles (sizes are 개념도) ─
+const GX = 40, GZ = 24, TS = 8, TX = GX / TS, TZ = GZ / TS;
+const BASE = [ // x, z, w, d, h, colour  (UGC block props)
+  [3, 3, 5, 4, 2.6, '#c7724f'], [20, 1, 10, 6, 3.0, '#8d97a6'], [6, 16, 3, 3, 4.2, '#d8c49c'], [12, 15, 2, 2, 3.0, '#6f9a6a'],
+  [16, 3, 2, 2, 1.4, '#a7794a'], [35, 3, 3, 3, 2.2, '#c7724f'], [12, 9, 2, 1, 1.0, '#a7794a'], [32, 16, 5, 4, 3.4, '#d8c49c'],
+  [26, 19, 2, 2, 1.2, '#b98a52'], // P3: removed by a user
+];
+const P1 = [23, 9, 2, 8, 2.6, '#ece0c6'], P2 = [14, 19, 3, 2, 1.6, '#cf8a56'], P3I = 8;
+const idx = (i, j) => i + j * GX;
+function blockedOf(list) {
+  const b = new Uint8Array(GX * GZ), hgt = new Float32Array(GX * GZ);
+  for (const [x, z, w, d, h] of list) for (let j = z; j < z + d; j++) for (let i = x; i < x + w; i++) { b[idx(i, j)] = 1; hgt[idx(i, j)] = h; }
+  return { b, hgt };
+}
+function walkOf(b) { // agent radius = 1 cell: walkable if the 3×3 around is free; the outer ring is not walkable
+  const w = new Uint8Array(GX * GZ);
+  for (let j = 1; j < GZ - 1; j++) for (let i = 1; i < GX - 1; i++) {
+    let ok = 1; for (let dj = -1; dj <= 1 && ok; dj++) for (let di = -1; di <= 1; di++) if (b[idx(i + di, j + dj)]) { ok = 0; break; }
+    w[idx(i, j)] = ok;
+  }
+  return w;
+}
+const OLDB = blockedOf(BASE), NEWB = blockedOf([...BASE.filter((_, i) => i !== P3I), P1, P2]);
+const WOLD = walkOf(OLDB.b), WNEW = walkOf(NEWB.b);
+// affected tiles: tiles overlapped by a changed prop's bounds grown by the agent radius
+const DIRTY = new Set();
+for (const [x, z, w, d] of [P1, P2, BASE[P3I]]) {
+  for (let tz = 0; tz < TZ; tz++) for (let tx = 0; tx < TX; tx++)
+    if (x - 1 < (tx + 1) * TS && x + w + 1 > tx * TS && z - 1 < (tz + 1) * TS && z + d + 1 > tz * TS) DIRTY.add(tx + tz * TX);
+}
+for (let j = 0; j < GZ; j++) for (let i = 0; i < GX; i++)
+  if (WOLD[idx(i, j)] !== WNEW[idx(i, j)] && !DIRTY.has(Math.floor(i / TS) + Math.floor(j / TS) * TX)) console.warn('walk change outside dirty tiles', i, j);
+// per-tile convex polygons (greedy rectangles of walkable cells, never crossing a tile border)
+function rectsOf(walk, tx, tz) {
+  const used = new Uint8Array(TS * TS), out = [], ok = (i, j) => walk[idx(tx * TS + i, tz * TS + j)] && !used[i + j * TS];
+  for (let j = 0; j < TS; j++) for (let i = 0; i < TS; i++) {
+    if (!ok(i, j)) continue;
+    let w = 1; while (i + w < TS && ok(i + w, j)) w++;
+    let d = 1; grow: while (j + d < TS) { for (let k = 0; k < w; k++) if (!ok(i + k, j + d)) break grow; d++; }
+    for (let jj = j; jj < j + d; jj++) for (let ii = i; ii < i + w; ii++) used[ii + jj * TS] = 1;
+    out.push({ x0: tx * TS + i, z0: tz * TS + j, x1: tx * TS + i + w, z1: tz * TS + j + d, tile: tx + tz * TX });
+  }
+  return out;
+}
+const OLDR = [], NEWR = [];
+for (let tz = 0; tz < TZ; tz++) for (let tx = 0; tx < TX; tx++) {
+  OLDR[tx + tz * TX] = rectsOf(WOLD, tx, tz);
+  NEWR[tx + tz * TX] = DIRTY.has(tx + tz * TX) ? rectsOf(WNEW, tx, tz) : OLDR[tx + tz * TX];
+}
+
+// ── pathfinding (precomputed): grid A* + line-of-sight smoothing; polygon A* for the search flood ─
+function astar(walk, s, g) {
+  const N = GX * GZ, gs = new Float32Array(N).fill(1e9), from = new Int32Array(N).fill(-1), closed = new Uint8Array(N);
+  const si = idx(...s), gi = idx(...g), open = [si]; gs[si] = 0;
+  const hh = i => Math.hypot(i % GX - g[0], Math.floor(i / GX) - g[1]);
+  while (open.length) {
+    let bi = 0; for (let k = 1; k < open.length; k++) if (gs[open[k]] + hh(open[k]) < gs[open[bi]] + hh(open[bi])) bi = k;
+    const c = open.splice(bi, 1)[0]; if (c === gi) break; if (closed[c]) continue; closed[c] = 1;
+    const cx = c % GX, cz = Math.floor(c / GX);
+    for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dz) continue; const nx = cx + dx, nz = cz + dz;
+      if (nx < 0 || nz < 0 || nx >= GX || nz >= GZ || !walk[idx(nx, nz)]) continue;
+      if (dx && dz && (!walk[idx(cx + dx, cz)] || !walk[idx(cx, cz + dz)])) continue;
+      const n = idx(nx, nz), ng = gs[c] + (dx && dz ? Math.SQRT2 : 1);
+      if (ng < gs[n]) { gs[n] = ng; from[n] = c; open.push(n); }
+    }
+  }
+  const out = []; for (let c = gi; c >= 0; c = from[c]) out.unshift([c % GX + .5, Math.floor(c / GX) + .5]);
+  return out;
+}
+function los(walk, a, b) {
+  const n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) * 4);
+  for (let k = 0; k <= n; k++) { const x = lerp(a[0], b[0], k / n), z = lerp(a[1], b[1], k / n); if (!walk[idx(Math.floor(x), Math.floor(z))]) return false; }
+  return true;
+}
+function smooth(walk, pts) {
+  const out = [pts[0]]; let i = 0;
+  while (i < pts.length - 1) { let j = pts.length - 1; while (j > i + 1 && !los(walk, pts[i], pts[j])) j--; out.push(pts[j]); i = j; }
+  return out;
+}
+function polyline(pts) { const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1])); return { pts, cum, len: cum[cum.length - 1] }; }
+function along(pl, s) {
+  s = clamp(s, 0, pl.len); let i = 1; while (i < pl.pts.length - 1 && pl.cum[i] < s) i++;
+  const a = pl.pts[i - 1], b = pl.pts[i], u = (s - pl.cum[i - 1]) / (pl.cum[i] - pl.cum[i - 1] || 1);
+  return [lerp(a[0], b[0], u), lerp(a[1], b[1], u), Math.atan2(b[0] - a[0], b[1] - a[1])];
+}
+const S = [2, 12], G = [37, 11];
+const OLDP = polyline(smooth(WOLD, astar(WOLD, S, G)));
+const XR = 20.3; // the NPC has reached here when it repaths (just before the new wall)
+let sR = 0; for (let s = 0; s < OLDP.len; s += .02) { if (along(OLDP, s)[0] >= XR) { sR = s; break; } }
+const RPOS = along(OLDP, sR);
+const NEWP = polyline(smooth(WNEW, astar(WNEW, [Math.floor(RPOS[0]), Math.floor(RPOS[1])], G)));
+NEWP.pts[0] = [RPOS[0], RPOS[1]]; Object.assign(NEWP, polyline(NEWP.pts));
+// polygon graph A* on the swapped mesh (only for the visual flood order)
+const ALLR = NEWR.flat();
+const ADJ = ALLR.map(() => []);
+ALLR.forEach((a, i) => ALLR.forEach((b, k) => {
+  if (i >= k) return;
+  const ox = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), oz = Math.min(a.z1, b.z1) - Math.max(a.z0, b.z0);
+  if ((ox > 0 && (a.z1 === b.z0 || b.z1 === a.z0)) || (oz > 0 && (a.x1 === b.x0 || b.x1 === a.x0))) { ADJ[i].push(k); ADJ[k].push(i); }
+}));
+const ctr = r => [(r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2];
+const polyAt = (x, z) => ALLR.findIndex(r => x >= r.x0 && x < r.x1 && z >= r.z0 && z < r.z1);
+const FLOOD = (() => {
+  const s0 = polyAt(RPOS[0], RPOS[1]), g0 = polyAt(G[0] + .5, G[1] + .5), gc = ctr(ALLR[g0]);
+  const gs = new Map([[s0, 0]]), from = new Map(), closed = [], open = [s0], cl = new Set();
+  const hh = i => Math.hypot(ctr(ALLR[i])[0] - gc[0], ctr(ALLR[i])[1] - gc[1]);
+  while (open.length) {
+    let bi = 0; for (let k = 1; k < open.length; k++) if (gs.get(open[k]) + hh(open[k]) < gs.get(open[bi]) + hh(open[bi])) bi = k;
+    const c = open.splice(bi, 1)[0]; if (cl.has(c)) continue; cl.add(c); closed.push(c); if (c === g0) break;
+    for (const n of ADJ[c]) { const ng = gs.get(c) + Math.hypot(ctr(ALLR[c])[0] - ctr(ALLR[n])[0], ctr(ALLR[c])[1] - ctr(ALLR[n])[1]); if (ng < (gs.has(n) ? gs.get(n) : 1e9)) { gs.set(n, ng); from.set(n, c); open.push(n); } }
+  }
+  const corr = []; for (let c = g0; c !== undefined; c = from.get(c)) corr.unshift(c);
+  return { closed, corr };
+})();
+// ambient NPCs (the main thread keeps ticking): loops / ping-pong on walkable cells
+const AMB = [
+  { pl: polyline([[1.5, 1.5], [9.5, 1.5], [9.5, 8.5], [1.5, 8.5], [1.5, 1.5]]), v: 1.5, o: 3 },
+  { pl: polyline([[30.5, 14.5], [38.5, 14.5], [38.5, 21.5], [30.5, 21.5], [30.5, 14.5]]), v: 1.4, o: 11 },
+  { pl: polyline([[2.5, 21.5], [11.5, 21.5]]), v: 1.1, o: 2, ping: true },
+];
+function ambAt(a, t) { let s = (t + a.o) * a.v; if (a.ping) { const L = a.pl.len, m = s % (2 * L); s = m < L ? m : 2 * L - m; return along(a.pl, s); } return along(a.pl, s % a.pl.len); }
+// the main NPC: walks the old path, stops to repath, then walks the new path
+const V1 = sR / T_REPATH, V2 = NEWP.len / (T_ARRIVE - T_GO);
+function npcAt(t) {
+  if (t < T_REPATH) return along(OLDP, V1 * t);
+  if (t < T_GO) { const a = along(OLDP, sR), b = along(NEWP, .3); return [a[0], a[1], lerp(a[2], b[2], eio(p(t, T_REPATH + .4, .6)))]; }
+  return along(NEWP, V2 * (t - T_GO));
+}
+
+// ── three.js scene ───────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(Math.round(W * Q), Math.round(H * Q), false);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setClearColor(C.bg);
+const scene = new THREE.Scene();
+const camera = new THREE.OrthographicCamera(-W / 2, W / 2, H / 2, -H / 2, .1, 400);
+scene.add(new THREE.HemisphereLight('#dfe7f2', '#3a3f48', 1.6));
+const sun = new THREE.DirectionalLight('#fff4e4', 2.1);
+sun.position.set(GX / 2 - 14, 30, GZ / 2 + 8); sun.target.position.set(GX / 2, 0, GZ / 2); scene.add(sun, sun.target);
+sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.bias = -.0015;
+Object.assign(sun.shadow.camera, { left: -30, right: 30, top: 24, bottom: -24, near: 1, far: 80 }); sun.shadow.camera.updateProjectionMatrix();
+
+// viewport grid (Godot editor style: grey lines, red X axis, blue Z axis)
+{
+  const pos = [], col = [], Y = -1.25, R = 120, gcol = new THREE.Color('#30353e');
+  for (let k = -R; k <= R; k += 2) {
+    const cx = k === 0 ? new THREE.Color('#7a3a40') : gcol, cz = k === 0 ? new THREE.Color('#34507e') : gcol;
+    pos.push(GX / 2 - R, Y, GZ / 2 + k, GX / 2 + R, Y, GZ / 2 + k); col.push(...cx.toArray(), ...cx.toArray());
+    pos.push(GX / 2 + k, Y, GZ / 2 - R, GX / 2 + k, Y, GZ / 2 + R); col.push(...cz.toArray(), ...cz.toArray());
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  scene.add(new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true })));
+}
+// board: a slab with a cell-tinted top
+{
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(GX, 1.2, GZ), new THREE.MeshLambertMaterial({ color: '#3d4139' }));
+  slab.position.set(GX / 2, -.63, GZ / 2); slab.receiveShadow = true; scene.add(slab);
+  const pos = [], col = [], c = new THREE.Color();
+  for (let j = 0; j < GZ; j++) for (let i = 0; i < GX; i++) {
+    const n = hash2(i, j) * .05 + hash2(i >> 2, j >> 2) * .05;
+    c.setHSL(.58, .08, .11 + n * .7);
+    for (const [x, z] of [[i, j], [i, j + 1], [i + 1, j + 1], [i, j], [i + 1, j + 1], [i + 1, j]]) { pos.push(x, .001, z); col.push(c.r, c.g, c.b); }
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
+  const top = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true })); top.receiveShadow = true; scene.add(top);
+}
+// flat ribbon helper: quads lying in the XZ plane
+function ribbons(segs, w, y) {
+  const pos = [];
+  for (const [ax, az, bx, bz] of segs) {
+    const dx = bx - ax, dz = bz - az, l = Math.hypot(dx, dz) || 1, nx = -dz / l * w / 2, nz = dx / l * w / 2;
+    const ex = dx / l * w / 2, ez = dz / l * w / 2;
+    const A = [ax - ex + nx, az - ez + nz], B = [bx + ex + nx, bz + ez + nz], Cc = [bx + ex - nx, bz + ez - nz], D = [ax - ex - nx, az - ez - nz];
+    for (const q of [A, B, Cc, A, Cc, D]) pos.push(q[0], y, q[1]);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); return g;
+}
+// tile borders on the ground
+{
+  const segs = [];
+  for (let k = 0; k <= TX; k++) segs.push([k * TS, 0, k * TS, GZ]);
+  for (let k = 0; k <= TZ; k++) segs.push([0, k * TS, GX, k * TS]);
+  scene.add(new THREE.Mesh(ribbons(segs, .1, .012), new THREE.MeshBasicMaterial({ color: '#272b31', side: THREE.DoubleSide })));
+}
+// navmesh tile meshes: faces (Godot debug: per-polygon random tint) + light edges
+function navTile(rects, inset = .07) {
+  const pos = [], col = [], c = new THREE.Color(), segs = [];
+  for (const r of rects) {
+    const k = .78 + hash2(r.x0 * 7 + r.x1, r.z0 * 13 + r.z1) * .22;
+    c.setRGB(k, k, k);
+    const x0 = r.x0 + inset, x1 = r.x1 - inset, z0 = r.z0 + inset, z1 = r.z1 - inset;
+    for (const [x, z] of [[x0, z0], [x1, z0], [x1, z1], [x0, z0], [x1, z1], [x0, z1]]) { pos.push(x, .03, z); col.push(c.r, c.g, c.b); }
+    segs.push([x0, z0, x1, z0], [x1, z0, x1, z1], [x1, z1, x0, z1], [x0, z1, x0, z0]);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  const fm = new THREE.MeshBasicMaterial({ vertexColors: true, color: C.nav, transparent: true, opacity: .62, depthWrite: false, side: THREE.DoubleSide });
+  const em = new THREE.MeshBasicMaterial({ color: '#a9d2f5', transparent: true, opacity: .9, depthWrite: false, side: THREE.DoubleSide });
+  const grp = new THREE.Group(); const f = new THREE.Mesh(g, fm), e = new THREE.Mesh(ribbons(segs, .07, .045), em);
+  f.renderOrder = 1; e.renderOrder = 2; grp.add(f, e); grp.userData = { fm, em }; return grp;
+}
+const OLDT = OLDR.map(r => { const m = navTile(r); scene.add(m); return m; });
+const lift = new THREE.Group(); scene.add(lift);
+const NEWT = new Map(); for (const ti of DIRTY) { const m = navTile(NEWR[ti]); lift.add(m); NEWT.set(ti, m); }
+// props
+const PROPS = [...BASE, P1, P2].map(([x, z, w, d, h, c], i) => {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w - .06, h, d - .06), new THREE.MeshLambertMaterial({ color: c, transparent: true }));
+  m.castShadow = true; m.receiveShadow = true; m.position.set(x + w / 2, h / 2, z + d / 2);
+  const e = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), new THREE.LineBasicMaterial({ color: '#1a1d22', transparent: true, opacity: .55 }));
+  m.add(e); scene.add(m); return { m, e, h, base: m.position.clone() };
+});
+const PR1 = PROPS[BASE.length], PR2 = PROPS[BASE.length + 1], PR3 = PROPS[P3I];
+// voxels of the affected tiles (HeightField spans), inside the lifted copy
+const VOX = [];
+{
+  const cols = [...DIRTY].map(ti => [ti % TX, Math.floor(ti / TX)]);
+  const xs = cols.map(c => c[0] * TS), minX = Math.min(...xs), maxX = Math.max(...xs) + TS;
+  for (const [tx, tz] of cols) for (let j = tz * TS; j < tz * TS + TS; j++) for (let i = tx * TS; i < tx * TS + TS; i++) {
+    const sw = (i - minX) / (maxX - minX), k = idx(i, j);
+    VOX.push({ x: i + .5, y: -.75, z: j + .5, sw, kind: 'under', lay: 0 });
+    VOX.push({ x: i + .5, y: -.25, z: j + .5, sw, kind: NEWB.b[k] ? 'under' : WNEW[k] ? 'walk' : 'edge', lay: 1 });
+    if (NEWB.b[k]) { const n = Math.round(NEWB.hgt[k] / .5); for (let l = 0; l < n; l++) VOX.push({ x: i + .5, y: .25 + l * .5, z: j + .5, sw, kind: 'prop', lay: 2 + l }); }
+  }
+}
+const voxMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: '#ffffff' }), VOX.length);
+voxMesh.castShadow = true; voxMesh.frustumCulled = false; lift.add(voxMesh);
+const VC = { neutral: new THREE.Color('#9aa3b2'), walk: new THREE.Color(C.green), edge: new THREE.Color('#6a717d'), prop: new THREE.Color('#ff6b5e'), under: new THREE.Color('#5b6270') };
+// NPCs
+const capG = new THREE.CapsuleGeometry(.36, .62, 4, 10);
+const npc = new THREE.Mesh(capG, new THREE.MeshLambertMaterial({ color: C.yellow, emissive: '#5a4300' })); npc.castShadow = true; npc.scale.setScalar(1.35); scene.add(npc);
+const ring = new THREE.Mesh(new THREE.RingGeometry(.7, .95, 32), new THREE.MeshBasicMaterial({ color: C.yellow, transparent: true, opacity: .9, depthWrite: false }));
+ring.rotation.x = -Math.PI / 2; ring.renderOrder = 4; scene.add(ring);
+const AMBM = AMB.map(() => { const m = new THREE.Mesh(capG, new THREE.MeshLambertMaterial({ color: '#d7dde6' })); m.castShadow = true; scene.add(m); return m; });
+
+// ── camera (orthographic, like the viewer's top-front view) ──
+const YAW = -.16, PITCH = .9;
+const CAMK = TALL ? [
+  [0, { x: 20, y: 0, z: 12, zoom: 23.5, sx: 540, sy: 640 }],
+  [6.6, { x: 20, y: 0, z: 12, zoom: 23.5, sx: 540, sy: 640 }],
+  [7.6, { x: 21, y: 2.6, z: 14, zoom: 24, sx: 540, sy: 700 }],
+  [13.6, { x: 21, y: 2.6, z: 14, zoom: 24, sx: 540, sy: 700 }],
+  [15.0, { x: 20, y: 0, z: 12, zoom: 23.5, sx: 540, sy: 640 }],
+  [26.6, { x: 20, y: 0, z: 12, zoom: 23.5, sx: 540, sy: 640 }],
+  [27.8, { x: 20, y: 0, z: 12, zoom: 22, sx: 540, sy: 930 }],
+] : [
+  [0, { x: 20, y: 0, z: 12, zoom: 28.5, sx: 1140, sy: 472 }],
+  [6.6, { x: 20, y: 0, z: 12, zoom: 28.5, sx: 1140, sy: 472 }],
+  [7.6, { x: 21, y: 2.6, z: 14, zoom: 29.5, sx: 1160, sy: 492 }],
+  [13.6, { x: 21, y: 2.6, z: 14, zoom: 29.5, sx: 1160, sy: 492 }],
+  [15.0, { x: 20, y: 0, z: 12, zoom: 28.5, sx: 1140, sy: 472 }],
+  [26.6, { x: 20, y: 0, z: 12, zoom: 28.5, sx: 1140, sy: 472 }],
+  [27.8, { x: 20, y: 0, z: 12, zoom: 25, sx: 1420, sy: 600 }],
+];
+function camAt(t) {
+  let i = 0; while (i < CAMK.length - 1 && CAMK[i + 1][0] <= t) i++;
+  const [t0, a] = CAMK[i], [t1, b] = CAMK[Math.min(i + 1, CAMK.length - 1)];
+  const u = t1 > t0 ? eio(clamp((t - t0) / (t1 - t0))) : 0, o = {};
+  for (const k in a) o[k] = lerp(a[k], b[k], u);
+  return o;
+}
+const DIR = new THREE.Vector3(Math.sin(YAW) * Math.cos(PITCH), Math.sin(PITCH), Math.cos(YAW) * Math.cos(PITCH));
+const _v = new THREE.Vector3();
+function proj(x, y, z) { _v.set(x, y, z).project(camera); return { x: (_v.x + 1) / 2 * W, y: (1 - _v.y) / 2 * H }; }
+
+// ── animate the 3D scene for time t ──────────────────────────
+const LIFT = 7.2;
+const _o = new THREE.Object3D(), _c = new THREE.Color();
+function liftAt(t) { return LIFT * eio(p(t, 7.3, 1.0)) * (1 - eio(p(t, T_JOB[0] + .1, .8))); }
+function animate(t) {
+  // props: P1 / P2 drop in, P3 shrinks away. Before the drop, P1 is a translucent placement preview.
+  const drop = (pr, t0) => {
+    const k = p(t, t0, .45), fall = 1 - eo(k);
+    pr.m.position.y = pr.base.y + (t < t0 ? 1.4 : fall * 6);
+    pr.m.material.opacity = t < t0 ? .32 : 1; pr.m.material.depthWrite = t >= t0;
+    pr.m.castShadow = t >= t0; pr.e.material.opacity = t < t0 ? .9 : .55; pr.e.material.color.set(t < t0 ? '#ffffff' : '#1a1d22');
+    const sq = t >= t0 + .45 ? 1 - .12 * Math.sin(p(t, t0 + .45, .25) * Math.PI) : 1; pr.m.scale.set(1 / sq ** .5, sq, 1 / sq ** .5);
+  };
+  drop(PR1, T_P1);
+  PR2.m.visible = t >= T_P2 - .5; if (PR2.m.visible) drop(PR2, T_P2);
+  const k3 = eio(p(t, T_P3, .55)); PR3.m.visible = k3 < 1; PR3.m.scale.setScalar(Math.max(.001, 1 - k3)); PR3.m.position.y = PR3.base.y * (1 - k3);
+  // navmesh: old tiles everywhere; the affected ones fade out as the new ones land
+  const focus = win(t, 6.9, 15.6, .6) * .55, swapK = eo(p(t, T_JOB[0] + .5, .5));
+  OLDT.forEach((m, ti) => {
+    const d = DIRTY.has(ti), op = d ? (1 - swapK) * lerp(1, .55, eo(p(t, 6.9, .6))) : 1 - focus;
+    m.visible = op > .01; m.userData.fm.opacity = .62 * op; m.userData.em.opacity = .9 * op;
+  });
+  // the lifted copy: voxels grow → classify → collapse into polygons → drop into place (main-thread job)
+  const L = liftAt(t); lift.position.y = L; lift.visible = t > 7.2;
+  const polyK = (sw) => eo(p(t, 10.9 + sw * .8, .45));
+  const greenK = 1 - eio(p(t, T_JOB[0] + 1.0, 1.6));
+  for (const [ti, m] of NEWT) {
+    const sw = ((ti % TX) * TS - 8) / 24, k = polyK(sw) * (t < 26.6 ? 1 : 1);
+    m.visible = k > 0; m.userData.fm.opacity = .66 * k; m.userData.em.opacity = .95 * k;
+    m.userData.fm.color.set(C.nav).lerp(_c.set('#3fbf68'), greenK); m.userData.em.color.set('#a9d2f5').lerp(_c.set('#b8f5c8'), greenK);
+  }
+  let vis = 0;
+  if (t > 7.6 && t < 12.6) {
+    for (let i = 0; i < VOX.length; i++) {
+      const v = VOX[i], g = eo(p(t, 8.1 + v.sw * 1.2 + v.lay * .06, .45)), cls = eo(p(t, 9.5 + v.sw * .6, .4)), col = eio(p(t, 10.7 + v.sw * .8, .5));
+      if (col >= .98) continue; const sy = g * (1 - col); if (sy <= .002) continue;
+      const hgt = .46 * sy, y = v.kind === 'prop' ? lerp(v.y, .02 + (v.lay - 2) * .01, col) : v.y;
+      _o.position.set(v.x, y, v.z); _o.scale.set(.9, hgt, .9); _o.updateMatrix(); voxMesh.setMatrixAt(vis, _o.matrix);
+      _c.copy(VC.neutral).lerp(VC[v.kind], cls); voxMesh.setColorAt(vis, _c); vis++;
+    }
+  }
+  voxMesh.count = vis; voxMesh.visible = vis > 0; voxMesh.instanceMatrix.needsUpdate = true; if (voxMesh.instanceColor) voxMesh.instanceColor.needsUpdate = true;
+  // NPCs
+  const [nx, nz, nh] = npcAt(t);
+  npc.position.set(nx, .36 * 1.35 + .31 * 1.35, nz); ring.position.set(nx, .06, nz);
+  ring.material.opacity = .6 + .3 * Math.sin(t * 5);
+  AMB.forEach((a, i) => { const [x, z] = ambAt(a, t); AMBM[i].position.set(x, .67, z); });
+}
+
+// ── 2D overlay helpers ───────────────────────────────────────
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function font(sz, wt = 500, mono = false) { ctx.font = `${wt} ${sz}px ${mono ? MONO : SANS}`; }
+function tw(s, size, weight = 500, mono = false) { font(size, weight, mono); return ctx.measureText(s).width; }
+function txt(s, x, y, o = {}) {
+  const { size = 36, weight = 600, color = C.text, align = 'left', mono = false, alpha = 1, shadow = true } = o;
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; font(size, weight, mono); ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  if (shadow) { ctx.shadowColor = 'rgba(14,16,20,.95)'; ctx.shadowBlur = size * .4; }
+  ctx.fillText(s, x, y); ctx.restore();
+}
+function runs(parts, x, y, size, weight, o = {}) {
+  const { align = 'left', alpha = 1 } = o;
+  const ws = parts.map(([s, , m, sz]) => tw(s, sz || size, weight, m)); const tot = ws.reduce((a, b) => a + b, 0);
+  let xx = align === 'center' ? x - tot / 2 : align === 'right' ? x - tot : x;
+  parts.forEach(([s, c, m, sz], i) => { txt(s, xx, y, { size: sz || size, weight, color: c || C.text, mono: m, alpha }); xx += ws[i]; });
+  return tot;
+}
+// in-scene label, Godot inspector style: dot on the anchor, a straight leader, a dark plate with a coloured left bar
+function tag(pt, title, col, a, o = {}) {
+  if (a <= 0) return;
+  const q = Array.isArray(pt) ? proj(...pt) : pt;
+  const { dx = 0, dy = -100, size = TALL ? 46 : 36, sub = '', subSize = TALL ? 40 : 30, dot = true } = o;
+  const pad = size * .45;
+  const w = Math.max(tw(title, size, 800), sub ? tw(sub, subSize, 600) : 0) + pad * 2 + 8;
+  const h = sub ? size + subSize + size * .95 : size * 1.6;
+  let bx = q.x + dx - w / 2, by = q.y + dy - h / 2;
+  bx = clamp(bx, 24, W - 24 - w); by = clamp(by, 24, H - 24 - h);
+  ctx.save(); ctx.globalAlpha *= a;
+  if (dot) {
+    const ex = clamp(q.x, bx + 10, bx + w - 10), ey = q.y < by ? by : q.y > by + h ? by + h : by + h / 2;
+    ctx.strokeStyle = rgba(col, .95); ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(ex, ey); ctx.stroke();
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(q.x, q.y, 7, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#14171c'; ctx.lineWidth = 2; ctx.stroke();
+  }
+  rr(bx, by, w, h, 5); ctx.fillStyle = C.plate; ctx.fill(); ctx.strokeStyle = rgba(col, .5); ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = col; ctx.fillRect(bx, by + 6, 6, h - 12);
+  txt(title, bx + pad + 8, by + size * 1.13, { size, weight: 800, shadow: false });
+  if (sub) txt(sub, bx + pad + 8, by + size * 1.13 + subSize * 1.3, { size: subSize, weight: 600, color: C.dim, shadow: false });
+  ctx.restore();
+}
+function shade(a, y0, y1, dark = .9) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; const g = ctx.createLinearGradient(0, y0, 0, y1);
+  g.addColorStop(0, `rgba(27,30,37,${dark})`); g.addColorStop(1, 'rgba(27,30,37,0)'); ctx.fillStyle = g;
+  ctx.fillRect(0, Math.min(y0, y1), W, Math.abs(y1 - y0)); ctx.restore();
+}
+function sideShade(a, w) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; const g = ctx.createLinearGradient(0, 0, w, 0);
+  g.addColorStop(0, 'rgba(27,30,37,.95)'); g.addColorStop(.62, 'rgba(27,30,37,.7)'); g.addColorStop(1, 'rgba(27,30,37,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, H); ctx.restore();
+}
+function poly(pts, close = true) { ctx.beginPath(); pts.forEach((q, i) => i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); if (close) ctx.closePath(); }
+const rectPts = (x0, z0, x1, z1, y = 0) => [proj(x0, y, z0), proj(x1, y, z0), proj(x1, y, z1), proj(x0, y, z1)];
+const L = TALL ? { mx: 60, ny: 84, hy: 168, hs: 60, sy: 238, ss: 46 } : { mx: 92, ny: 78, hy: 152, hs: 58, sy: 214, ss: 38 };
+
+// ── world overlays: paths, mismatch, affected tiles, flood ───
+function pathLine(pl, s0, s1, col, a, o = {}) {
+  if (a <= 0 || s1 <= s0) return;
+  const { width = 7, dash = null, y = .1 } = o, pts = [];
+  pts.push(along(pl, s0)); for (let i = 1; i < pl.pts.length - 1; i++) if (pl.cum[i] > s0 && pl.cum[i] < s1) pts.push(pl.pts[i]); pts.push(along(pl, s1));
+  const sp = pts.map(q => proj(q[0], y, q[1]));
+  ctx.save(); ctx.globalAlpha = a; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (dash) ctx.setLineDash(dash);
+  ctx.strokeStyle = 'rgba(16,18,22,.85)'; ctx.lineWidth = width + 5; poly(sp, false); ctx.stroke();
+  ctx.strokeStyle = col; ctx.lineWidth = width; poly(sp, false); ctx.stroke(); ctx.restore();
+}
+function goalFlag(a) {
+  if (a <= 0) return;
+  const q = proj(G[0] + .5, 0, G[1] + .5), s = TALL ? 1.1 : 1;
+  ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = C.yellow; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.ellipse(q.x, q.y, 18 * s, 9 * s, 0, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(q.x, q.y - 62 * s); ctx.stroke();
+  ctx.fillStyle = C.yellow; ctx.beginPath(); ctx.moveTo(q.x, q.y - 62 * s); ctx.lineTo(q.x + 34 * s, q.y - 50 * s); ctx.lineTo(q.x, q.y - 38 * s); ctx.fill();
+  ctx.restore();
+}
+function cursor(x, y, a, minus = false) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); const s = TALL ? 1.5 : 1.3; ctx.scale(s, s);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 30); ctx.lineTo(8, 23); ctx.lineTo(13, 34); ctx.lineTo(18, 32); ctx.lineTo(13, 21); ctx.lineTo(23, 21); ctx.closePath();
+  ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.strokeStyle = '#14171c'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = minus ? C.red : C.green; ctx.beginPath(); ctx.arc(26, 38, 10, 0, 7); ctx.fill(); ctx.strokeStyle = '#14171c'; ctx.stroke();
+  ctx.strokeStyle = '#14171c'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(21, 38); ctx.lineTo(31, 38); if (!minus) { ctx.moveTo(26, 33); ctx.lineTo(26, 43); } ctx.stroke();
+  ctx.restore();
+}
+function tileOutline(ti, y, col, a, o = {}) {
+  const tx = ti % TX, tz = Math.floor(ti / TX), { fill = 0, dash = null, lw = 4 } = o;
+  const q = rectPts(tx * TS + .1, tz * TS + .1, tx * TS + TS - .1, tz * TS + TS - .1, y);
+  ctx.save(); ctx.globalAlpha = a;
+  if (fill) { poly(q); ctx.fillStyle = rgba(col, fill); ctx.fill(); }
+  if (dash) ctx.setLineDash(dash); poly(q); ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.stroke(); ctx.restore();
+}
+function world(t) {
+  // 1 · old path (yellow) from the NPC to the goal; the part through the new wall turns red
+  const [nx, nz] = npcAt(t), sN = t < T_REPATH ? V1 * t : sR;
+  const oldA = (1 - eio(p(t, T_REPATH + .3, .8))) * (1 - .8 * win(t, 7.3, 14.6, .5));
+  const k1 = eo(p(t, T_P1 + .45, .4));
+  // where the old path enters / leaves the new wall's footprint (grown by the agent radius)
+  let sIn = 0, sOut = 0; for (let s = 0; s < OLDP.len; s += .05) { const [x, z] = along(OLDP, s); const inside = !WNEW[idx(Math.floor(x), Math.floor(z))] && x > 18 && x < 30; if (inside && !sIn) sIn = s; if (inside) sOut = s; }
+  if (oldA > 0) {
+    const dim = t > T_REPATH ? .55 : 1;
+    pathLine(OLDP, sN, OLDP.len, C.yellow, oldA * dim, { dash: t > T_REPATH ? [14, 12] : null });
+    if (k1 > 0) pathLine(OLDP, Math.max(sN, sIn), sOut, C.red, oldA * k1, { width: 9 });
+  }
+  goalFlag(win(t, 0, 33, .5));
+  // mismatch: the old polygons now under the new wall, drawn x-ray on top of it
+  const km = win(t, T_P1 + .5, 7.2, .4);
+  if (km > 0) {
+    ctx.save(); ctx.globalAlpha = km; ctx.setLineDash([10, 8]); ctx.strokeStyle = C.red; ctx.lineWidth = 3;
+    for (const r of OLDR.flat()) {
+      if (r.x1 <= P1[0] || r.x0 >= P1[0] + P1[2] || r.z1 <= P1[1] || r.z0 >= P1[1] + P1[3]) continue;
+      const x0 = Math.max(r.x0, P1[0]) + .08, x1 = Math.min(r.x1, P1[0] + P1[2]) - .08, z0 = Math.max(r.z0, P1[1]) + .08, z1 = Math.min(r.z1, P1[1] + P1[3]) - .08;
+      const q = rectPts(x0, z0, x1, z1, P1[4] + .02); poly(q); ctx.fillStyle = rgba(C.red, .22); ctx.fill(); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // 2 · affected tiles (orange) in the world, and the lifted copy with guide lines
+  const kd = win(t, 6.7, T_JOB[0] + .9, .45);
+  if (kd > 0) {
+    const pulse = .75 + .25 * Math.sin(t * 6);
+    for (const ti of DIRTY) tileOutline(ti, .05, C.orange, kd * pulse, { fill: .1, lw: 4 });
+    const Lh = liftAt(t);
+    if (Lh > .3) {
+      const kl = clamp(Lh / LIFT * 1.5);
+      ctx.save(); ctx.globalAlpha = kd * kl * .8; ctx.setLineDash([6, 8]); ctx.strokeStyle = C.orange; ctx.lineWidth = 2;
+      for (const ti of DIRTY) {
+        const tx = ti % TX, tz = Math.floor(ti / TX);
+        for (const [x, z] of [[tx * TS, tz * TS], [tx * TS + TS, tz * TS], [tx * TS + TS, tz * TS + TS], [tx * TS, tz * TS + TS]]) {
+          const a = proj(x, 0, z), b = proj(x, Lh - 1, z); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+      }
+      ctx.restore();
+      for (const ti of DIRTY) tileOutline(ti, Lh + .05, t > 10.9 ? C.green : C.orange, kd * kl, { lw: 3, dash: [12, 8] });
+    }
+  }
+  // swap flash on landing
+  const kf = win(t, T_JOB[0] + .7, T_JOB[0] + 2.4, .3);
+  if (kf > 0) for (const ti of DIRTY) tileOutline(ti, .05, C.green, kf, { fill: .16, lw: 5 });
+  // 4 · repath: polygon search flood, then the new path
+  const kfl = win(t, T_REPATH, T_GO + 1.4, .3);
+  if (kfl > 0) {
+    const n = FLOOD.closed.length, shown = Math.floor(n * eo(p(t, T_REPATH + .1, .75)));
+    ctx.save(); ctx.globalAlpha = kfl;
+    for (let i = 0; i < shown; i++) { const r = ALLR[FLOOD.closed[i]]; poly(rectPts(r.x0 + .1, r.z0 + .1, r.x1 - .1, r.z1 - .1, .06)); ctx.fillStyle = rgba(C.yellow, .34); ctx.fill(); }
+    const kc = eo(p(t, T_REPATH + .85, .3));
+    if (kc > 0) for (const i of FLOOD.corr) { const r = ALLR[i]; poly(rectPts(r.x0 + .1, r.z0 + .1, r.x1 - .1, r.z1 - .1, .06)); ctx.fillStyle = rgba(C.yellow, .28 * kc); ctx.fill(); ctx.strokeStyle = rgba(C.yellow, .8 * kc); ctx.lineWidth = 2; ctx.stroke(); }
+    ctx.restore();
+  }
+  const kp = eo(p(t, T_REPATH + 1.0, .5));
+  if (kp > 0) {
+    const s0 = t < T_GO ? 0 : V2 * (t - T_GO), kg = 1 - eo(p(t, 26.6, .6));
+    pathLine(NEWP, 0, s0, C.yellow, .45 * kg, { width: 5, dash: [10, 10] });
+    pathLine(NEWP, s0, Math.max(s0, NEWP.len * kp), C.yellow, 1, { width: 8 });
+  }
+}
+
+// ── header, viewer chrome ────────────────────────────────────
+function header(t) {
+  for (const [s, e, n, title, sub] of HEAD.slice(0, 4)) {
+    const a = win(t, s, e, .45); if (a <= 0) continue;
+    shade(a, 0, TALL ? 420 : 300);
+    const k = s <= 0 ? 1 : eo(p(t, s, .6)), x = L.mx - (1 - k) * 24;
+    ctx.save(); ctx.globalAlpha = a;
+    txt(n, L.mx, L.ny, { size: TALL ? 34 : 28, weight: 700, color: C.blue, mono: true });
+    txt('/ 05', L.mx + tw(n, TALL ? 34 : 28, 700, true) + 10, L.ny, { size: TALL ? 34 : 28, weight: 500, color: C.faint, mono: true });
+    if (!TALL) txt('Miniverse · 서버 뷰어 (Godot)', L.mx + 150, L.ny, { size: 28, weight: 600, color: C.faint });
+    txt(title, x, L.hy, { size: L.hs, weight: 800 });
+    txt(sub, L.mx, L.sy, { size: L.ss, weight: 500, color: C.dim });
+    ctx.restore();
+  }
+}
+// layer toggles of the server viewer: 지형 · 길찾기 · 충돌 (길찾기 on)
+function layers(a) {
+  if (a <= 0) return;
+  const size = TALL ? 40 : 32, items = [['지형', true], ['길찾기', true], ['충돌', false]], gap = 10, padx = size * .5, box = size * .62;
+  const ws = items.map(([s]) => tw(s, size, 700) + padx * 2 + box + size * .35), tot = ws.reduce((x, y) => x + y, 0) + gap * (items.length - 1);
+  let x = W - (TALL ? 50 : 72) - tot; const y = TALL ? 34 : 34, h = size * 1.6;
+  ctx.save(); ctx.globalAlpha = a;
+  items.forEach(([s, on], i) => {
+    const hi = s === '길찾기';
+    rr(x, y, ws[i], h, 5); ctx.fillStyle = hi ? 'rgba(71,140,191,.28)' : C.plate; ctx.fill(); ctx.strokeStyle = hi ? C.blue : C.line; ctx.lineWidth = 2; ctx.stroke();
+    const bx = x + padx, by = y + (h - box) / 2;
+    rr(bx, by, box, box, 3); ctx.fillStyle = on ? (hi ? C.blue : '#7f8a99') : 'transparent'; ctx.fill(); ctx.strokeStyle = on ? 'transparent' : C.faint; ctx.lineWidth = 2; ctx.stroke();
+    if (on) { ctx.strokeStyle = '#14171c'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx + box * .22, by + box * .52); ctx.lineTo(bx + box * .43, by + box * .72); ctx.lineTo(bx + box * .8, by + box * .3); ctx.stroke(); }
+    txt(s, bx + box + size * .35, y + h * .68, { size, weight: 700, color: on ? C.text : C.faint, shadow: false });
+    x += ws[i] + gap;
+  });
+  ctx.restore();
+}
+// Godot's view gizmo: filled circles for +axes, hollow for −axes
+function gizmo(a) {
+  if (a <= 0 || TALL) return;
+  const cx = W - 120, cy = 210, r = 46, m = camera.matrixWorldInverse;
+  const ax = [[1, 0, 0, '#e8505b', 'X'], [0, 1, 0, '#8bd450', 'Y'], [0, 0, 1, '#4f8fe8', 'Z']];
+  const pts = [];
+  for (const [x, y, z, c, n] of ax) for (const sg of [1, -1]) { const d = new THREE.Vector3(x * sg, y * sg, z * sg).transformDirection(m); pts.push({ d, c, n, sg }); }
+  pts.sort((A, B) => A.d.z - B.d.z);
+  ctx.save(); ctx.globalAlpha = a * .9;
+  ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.beginPath(); ctx.arc(cx, cy, r + 22, 0, 7); ctx.fill();
+  for (const { d, c, n, sg } of pts) {
+    const x = cx + d.x * r, y = cy - d.y * r;
+    if (sg > 0) { ctx.strokeStyle = c; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke(); }
+    ctx.beginPath(); ctx.arc(x, y, sg > 0 ? 13 : 10, 0, 7);
+    if (sg > 0) { ctx.fillStyle = c; ctx.fill(); font(16, 800, true); ctx.fillStyle = '#14171c'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(n, x, y + 1); }
+    else { ctx.fillStyle = rgba(c, .25); ctx.fill(); ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.stroke(); }
+  }
+  ctx.restore();
+}
+// 02 · the rebuild pipeline inside the affected tiles
+const PIPE = [['복셀화', 8.1, C.orange], ['걷는 면 필터', 9.5, C.green], ['폴리곤 생성', 10.8, C.blue]];
+function pipeline(t) {
+  const a = win(t, 7.6, 13.2, .45); if (a <= 0) return;
+  const size = TALL ? 46 : 36, h = size * 1.6, gap = TALL ? 44 : 52;
+  const ws = PIPE.map(([s]) => tw(s, size, 800) + size * 1.1), tot = ws.reduce((x, y) => x + y, 0) + gap * 2;
+  let x = TALL ? (W - tot) / 2 : L.mx; const y = TALL ? 286 : 262;
+  ctx.save(); ctx.globalAlpha = a;
+  PIPE.forEach(([s, ts, col], i) => {
+    const on = eo(p(t, ts, .4)), cur = t >= ts && (i === 2 || t < PIPE[i + 1][1]);
+    rr(x, y, ws[i], h, 6); ctx.fillStyle = cur ? rgba(col, .26) : C.plate; ctx.fill();
+    ctx.strokeStyle = rgba(col, lerp(.3, 1, on)); ctx.lineWidth = cur ? 3 : 2; ctx.stroke();
+    txt(s, x + ws[i] / 2, y + h * .68, { size, weight: 800, align: 'center', color: on > .5 ? C.text : C.faint, shadow: false });
+    if (i < 2) {
+      const ax = x + ws[i] + 8, bx = x + ws[i] + gap - 8, ay = y + h / 2;
+      ctx.strokeStyle = rgba('#c9d2dc', .7); ctx.fillStyle = rgba('#c9d2dc', .7); ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx - 8, ay); ctx.stroke(); ctx.beginPath(); ctx.moveTo(bx, ay); ctx.lineTo(bx - 12, ay - 8); ctx.lineTo(bx - 12, ay + 8); ctx.fill();
+    }
+    x += ws[i] + gap;
+  });
+  ctx.restore();
+}
+
+// ── dock: thread lanes (Godot bottom panel) ──────────────────
+const DK = TALL
+  ? { y0: 934, x0: 40, x1: 1040, nowX: 700, v: 104, l1: [1000, 82], l2: [1160, 82], lab: 46, labAbove: true }
+  : { y0: 792, x0: 300, x1: 1888, nowX: 1290, v: 140, l1: [818, 78], l2: [918, 78], lab: 36, labAbove: false };
+function dock(t) {
+  const a = 1 - eio(p(t, 26.6, .7)); if (a <= 0) return;
+  const off = (1 - a) * 90, X = tau => DK.nowX + (tau - t) * DK.v;
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(0, off);
+  ctx.fillStyle = C.panel; ctx.fillRect(0, DK.y0, W, H - DK.y0); ctx.fillStyle = C.line; ctx.fillRect(0, DK.y0, W, 2);
+  const lanes = [[DK.l1, '메인 스레드', C.blue], [DK.l2, TALL ? '백그라운드 스레드' : '백그라운드', C.orange]];
+  for (const [[ly, lh], name, col] of lanes) {
+    if (DK.labAbove) txt(name, DK.x0, ly - 16, { size: DK.lab, weight: 800, color: col, shadow: false });
+    else { const nm = name; txt(nm, 48, ly + lh * .64, { size: DK.lab, weight: 800, color: col, shadow: false }); }
+    rr(DK.x0, ly, DK.x1 - DK.x0, lh, 6); ctx.fillStyle = '#15181e'; ctx.fill();
+  }
+  ctx.save(); rr(DK.x0, DK.y0, DK.x1 - DK.x0, H - DK.y0, 0); ctx.clip();
+  const [y1, h1] = DK.l1, [y2, h2] = DK.l2;
+  // main thread ticks: never stop
+  for (let k = Math.floor((t - 12) / .5); k < (t + 12) / .5; k++) {
+    const s = k * .5 + .08, e = s + .34; if (s >= T_JOB[0] - .3 && s < T_JOB[1]) continue;
+    const xs = X(s), xe = X(e); if (xe < DK.x0 || xs > DK.x1) continue;
+    const past = e <= t, cur = s <= t && t < e;
+    rr(xs, y1 + 12, xe - xs, h1 - 24, 4);
+    ctx.fillStyle = past ? rgba(C.blue, .7) : cur ? C.blue : rgba(C.blue, .12); ctx.fill();
+    if (!past && !cur) { ctx.strokeStyle = rgba(C.blue, .35); ctx.lineWidth = 1.5; ctx.stroke(); }
+  }
+  // user edits arrive on the main thread, then are collected into one batch
+  const EV = [[T_P1 + .45, '+'], [T_P2 + .45, '+'], [T_P3 + .3, '−']];
+  const kb = t >= T_BATCH[0];
+  if (kb) {
+    const xs = X(T_BATCH[0]), xe = X(Math.min(t, T_BATCH[1]));
+    rr(xs, y2 + 8, Math.max(0, xe - xs), h2 - 16, 6); ctx.fillStyle = rgba(C.orange, .1); ctx.fill();
+    ctx.setLineDash([10, 7]); ctx.strokeStyle = C.orange; ctx.lineWidth = 2.5; ctx.stroke(); ctx.setLineDash([]);
+    ctx.save(); rr(xs, y2, Math.max(0, xe - xs), h2, 0); ctx.clip();
+    txt(TALL ? '변경 모아 1회' : '배치 · 변경을 모아 한 번에', xs + 20, y2 + h2 * .66, { size: DK.lab, weight: 800, color: C.orange, shadow: false });
+    ctx.restore();
+  }
+  for (const [tau, sgn] of EV) {
+    if (t < tau) continue;
+    const x = X(tau), r = h1 * .36;
+    if (!TALL) {
+      ctx.strokeStyle = rgba('#ffffff', .55); ctx.lineWidth = 2.5; ctx.setLineDash([5, 5]);
+      ctx.beginPath(); ctx.moveTo(x, y1 + h1 / 2 + r); ctx.lineTo(x, y2 + 8); ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.beginPath(); ctx.arc(x, y1 + h1 / 2, r, 0, 7); ctx.fillStyle = sgn === '+' ? C.green : C.red; ctx.fill(); ctx.strokeStyle = '#15181e'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.strokeStyle = '#15181e'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(x - r * .5, y1 + h1 / 2); ctx.lineTo(x + r * .5, y1 + h1 / 2);
+    if (sgn === '+') { ctx.moveTo(x, y1 + h1 / 2 - r * .5); ctx.lineTo(x, y1 + h1 / 2 + r * .5); } ctx.stroke();
+  }
+  // the background rebuild
+  if (t >= T_BUILD[0]) {
+    const xs = X(T_BUILD[0]), xe = X(Math.min(t, T_BUILD[1]));
+    rr(xs, y2 + 8, Math.max(0, xe - xs), h2 - 16, 6); ctx.fillStyle = rgba(C.orange, .85); ctx.fill();
+    ctx.save(); rr(xs, y2, Math.max(0, xe - xs), h2, 0); ctx.clip();
+    txt(TALL ? 'DotRecast 리빌드' : 'DotRecast 리빌드 · 영향 타일만', xs + 20, y2 + h2 * .66, { size: DK.lab, weight: 800, color: '#1b1205', shadow: false });
+    ctx.restore();
+  }
+  // the swap job on the main thread
+  if (t >= T_BUILD[1]) {
+    const ka = eo(p(t, T_BUILD[1], .3)), ax = X(T_BUILD[1]), bx = X(T_JOB[0] + .15);
+    ctx.save(); ctx.globalAlpha *= ka; ctx.strokeStyle = C.green; ctx.fillStyle = C.green; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(ax - 6, y2 + 8); ctx.bezierCurveTo(ax - 6, y2 - 24, bx, y1 + h1 + 30, bx, y1 + h1 - 6); ctx.stroke();
+    ctx.restore();
+  }
+  if (t >= T_JOB[0]) {
+    const xs = X(T_JOB[0]), xe = X(Math.min(t, T_JOB[1]));
+    rr(xs, y1 + 6, Math.max(0, xe - xs), h1 - 12, 6); ctx.fillStyle = C.green; ctx.fill();
+    ctx.save(); rr(xs, y1, Math.max(0, xe - xs), h1, 0); ctx.clip();
+    txt(TALL ? '교체' : '교체 Job', xs + 16, y1 + h1 * .66, { size: DK.lab, weight: 800, color: '#0d2014', shadow: false });
+    ctx.restore();
+  }
+  // "ticks keep going" note in the future part of the main lane while the rebuild runs
+  const kn = win(t, T_BUILD[0] + .3, T_BUILD[1] + .2, .4);
+  if (kn > 0) {
+    const s = TALL ? '틱은 계속' : '메인은 계속 틱', w = tw(s, DK.lab, 800) + 32, x = DK.nowX + 24;
+    ctx.save(); ctx.globalAlpha *= kn; rr(x, y1 + 8, w, h1 - 16, 6); ctx.fillStyle = 'rgba(21,24,30,.92)'; ctx.fill(); ctx.strokeStyle = C.blue; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+    txt(s, x + 16, y1 + h1 * .66, { size: DK.lab, weight: 800, color: C.blue, alpha: kn, shadow: false });
+  }
+  ctx.restore();
+  // now line
+  ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(DK.nowX, y1 - (DK.labAbove ? 4 : 10)); ctx.lineTo(DK.nowX, y2 + h2 + 8); ctx.stroke();
+  ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(DK.nowX - 9, y1 - 18); ctx.lineTo(DK.nowX + 9, y1 - 18); ctx.lineTo(DK.nowX, y1 - 6); ctx.fill();
+  ctx.restore();
+}
+function footnote(t) {
+  const res = t >= 27;
+  const s = res ? '* 수~수십 ms만 실제 수치(영향 타일 재계산), 화면은 개념도' : '* 타일 크기·개수, 프랍, 경로, 스레드 시간 축은 개념도 · 예시';
+  txt(s, W - (TALL ? 36 : 48), H - (TALL ? 26 : 26), { size: TALL ? 28 : 26, weight: 500, color: C.faint, align: 'right', alpha: .95 });
+}
+
+// ── beat overlays ────────────────────────────────────────────
+function ov01(t) {
+  const a = win(t, 0, 6.8, .45); if (a <= 0) return;
+  // placement preview + cursor for P1, then P2, then the removal of P3
+  const top1 = proj(P1[0] + 1, P1[4] + 1.5, P1[1] + 1.5), top2 = proj(P2[0] + 1.5, P2[4] + 1.4, P2[1] + 1), top3 = proj(BASE[P3I][0] + 1, 1.2, BASE[P3I][1] + 1);
+  cursor(top1.x + 10, top1.y - 6 + eo(p(t, T_P1, .3)) * 40, a * (1 - eo(p(t, T_P1 + .5, .4))));
+  cursor(top2.x + 10, top2.y - 6, win(t, T_P2 - .5, T_P2 + .9, .3));
+  cursor(top3.x + 10, top3.y - 10, win(t, T_P3 - .5, T_P3 + .9, .3), true);
+  tag([P1[0] + 1, P1[4] + 1.6 * (1 - eo(p(t, T_P1, .45))), P1[1] + 1], '유저 배치', C.green, a * (1 - eo(p(t, T_P1 + 1.2, .4))), TALL ? { dx: -180, dy: -150 } : { dx: -150, dy: -130 });
+  tag([P1[0] + 1, P1[4], 12.6], '경로가 프랍을 관통', C.red, win(t, T_P1 + .9, 6.8, .4), TALL ? { dx: 60, dy: -300, sub: '네비메시는 옛 모습 그대로' } : { dx: 360, dy: 200, sub: '네비메시는 옛 모습 그대로' });
+  tag([BASE[P3I][0] + 1, .6, BASE[P3I][1] + 1], '− 제거', C.red, win(t, T_P3, 6.0, .3), TALL ? { dx: 220, dy: 110 } : { dx: -250, dy: 100 });
+  const [nx, nz] = npcAt(t);
+  tag([nx, 1.8, nz], 'NPC', C.yellow, a * (1 - eo(p(t, T_P1 + .9, .4))), TALL ? { dx: 30, dy: -110 } : { dx: 0, dy: -90 });
+}
+function ov02(t) {
+  if (t < 6.6 || t > 13.6) return;
+  const cx = 28.5, cz = 12; // a point on the affected block
+  tag([4 * TS, liftAt(t) - .5, 1.6 * TS], TALL ? 'HeightField' : 'Recast HeightField', C.orange, win(t, 8.4, 10.8, .4), TALL ? { dx: 60, dy: -150 } : { dx: 300, dy: 40, sub: '칸마다 높이 구간(span)' });
+  tag([4 * TS, liftAt(t), 1.6 * TS], TALL ? '새 타일' : '새 타일 · 아직 미반영', C.green, win(t, 11.3, 13.4, .4), TALL ? { dx: 60, dy: -150 } : { dx: 300, dy: 40, sub: '백그라운드에서 완성' });
+  tag([4, 0, 11], '나머지 타일은 그대로', C.blue, win(t, 7.0, 9.8, .4), TALL ? { dx: 170, dy: -150 } : { dx: -230, dy: 170 });
+  void cx; void cz;
+}
+function ov03(t) {
+  if (t < 13 || t > 17) return;
+  tag([2.5 * TS, .2, 1.5 * TS], '메인 스레드 Job이 교체', C.green, win(t, T_JOB[0] + .6, 16.6, .4), TALL ? { dx: 40, dy: -240, sub: '쓰기는 한 스레드에서만' } : { dx: -300, dy: -250, sub: '쓰기는 한 스레드에서만' });
+  const [x, z] = ambAt(AMB[1], t);
+  tag([x, 1.4, z], 'NPC는 그동안에도 이동', '#d7dde6', win(t, 13.3, 16.4, .4), TALL ? { dx: -140, dy: 150 } : { dx: 150, dy: -120 });
+}
+function ov04(t) {
+  if (t < 16.4) return;
+  const a = win(t, 16.8, 26.6, .4);
+  const [nx, nz] = npcAt(t);
+  tag([nx, 1.8, nz], t < T_GO + .4 ? '새 메시로 길찾기' : 'NPC 재경로', C.yellow, a, TALL ? { dx: -60, dy: -170 } : { dx: -120, dy: -150 });
+  const mid = along(NEWP, NEWP.len * .48);
+  tag([mid[0], .2, mid[1]], '새 프랍을 돌아서', C.yellow, win(t, T_GO + .6, 26.6, .4), TALL ? { dx: 60, dy: 150 } : { dx: 120, dy: 140 });
+}
+function ov05(t) {
+  const a = eo(p(t, 26.7, .8)); if (a <= 0) return;
+  const ko = eo(p(t, 27.5, .8));
+  for (const ti of DIRTY) tileOutline(ti, .05, C.green, ko * .9, { fill: .08, lw: 3, dash: [12, 8] });
+  pathLine(NEWP, 0, NEWP.len, C.yellow, ko * .45, { width: 5, dash: [10, 10] });
+  tag([3.5 * TS, .1, 2 * TS + 6], '영향 타일만 교체', C.green, ko, TALL ? { dx: 120, dy: 170 } : { dx: 120, dy: 200 });
+  const k2 = eo(p(t, 27.6, .8));
+  const chips = (list, x, y, size, gap, rowGap, maxX) => {
+    let xx = x, yy = y;
+    list.forEach(([s, c], i) => {
+      const kk = eo(p(t, 28.0 + i * .2, .5)); if (kk <= 0) return;
+      const w = tw(s, size, 700) + size * 1.1;
+      if (xx + w > maxX) { xx = x; yy += rowGap; }
+      ctx.save(); ctx.globalAlpha = a * kk; rr(xx, yy - size * 1.15, w, size * 1.65, 5); ctx.fillStyle = rgba(c, .15); ctx.fill(); ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+      txt(s, xx + size * .55, yy, { size, weight: 700, color: c, alpha: kk, shadow: false });
+      xx += w + gap;
+    });
+  };
+  ctx.save(); ctx.globalAlpha = a;
+  if (!TALL) {
+    sideShade(1, 1100);
+    txt('프랍이 바뀌면 영향 타일만 재계산', 100, 300, { size: 42, weight: 700, color: C.dim });
+    runs([['수~수십', C.text, false, 150], [' ms', C.orange, false, 120]], 92, 460, 150, 800);
+    txt('복셀(Recast HeightField) + DotRecast', 100, 550, { size: 40, weight: 700, alpha: k2 });
+    chips([['비동기 빌드 → 메인 스레드 교체', C.blue], ['리빌드 배치', C.orange], ['NPC 재경로', C.yellow], ['Godot 서버 뷰어', '#c9d2dc']], 100, 670, 36, 16, 84, 1000);
+  } else {
+    shade(1, 0, 680, .94);
+    txt('프랍이 바뀌면 영향 타일만', 60, 110, { size: 50, weight: 700, color: C.dim });
+    runs([['수~수십', C.text, false, 150], [' ms', C.orange, false, 120]], 54, 270, 150, 800);
+    txt('복셀 + DotRecast 재계산', 60, 360, { size: 50, weight: 800, alpha: k2 });
+    chips([['비동기 빌드 → 메인 교체', C.blue], ['리빌드 배치', C.orange], ['Godot 서버 뷰어', '#c9d2dc']], 60, 470, 46, 16, 92, 1030);
+  }
+  ctx.restore();
+}
+
+// ── frame ────────────────────────────────────────────────────
+function renderAt(t) {
+  t = clamp(+t || 0, 0, DURATION);
+  const c = camAt(t);
+  camera.zoom = c.zoom;
+  camera.position.set(c.x, c.y, c.z).addScaledVector(DIR, 100); camera.up.set(0, 1, 0); camera.lookAt(c.x, c.y, c.z);
+  camera.setViewOffset(W, H, W / 2 - c.sx, H / 2 - c.sy, W, H);
+  camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+  animate(t);
+  renderer.render(scene, camera);
+  ctx.setTransform(Q, 0, 0, Q, 0, 0); ctx.globalAlpha = 1;
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(renderer.domElement, 0, 0, W, H);
+  world(t);
+  ov04(t); ov03(t); ov02(t); ov01(t);
+  header(t); pipeline(t);
+  const kc = 1 - eio(p(t, 26.6, .6));
+  layers(kc); gizmo(kc);
+  dock(t);
+  ov05(t);
+  footnote(t);
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+window.STATS = { dirty: [...DIRTY], oldPolys: OLDR.flat().length, newPolys: ALLR.length, vox: VOX.length, oldLen: OLDP.len, newLen: NEWP.len, flood: FLOOD.closed.length };
+
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) {
+    try { document.fonts.add(await new FontFace(family, `url(../assets/fonts/${file})`, { weight }).load()); } catch (e) { /* fall back */ }
+  }
+  await document.fonts.ready;
+  renderAt(0);
+})();
+
+// ── player (standalone only) ─────────────────────────────────
+if (!EMBED && !RENDER) {
+  const $ = id => document.getElementById(id);
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CHAPTERS = HEAD.map(h => [h[0], h[2], h[3].split(' → ')[0]]);
+  $('scrub').setAttribute('aria-valuemax', Math.round(DURATION));
+  let t = 0, playing = false, started = false, last = 0;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button');
+    b.innerHTML = `<span>${n}</span>` + label;
+    b.addEventListener('click', () => { seek(s + .01); play(); });
+    $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing;
+    $('big').innerHTML = ended ? ICON.replay : ICON.play;
+    $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur && started));
+  }
+  function draw() { renderAt(Math.min(t, DURATION)); }
+  function play() { if (t >= DURATION) t = 0; started = true; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+  function frame(now) {
+    if (playing) {
+      t += (now - last) / 1000 * rate; last = now;
+      if (t >= DURATION) { t = DURATION; playing = false; }
+      draw(); ui();
+    }
+    requestAnimationFrame(frame);
+  }
+  const RATES = [1, .75, .5];
+  let rate = 1;
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) {
+    rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`);
+    try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ }
+  }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('play').addEventListener('click', toggle);
+  $('fs').addEventListener('click', () => { const el = $('stage'); if (document.fullscreenElement) document.exitFullscreen?.(); else el.requestFullscreen?.().catch(() => {}); });
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+  });
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frame);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+}
+</script>
