@@ -76,7 +76,7 @@
 <body>
 <div class="player">
   <div class="stage" id="stage">
-    <canvas id="c" width="1920" height="1080" aria-label="거대 NPC와 싸우는 필드를 게임 화면으로 재현한 뒤, 서버 디버그 뷰로 부위 판정·서버 본 애니메이션·HIT 프레임·이동 궤적 판정을 보여 주는 모션그래픽"></canvas>
+    <canvas id="c" width="1920" height="1080" aria-label="거대 NPC와 싸우는 필드를 게임 화면 예시로 보여 준 뒤, 서버 디버그 뷰로 부위 판정·서버 본 애니메이션·HIT 프레임·이동 궤적 판정을 보여 주는 모션그래픽"></canvas>
     <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
   </div>
   <div class="bar">
@@ -95,7 +95,7 @@
   <h2>AION2 · 거대 객체 전투 리서치</h2>
   <article data-ch="01"><p><b>문제.</b> 보통 NPC는 서버에서 캡슐 하나로 판정해도 충분합니다. 몸이 필드를 덮을 만큼 큰 NPC는 다릅니다. 머리·다리·꼬리 중 어디를 맞았는지가 중요하고, 몸 자체가 애니메이션으로 크게 움직이며, 한 번 휘두르거나 돌진하면 여러 플레이어가 한꺼번에 휩쓸립니다.</p></article>
   <article data-ch="02"><p><b>리서치한 방안.</b> 공격의 방향·위치·높이로 맞은 부위를 판정하고, 리소스의 부위 데이터를 이용해 서버에서도 본 애니메이션을 처리해 부위 판정이 실제 몸의 자세를 따라가게 했습니다. 애니메이션에서 HIT 정보를 추출해 그 프레임에 충돌을 처리하고 이동 애니메이션을 서버 이동과 맞췄으며, 큰 객체의 스킬은 이동 궤적 전체로 판정했습니다.</p></article>
-  <article data-ch="05"><p><b>성격.</b> AION2(NCSOFT)에서 거대 NPC 전투 방안을 리서치한 작업입니다. 이 영상은 네 가지 판정 방식이 무엇을 하는지 보여 주는 재현입니다.</p>
+  <article data-ch="05"><p><b>성격.</b> AION2(NCSOFT)에서 거대 NPC 전투 방안을 리서치한 작업입니다. 이 영상은 네 가지 판정 방식이 무엇을 하는지 보여 주는 예시 장면입니다.</p>
   <p class="fine">필드·크리처·플레이어·디버그 뷰, 부위·본 이름, 판정 표는 모두 원리를 보여 주기 위한 개념도·예시이며 실제 게임 화면이나 데이터가 아닙니다. 화면에 측정값은 없습니다.</p></article>
 </section>
 <script type="importmap">{"imports": {"three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/"}}</script>
@@ -684,7 +684,7 @@ function kicker(t) {
   txt('AION2 · 거대 객체 전투 리서치', KX, TALL ? 70 : 66, { size, weight: 700, color: C.gold, sh: 8 });
 }
 function viewChip(t) {
-  const segs = [[-1, T_LIVE, '▶  게임 화면 · 재현', C.text], [T_LIVE, T_REW, '◀◀  되감기', C.gold], [T_REW, T_RES, '◉  서버 디버그 뷰 · 개념도', C.srv], [T_RES, 99, '◉  네 가지 판정 · 개념도', C.srv]];
+  const segs = [[-1, T_LIVE, '▶  게임 화면 · 예시', C.text], [T_LIVE, T_REW, '◀◀  되감기', C.gold], [T_REW, T_RES, '◉  서버 디버그 뷰 · 개념도', C.srv], [T_RES, 99, '◉  네 가지 판정 · 개념도', C.srv]];
   const size = LBL, y = TALL ? 96 : 92;
   for (const [s, e, label, c] of segs) {
     const a = win(t, s, e, .2); if (a <= .01) continue;
@@ -731,7 +731,7 @@ function gameHud(t) {          // boss frame (game UI) while the scene is the pl
   const x = TALL ? 44 : 900, y = TALL ? 216 : 66, w = TALL ? W - 88 : 900;
   ctx.save(); ctx.globalAlpha = a;
   txt('거대 NPC', x, y, { size: LBL, weight: 800, color: '#ffe2b0' });
-  txt('재현', x + w, y, { size: TALL ? 40 : 32, weight: 600, color: C.dim, align: 'right' });
+  txt('예시', x + w, y, { size: TALL ? 40 : 32, weight: 600, color: C.dim, align: 'right' });
   const by = y + 16; rr(x, by, w, 26, 6); ctx.fillStyle = 'rgba(20,10,16,.85)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,214,150,.55)'; ctx.lineWidth = 2; ctx.stroke();
   const k = .86 - .05 * clamp(gtime(t) / 4);
   const gr = ctx.createLinearGradient(x, 0, x + w, 0); gr.addColorStop(0, '#b3212f'); gr.addColorStop(1, '#ef5a3c');

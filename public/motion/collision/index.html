@@ -735,7 +735,7 @@ function status(t) {
   if (game > 0) chip('클라이언트 화면', x, y - 12, '#ffd59a', { align: 'right', alpha: game * a, size: TALL ? 40 : 34 });
   const dk = p(t, SCAN1 - .3, .4) * a;
   if (dk > 0) {
-    chip('서버 충돌 뷰', x, y - 12, C.stat, { align: 'right', alpha: dk, size: TALL ? 40 : 34 });
+    chip(TALL ? '서버 충돌 뷰 · 개념도' : '서버 충돌 뷰', x, y - 12, C.stat, { align: 'right', alpha: dk, size: TALL ? 40 : 34 });
     if (!TALL) txt('모양 · 크기 · 개수는 개념도', x, y + 52, { size: 30, weight: 500, color: C.faint, align: 'right', alpha: dk });
   }
 }
