@@ -79,8 +79,6 @@ Full detail (Korean): https://jungrok5.github.io/resume/llms-full.txt
 
 ## Personal projects (GitHub)
 
-Experiments in how far each domain can be pushed using AI and models as tools.
-
 - **Game Lag White Paper**: public encyclopedia of 228 online game lag causes across 13 layers,
   from the client to the server database. Each cause has symptoms, graph shape, how to confirm,
   owning team (game dev, infra, external) and authoritative sources (630 source URLs, 83 publishers).

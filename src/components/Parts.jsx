@@ -75,7 +75,6 @@ export function Summary() {
     <div className="summary">
       <div>
         <h3>개인 프로젝트 (GitHub)</h3>
-        <p className="summary-lede">AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 실험해 본 프로젝트들.</p>
         {/* 프로젝트 실측 녹화 — media 필드가 있는 프로젝트만 (현재 Hellfarm 1개), 목록보다 먼저 */}
         <div className="summary-media">
           {projects.flatMap((p) => p.media || []).map((m) => (
