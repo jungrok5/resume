@@ -108,7 +108,7 @@
 //    02  6.5–13.0  part volumes; three attacks picked by direction · position · height
 //    03 13.0–19.0  bones posed on the server from resource part data → volumes follow the rear-up
 //    04 19.0–25.0  HIT frame extracted from the stomp clip → collision; walk root motion = server move
-//    05 25.0–34.0  charge judged along its trajectory (swept band) → result hold: four techniques
+//    05 25.0–34.0  charge judged along its trajectory (swept band) → 30.0– result hold: four techniques
 //  No measured numbers exist for this item; everything shown is a schematic (개념도 / 예시).
 //  Every frame is a pure function of t. Modes: ?embed (driven by renderAt), ?render, ?layout=tall, ?q=0.4–1.
 // ─────────────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ const BEATS = [
 const T_LIVE = 3.7, T_REW = 4.3;          // live play → rewind → replay with debug
 const T_HIT = 21.0;                        // stomp HIT frame
 const CH = { wind: 25.4, go: 26.4, end: 28.3 };   // charge
-const T_RES = 30.6;                        // result hold
+const T_RES = 30.0;                        // result hold
 
 // ── palette (debug roles) ────────────────────────────────────
 const C = {
@@ -568,19 +568,19 @@ function setBand(wr, a) {
 const CK = TALL ? [
   [0, -1, 8, 2, 92, .78, .03, 44, 0, -60], [3.6, -1, 8, 2, 84, .7, .05, 44, 0, -60],
   [4.4, -4, 8, 1, 124, .62, .2, 44, 0, -40], [6.4, -4, 8, 1, 118, .62, .2, 44, 0, -40],
-  [7.3, -1, 6, 3, 112, .72, .36, 44, 0, -230], [12.8, -1, 6, 3, 108, .72, .36, 44, 0, -230],
-  [13.8, 2, 12, 1, 108, .95, .16, 44, 0, -170], [18.8, 2, 12, 1, 104, .95, .16, 44, 0, -170],
+  [7.3, -1, 6, 3, 112, .72, .36, 44, 0, -170], [12.8, -1, 6, 3, 108, .72, .36, 44, 0, -170],
+  [13.8, 2, 12, 1, 112, .95, .16, 44, 0, -230], [18.8, 2, 12, 1, 108, .95, .16, 44, 0, -230],
   [19.6, 5, 5, 4, 80, .7, .3, 44, 0, -200], [21.9, 5, 5, 4, 80, .7, .3, 44, 0, -200], [24.6, 12, 6, 4, 86, .7, .3, 44, 0, -200],
-  [25.5, 26, 3, 7, 122, .2, .6, 44, 0, -120], [30.3, 28, 3, 8, 118, .2, .6, 44, 0, -120],
-  [31.6, 32, 6, 9, 104, .45, .42, 44, 0, 230], [DURATION, 32, 6, 9, 100, .45, .42, 44, 0, 230],
+  [25.5, 30, 3, 8, 110, .2, .6, 44, 0, 60], [29.8, 34, 3, 9, 106, .2, .6, 44, 0, 60],
+  [31.2, 32, 6, 9, 106, .45, .42, 44, 0, 170], [DURATION, 32, 6, 9, 102, .45, .42, 44, 0, 170],
 ] : [
   [0, 0, 8, 2, 66, .8, .02, 40, 150, -40], [3.6, 0, 8, 2, 59, .72, .04, 40, 150, -40],
   [4.4, -6, 8, 1, 84, .6, .2, 38, 280, 10], [6.4, -6, 8, 1, 80, .6, .2, 38, 280, 10],
   [7.3, -2, 6, 3, 94, .72, .34, 38, 300, 30], [12.8, -2, 6, 3, 90, .72, .34, 38, 300, 30],
   [13.8, 2, 12, 1, 88, .95, .16, 38, 300, 20], [18.8, 2, 12, 1, 84, .95, .16, 38, 300, 20],
   [19.6, 4, 5, 4, 66, .95, .3, 38, 400, 40], [21.9, 4, 5, 4, 66, .95, .3, 38, 400, 40], [24.6, 11, 6, 4, 72, .95, .3, 38, 400, 40],
-  [25.5, 26, 3, 7, 124, .15, .6, 38, 100, 40], [30.3, 28, 3, 8, 118, .15, .6, 38, 100, 40],
-  [31.6, 34, 6, 9, 98, .45, .42, 38, 420, 20], [DURATION, 34, 6, 9, 94, .45, .42, 38, 420, 20],
+  [25.5, 28, 3, 8, 100, .15, .62, 38, 60, 50], [29.8, 31, 3, 9, 96, .15, .62, 38, 60, 50],
+  [31.2, 34, 6, 9, 98, .45, .42, 38, 420, 20], [DURATION, 34, 6, 9, 94, .45, .42, 38, 420, 20],
 ];
 function camAt(t) {
   let i = 0; while (i < CK.length - 2 && t >= CK[i + 1][0]) i++;
@@ -673,7 +673,7 @@ function chipStack(label, x, y, color, a, o = {}) {   // pushes up until it clea
 function tag(px, py, label, color, a, dx, dy, o = {}) {   // leader line from (px,py) to a chip at (px+dx, py+dy)
   if (a <= .01) return;
   const r = chip(label, px + dx, py + dy, color, a, o); if (!r) return;
-  const cx = clamp(px, r[0] + 14, r[0] + r[2] - 14), cy = dy < 0 ? r[1] + r[3] : r[1];
+  const cx = clamp(px, r[0] + 14, r[0] + r[2] - 14), cy = clamp(py, r[1], r[1] + r[3]);
   line(px, py, cx, cy, color, 3, a); dot(px, py, 7, color, a);
 }
 
@@ -709,7 +709,7 @@ function caption(num, title, sub, a, subA = a) {
 }
 function captions(t) {
   const sw = (s, e) => win(t, s, e, .3);
-  caption('01', '거대 NPC 전투', '몸이 필드를 덮는 적 — 플레이어는 다리 사이에서 싸운다', sw(-1, T_LIVE + .1));
+  caption('01', '거대 NPC 전투', '몸이 필드를 덮는 적 — 플레이어는 다리 사이에서 싸운다', sw(-1, T_REW + .05));
   caption('01', '캡슐 하나로는 판정이 안 된다', '어디를 맞았나 · 몸이 애니메이션으로 움직인다 · 휘두르면 여럿이 맞는다', sw(T_REW, 6.5));
   caption('02', '방향 · 위치 · 높이 → 부위', '공격이 들어온 방향, 몸의 앞뒤 위치, 맞은 높이로 부위를 고른다', sw(6.5, 13));
   caption('03', '서버도 본을 움직인다', '리소스의 부위 데이터로 서버에서 본 애니메이션 처리 → 판정이 몸을 따라간다', sw(13, 19));
@@ -752,11 +752,11 @@ function overlay01(t) {
 }
 // beat 2: part labels, wedges, height ruler, rays, table
 const RULER = [[0, '하단'], [6, '중단'], [12, '상단']];
-function partLabels(t, a, hide = {}) {
+function partLabels(t, a, hide = {}, L0 = null) {
   if (a <= .01) return;
-  const L = TALL
-    ? { head: [60, -110], body: [-120, -120], fore: [150, 120], hind: [-60, 140], tail: [-30, -120] }
-    : { head: [110, -90], body: [-150, -120], fore: [170, 110], hind: [-60, 130], tail: [-40, -110] };
+  const L = L0 || (TALL
+    ? { head: [40, -90], body: [-120, -110], fore: [190, 10], hind: [-190, 10], tail: [-30, -110] }
+    : { head: [110, -90], body: [-150, -120], fore: [170, 110], hind: [-60, 130], tail: [-40, -110] });
   for (const k in PART_COL) {
     const [X, Y] = projO(A[k]), on = 1 - (hide[k] || 0);
     tag(X, Y, PART_NAME[k], PART_COL[k], a * on, L[k][0], L[k][1]);
@@ -768,7 +768,7 @@ function overlay02(t) {
   const hide = {}; ATK.forEach((k, i) => { const s = atkState(t, i); if (s.done) hide[k.part] = Math.max(hide[k.part] || 0, s.show); });
   partLabels(t, a * eo(p(t, 6.9, .5)) * (1 - .4 * eo(p(t, 7.4, .4))), hide);
   // height ruler (world x = 27 ahead of the head)
-  const rx = 27, rz = -3, r0 = proj(rx, 0, rz), r1 = proj(rx, 20, rz);
+  const rx = TALL ? 25 : 27, rz = -3, r0 = proj(rx, 0, rz), r1 = proj(rx, 20, rz);
   line(r0[0], r0[1], r1[0], r1[1], C.dim, 4, a * .9);
   RULER.forEach(([y, lab], j) => {
     const [X, Y] = proj(rx, y, rz), [, Y2] = proj(rx, j < 2 ? RULER[j + 1][0] : 20, rz);
@@ -796,20 +796,21 @@ function overlay02(t) {
   const WL = [['전방', 0], ['좌측', Math.PI / 2], ['후방', Math.PI], ['우측', -Math.PI / 2]];
   WL.forEach(([lab, ang], i) => {
     const cur = ATK.find((k, j) => k.wedge === i && atkState(t, j).show > .5);
-    const [X, Y] = proj(2 + Math.cos(ang) * 30, 0, -Math.sin(ang) * 30);
+    if (TALL && !cur) return;
+    const R = TALL ? 21 : 30, [X, Y] = proj(2 + Math.cos(ang) * R, 0, -Math.sin(ang) * R);
     txt(lab, X, Y + 12, { size: LBL, weight: 800, color: cur ? '#bff4ff' : C.dim, align: 'center', alpha: a * (cur ? 1 : .75) });
   });
   table02(t, a);
 }
 function table02(t, a) {
   const size = LBL, rh = size * (TALL ? 1.42 : 1.6), rows = ATK.map((k, i) => [k, eo(p(t, k.t0 + FLY, .3))]);
-  const cols = TALL ? [0, 150, 260, 400] : [0, 128, 228, 352], w = TALL ? 620 : 560;
-  const x = TALL ? W - w - 44 : 64, y = TALL ? 196 : 200, h = 78 + rh * 4 + 8;
+  const cols = TALL ? [0, 190, 330, 520] : [0, 128, 228, 352], w = TALL ? W - 88 : 560, hr = TALL ? 0 : 1;
+  const x = TALL ? 44 : 64, y = TALL ? 196 : 200, h = 78 + rh * (3 + hr) + 8;
   panel(x, y, w, h, a);
-  txt('판정 예시', x + 26, y + size + 18, { size, weight: 800, color: C.gold, alpha: a, sh: 0 });
-  ['방향', '위치', '높이', '→ 부위'].forEach((c, j) => txt(c, x + 26 + cols[j], y + 78 + rh * .75, { size, weight: 600, color: C.faint, alpha: a, sh: 0 }));
+  txt(TALL ? '방향 · 위치 · 높이 → 부위 (예시)' : '판정 예시', x + 26, y + size + 18, { size, weight: 800, color: C.gold, alpha: a, sh: 0 });
+  if (hr) ['방향', '위치', '높이', '→ 부위'].forEach((c, j) => txt(c, x + 26 + cols[j], y + 78 + rh * .75, { size, weight: 600, color: C.faint, alpha: a, sh: 0 }));
   rows.forEach(([k, ra], i) => {
-    if (ra <= .01) return; const yy = y + 78 + rh * (i + 1.75);
+    if (ra <= .01) return; const yy = y + 78 + rh * (i + .75 + hr);
     const live = atkState(t, i).show; if (live > .01) { ctx.save(); ctx.globalAlpha = a * ra * live; rr(x + 10, yy - size * 1.05, w - 20, rh - 4, 8); ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fill(); ctx.restore(); }
     [k.dir, k.pos, k.hgt].forEach((c, j) => txt(c, x + 26 + cols[j], yy, { size, weight: 700, alpha: a * ra, sh: 0 }));
     txt('→ ' + PART_NAME[k.part], x + 26 + cols[3], yy, { size, weight: 800, color: PART_COL[k.part], alpha: a * ra, sh: 0 });
@@ -848,9 +849,9 @@ function overlay03(t) {
   // posed head vs rest-pose ghost
   const ga = a * eo(p(t, 14.6, .5)) * (1 - eo(p(t, 17.9, .5)));
   if (ga > .01) {
-    const [hx, hy] = projO(A.head); tag(hx, hy, '본 포즈 → 머리 판정이 따라감', C.head, ga, TALL ? -40 : 60, -70);
+    const [hx, hy] = projO(A.head); tag(hx, hy, TALL ? '본 포즈 → 따라감' : '본 포즈 → 머리 판정이 따라감', C.head, ga, TALL ? -250 : 60, TALL ? 30 : -70);
     const gp = new THREE.Vector3(3.4, 3.2, 0).applyMatrix4(ghostHead.matrix), [gx, gy] = projV(gp);
-    tag(gx, gy - 30, '본 처리 없으면 → 제자리', C.hit, ga, TALL ? 60 : 200, TALL ? 120 : 30);
+    tag(gx, gy - 30, '본 처리 없으면 → 제자리', C.hit, ga, TALL ? -40 : 200, TALL ? 150 : 30);
   }
 }
 // beat 4: animation strip with HIT, stomp collision, walk sync
@@ -888,28 +889,39 @@ function overlay04(t) {
   if (ph != null) { line(ph, ty - 10, ph, ty + th + 10, '#ffffff', 4, a); dot(ph, ty - 10, 7, '#ffffff', a); }
   // what the server does with it
   const msgY = ty + th + (TALL ? 76 : 64);
-  const m1 = a * win(t, T_HIT - .05, 22.0, .25), m2 = a * win(t, 21.95, 25.2, .25);
+  const m0 = a * win(t, 19.3, T_HIT, .2), m1 = a * win(t, T_HIT - .05, 22.0, .25), m2 = a * win(t, 21.95, 25.2, .25);
+  txt('애니메이션에서 HIT 프레임 추출', tx0, msgY, { size, weight: 700, color: C.text, alpha: m0, sh: 0 });
   txt('HIT 프레임 → 그 순간 앞발 충돌 처리', tx0, msgY, { size, weight: 700, color: C.hit, alpha: m1, sh: 0 });
   txt('이동 애니 이동량 → 서버 이동 동기화', tx0, msgY, { size, weight: 700, color: C.srv, alpha: m2, sh: 0 });
   // stomp hits on players
-  const sa = a * win(t, T_HIT, 22.6, .2);
+  const sa = a * win(t, T_HIT, 22.4, .2);
   STOMP_HITS.forEach((i, j) => { const pp = playerPos(i, t), [X, Y] = proj(pp.x, pp.y + 2.4, pp.z), z = TALL ? 40 : 32; chipStack('HIT', X, Y - 6 - z * .78, C.hit, sa * eo(p(t, T_HIT + j * .05, .2)), { size: z, solid: true }); });
   // server root marker
   const ma = a * win(t, 21.9, 25.2, .3);
-  if (ma > .01) { const [X, Y] = proj(B.root.position.x, 0, B.root.position.z); chip('서버 위치', X, Y + (TALL ? 120 : 96), C.srv, ma); line(X, Y + 8, X, Y + (TALL ? 50 : 36), C.srv, 3, ma); }
+  if (ma > .01) { const [X, Y] = proj(B.root.position.x, 1.2, B.root.position.z); tag(X, Y, '서버 위치', C.srv, ma, TALL ? 300 : 0, TALL ? 40 : 110); }
 }
 // beat 5: charge along the trajectory
 function overlay05(t) {
   const a = win(t, 25.2, T_RES + .2, .3); if (a <= .01) return;
   const pa = a * win(t, 25.3, 26.7, .3);
-  if (pa > .01) { const c = centre(PATH.L * .55), [X, Y] = proj(c.x, 0, c.z); chip('돌진 스킬 · 이동 궤적', X, Y - 30, C.path, pa); }
+  if (pa > .01) {   // predicted trajectory: thick dashed line + arrowhead
+    const k = eo(p(t, 25.3, .8)), pts = [];
+    for (let i = 0; i <= 60; i++) { const c = centre(lerp(W0, W1, i / 60 * k)); pts.push(proj(c.x, .2, c.z)); }
+    ctx.save(); ctx.globalAlpha = pa; ctx.strokeStyle = C.path; ctx.lineWidth = 6; ctx.setLineDash([22, 14]); ctx.lineCap = 'round';
+    ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); ctx.setLineDash([]);
+    const [xa, ya] = pts[pts.length - 2], [xb, yb] = pts[pts.length - 1], an = Math.atan2(yb - ya, xb - xa);
+    ctx.fillStyle = C.path; ctx.beginPath(); ctx.moveTo(xb + Math.cos(an) * 26, yb + Math.sin(an) * 26);
+    ctx.lineTo(xb + Math.cos(an + 2.4) * 22, yb + Math.sin(an + 2.4) * 22); ctx.lineTo(xb + Math.cos(an - 2.4) * 22, yb + Math.sin(an - 2.4) * 22); ctx.fill(); ctx.restore(); const c = centre(PATH.L * .55), [X, Y] = proj(c.x, 0, c.z); chip('돌진 스킬 · 이동 궤적', X, Y - 30, C.path, pa); }
   const ba = a * eo(p(t, CH.go + .2, .4));
   if (ba > .01) { const c = centre(-6), [X, Y] = proj(c.x, 0, c.z - 5); chip('궤적 전체 = 판정 범위', X - (TALL ? 0 : 60), Y + (TALL ? 130 : 110), C.path, ba); }
-  CHARGE_HITS.forEach((i, j) => {
-    const e = PEV[i][PEV[i].length - 1], k = eo(p(t, e.t0, .25)); if (k <= .01) return;
-    const pp = playerPos(i, t), [X, Y] = proj(pp.x, pp.y + 2.4, pp.z);
-    const z = TALL ? 40 : 32; chipStack('HIT', X, Y - 6 - z * .78, C.hit, a * k, { size: z, solid: true });
+  let first = 99;
+  CHARGE_HITS.forEach(i => {
+    const e = PEV[i][PEV[i].length - 1]; first = Math.min(first, e.t0); if (t < e.t0) return;
+    const pp = playerPos(i, t), [X, Y] = proj(pp.x, pp.y + 1.2, pp.z);
+    burst(X, Y, p(t, e.t0, .7), C.hit, 10, TALL ? 70 : 60);
   });
+  const ha = a * eo(p(t, first, .3)) * (1 - eo(p(t, T_RES - .2, .4)));
+  if (ha > .01) { const c = centre(PATH.L * .78), [X, Y] = proj(c.x, 0, c.z); chip('궤적 안 플레이어 → HIT', X + (TALL ? 0 : 120), Y + (TALL ? 170 : 150), C.hit, ha, { solid: true }); }
 }
 // result hold: the four techniques in one frame
 const SUM = TALL ? [
@@ -919,7 +931,7 @@ const SUM = TALL ? [
 ];
 function overlayRes(t) {
   const a = eo(p(t, T_RES, .6)); if (a <= .01) return;
-  partLabels(t, a * .9);
+  partLabels(t, a * .9, {}, TALL ? { head: [-10, -120], body: [-30, -140], fore: [170, 70], hind: [-150, 80], tail: [-150, -70] } : null);
   const size = TALL ? 46 : 38, rh = size * 1.62, w = TALL ? W - 88 : 840;
   const x = TALL ? 44 : 64, h = 150 + rh * 4, y = TALL ? H - h - 40 : H - h - 56;
   panel(x, y, w, h, a, { fill: 'rgba(14,12,26,.9)', stroke: 'rgba(242,196,109,.5)' });
@@ -1024,7 +1036,7 @@ function effects(t) {
   }
   // charge path + swept band
   const pa = win(t, 25.3, 26.9, .3);
-  pathLine.visible = pa > .01; pathLine.material.opacity = pa;
+  pathLine.visible = false;
   const R = rootAt(t), front = t >= CH.go ? sAt(t) + 17 : 17;
   setBand(front, t >= 25 ? eo(p(t, CH.go - .1, .3)) * (t < T_RES ? 1 : .8) : 0);
   // ghost head (rest pose) during the rear-up
