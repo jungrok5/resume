@@ -69,7 +69,7 @@ Technical Director · MMO Server Architect | 20년차 게임 서버 | 분산 서
 새로운 MMO를 처음부터 설계하는 팀에서 서버의 근간을 맡아 끝까지 함께 만들어갈 수 있습니다.
 
 웹 이력서: https://jungrok5.github.io/resume/
-3D 인터랙티브 이력서: https://jungrok5.github.io/resume/interactive.html
+모션 그래픽 이력서: https://jungrok5.github.io/resume/interactive.html
 GitHub: https://github.com/jungrok5
 
 [ 핵심 역량 ]
@@ -159,6 +159,27 @@ AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 �
   - 조건을 바꿔 증상을 재현하는 실험 28개, 진단 도우미, 공개 장애 사후 분석 12건과 상황별 절차
   - 한국어 원문과 11개 언어판, 원인·증상별 정적 페이지와 llms.txt로 검색엔진·AI 인용 대응
 
+● motion-graphics: 코드로 그리는 기술 설명 모션 그래픽 실험 (MMO 서버·네트워크 12개 주제)
+  HTML Canvas · three.js(WebGL) · Playwright · ffmpeg | 공개 | jungrok5.github.io/motion-graphics
+  - 영상 파일이 아니라 코드로 그리는 웹 페이지: 모든 프레임이 시간의 순수 함수라 브라우저에서 바로 재생·탐색되고,
+    같은 페이지를 헤드리스 렌더링으로 MP4로 굽는다
+  - MMO 서버·네트워크 12개 주제(서버 틱, 보스 렉, TCP 재전송, Nagle, 러버밴딩 등)를 주제마다 영상·설명·용어집 세트와
+    모바일 세로 영상으로 제작, 전문가 관점 검수 단계 포함
+  - 설명 방식 7가지(분해해 들어가기, 흐름을 빛으로, 실물 늘어놓기, 게임 화면 재현, 직접 조작, 바닥부터 쌓기,
+    그려 가며 설명)를 3D(WebGL)로 실험하고 주제마다 맞는 방식을 골라 적용
+  - 제작 과정을 Claude Code 스킬로 만들어 같은 형식·품질로 반복 제작. 이 이력서의 모션 그래픽 페이지도 같은 방식으로 제작
+
+● AI 협업 개발 템플릿: AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿 (여러 AI 도구 · 여러 레포)
+  GitHub Actions · Claude Code 플러그인(훅·스킬·서브에이전트) · Make | 공개 · MIT | github.com/jungrok5/ai-code-collaboration-best-practices
+  - Claude Code·Copilot·Cursor·Codex·Gemini 어떤 도구로 작업해도 AGENTS.md 하나(약 60줄)의 규칙을 읽고
+    같은 검사를 통과해야 main에 반영되는 구조
+  - 로컬 가드레일: Claude Code 플러그인(보호 경로 수정·main 커밋·강제 푸시 차단 훅, 스킬 11개, 서브에이전트 5개),
+    pre-commit·make check로 사람의 커밋에도 같은 검사
+  - GitHub 거버넌스·자동화: 룰셋(PR·사람 승인·squash), CODEOWNERS, AI 사용 공개 PR 템플릿,
+    워크플로 22개(이슈 분류, ai:ready 이슈 구현, AI 리뷰, CI 실패 수정, 설계 겹침 알림, 릴리스)
+  - AI 작업은 각자 자리의 로그인으로 실행(API 키 불필요), 서버 자동화는 사내 로컬 LLM 또는 Anthropic 선택,
+    여러 레포는 템플릿 복사와 플러그인 마켓플레이스로 갱신
+
 ● Hellfarm 🔒: 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android)
   Godot · C# | 1인 개발 · 비공개
   - 노드/GC 없는 데이터지향 엔진: 모든 엔티티를 SoA 플랫 배열로, 시스템당 드로우콜 1개(MultiMesh)·
@@ -189,11 +210,6 @@ AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 �
   Vanilla JS · Node · Vercel | 라이브 · one-scroll-bible.com | github.com/jungrok5/one-scroll-bible
   - 단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)
   - 현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치
-
-● thesauros: 한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스
-  Python · Next.js · Supabase | 라이브 운영 중 | github.com/jungrok5/thesauros
-  - 데이터 수집 → 분석 → 백테스트 → 알림까지 프로덕션으로 직접 운영 (Vercel·Supabase·크론 8개·CI)
-  - AI를 활용한 주식 매매의 효용성 리서치
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [ 보유 기술 / Skills ]

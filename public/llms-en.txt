@@ -25,7 +25,7 @@ Full detail (Korean): https://jungrok5.github.io/resume/llms-full.txt
 
 - [Resume (English summary)](https://jungrok5.github.io/resume/en/): career, achievements, projects
 - [Resume (Korean, full)](https://jungrok5.github.io/resume/): complete detail with per-project breakdowns
-- [3D interactive resume](https://jungrok5.github.io/resume/interactive.html): key achievements as scroll-driven 3D scenes
+- [Motion-graphics resume](https://jungrok5.github.io/resume/interactive.html): 12 key projects explained as scroll-driven motion graphics
 - [GitHub](https://github.com/jungrok5): public personal project repositories
 - [Game Lag White Paper](https://jungrok5.github.io/mmo-lag-anatomy/en/): his public encyclopedia of 228 online game lag causes (12 languages)
 
@@ -73,7 +73,7 @@ Full detail (Korean): https://jungrok5.github.io/resume/llms-full.txt
 
 - Languages: C++ (11–20), C#, TypeScript/JavaScript, Python, Lua, GDScript, Kotlin
 - Server & distributed: Microsoft Orleans (virtual actors), gRPC/TCP, IOCP, ASP.NET, Node.js, WebSocket, sharding
-- Data: MSSQL & stored procedures, Redis/Garnet, MongoDB, EntityFramework, Supabase
+- Data: MSSQL & stored procedures, Redis/Garnet, MongoDB, EntityFramework
 - Engines, navigation & physics: Unreal Engine 3/4/5, Unity3D, Godot, Gamebryo, Recast/Detour, voxel navmesh
 - AI & infrastructure: MCP (own implementation), local LLM (llama.cpp), ONNX Runtime, Perforce, Jenkins, .NET Aspire
 
@@ -86,6 +86,21 @@ Experiments in how far each domain can be pushed using AI and models as tools.
   owning team (game dev, infra, external) and authoritative sources (630 source URLs, 83 publishers).
   28 interactive experiments and 12 public postmortems. Korean original with 11 translations. MIT.
   https://jungrok5.github.io/mmo-lag-anatomy/en/ (AI summary: https://jungrok5.github.io/mmo-lag-anatomy/en/llms.txt)
+- **motion-graphics**: motion graphics drawn in code to explain tech (12 MMO server/network topics).
+  HTML Canvas, three.js (WebGL), Playwright, ffmpeg. A web page drawn in code rather than a video file:
+  every frame is a pure function of time, so it plays and seeks in the browser, and the same page is
+  rendered headlessly to MP4. Topics such as server ticks, boss lag, TCP retransmission, Nagle and
+  rubber-banding each get a video, explanation and glossary set plus a vertical mobile video, with an
+  expert-perspective review step. Seven explanation styles explored in 3D (WebGL); production is a
+  Claude Code skill (the motion-graphics page of this resume was made the same way).
+  https://jungrok5.github.io/motion-graphics/ (source: https://github.com/jungrok5/motion-graphics)
+- **AI Collaboration Dev Template** (ai-code-collaboration-best-practices): GitHub collaboration template
+  for teams working with AI agents (multiple AI tools, multiple repos). GitHub Actions, Claude Code plugin
+  (hooks, skills, subagents), Make. Whether the work is done with Claude Code, Copilot, Cursor, Codex or
+  Gemini, it reads the rules in a single AGENTS.md (about 60 lines) and must pass the same checks before
+  reaching main. Blocking hooks, 11 skills, 5 subagents, pre-commit and make check, rulesets, CODEOWNERS,
+  an AI-use disclosure PR template and 22 workflows. MIT.
+  https://github.com/jungrok5/ai-code-collaboration-best-practices (explainer: https://jungrok5.github.io/ai-code-collaboration-best-practices/)
 - **Hellfarm** (private): Diablo-style loot farming meets Vampire-Survivors-like one-hand
   hack-and-slash action game (Windows/Android), Godot + C#. A node-free, GC-free data-oriented
   engine (struct-of-arrays flat arrays, one MultiMesh draw call per system, custom spatial hash
@@ -102,9 +117,6 @@ Experiments in how far each domain can be pushed using AI and models as tools.
 - **one-scroll-bible**: multilingual mobile web telling the whole Bible's redemptive history as a
   single scroll, in 200+ languages. Vanilla JS, Node, Vercel. Live at https://one-scroll-bible.com/
   https://github.com/jungrok5/one-scroll-bible
-- **thesauros**: service analyzing and alerting on buy timing for Korean and US equities.
-  Python, Next.js, Supabase. Runs in production from collection through analysis, backtesting and alerts.
-  https://github.com/jungrok5/thesauros
 
 ## Awards & activities
 

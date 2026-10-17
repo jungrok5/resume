@@ -24,7 +24,7 @@ English version: https://jungrok5.github.io/resume/llms-en.txt
 ## 링크
 
 - [웹 이력서 (기본·상세 뷰)](https://jungrok5.github.io/resume/): 경력·핵심 성과·개인 프로젝트 전체
-- [3D 인터랙티브 이력서](https://jungrok5.github.io/resume/interactive.html): 주요 성과를 3D 씬으로 시각화
+- [모션 그래픽 이력서](https://jungrok5.github.io/resume/interactive.html): 대표 작업 12개를 스크롤로 넘기는 모션 그래픽으로 설명
 - [English resume](https://jungrok5.github.io/resume/en/): 영문 요약본
 - [상세 전문 텍스트](https://jungrok5.github.io/resume/llms-full.txt): 프로젝트별 상세·수치 전문
 - [GitHub 프로필](https://github.com/jungrok5): 공개 개인 프로젝트 저장소
@@ -64,7 +64,7 @@ English version: https://jungrok5.github.io/resume/llms-en.txt
 
 - 언어: C++(11–20) · C# · TypeScript/JavaScript · Python · Lua · GDScript · Kotlin
 - 서버·분산: Orleans(가상 액터) · gRPC/TCP · IOCP · ASP.NET · Node.js · WebSocket · 샤딩
-- 데이터: MSSQL·저장프로시저 · Redis/Garnet · MongoDB · EntityFramework · Supabase
+- 데이터: MSSQL·저장프로시저 · Redis/Garnet · MongoDB · EntityFramework
 - 엔진·네비·물리: Unreal Engine 3/4/5 · Unity3D · Godot · Gamebryo · Recast/Detour · 복셀 네비메시
 - AI·인프라: MCP(자체 구현) · 로컬 LLM(llama.cpp) · ONNX Runtime · Perforce · Jenkins · .NET Aspire
 
@@ -76,6 +76,17 @@ AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 �
   원인마다 증상·그래프 모양·확인 방법·주 담당 팀(게임개발팀·인프라팀·외부)·공신력 있는 출처(출처 주소 630개, 발행처 83곳).
   조건을 바꿔 증상을 재현하는 실험 28개, 공개 장애 사후 분석 12건. 한국어 원문과 11개 언어판. MIT.
   https://jungrok5.github.io/mmo-lag-anatomy/ (AI용 요약: https://jungrok5.github.io/mmo-lag-anatomy/llms.txt)
+- **motion-graphics**: 코드로 그리는 기술 설명 모션 그래픽 실험 (MMO 서버·네트워크 12개 주제).
+  HTML Canvas · three.js(WebGL) · Playwright · ffmpeg. 영상 파일이 아니라 코드로 그리는 웹 페이지로, 모든 프레임이
+  시간의 순수 함수라 브라우저에서 바로 재생·탐색되고 같은 페이지를 헤드리스 렌더링으로 MP4로 굽는다.
+  서버 틱·보스 렉·TCP 재전송·Nagle·러버밴딩 등 주제마다 영상·설명·용어집 세트와 모바일 세로 영상, 전문가 관점 검수.
+  설명 방식 7가지를 3D(WebGL)로 실험, 제작 과정은 Claude Code 스킬로 반복 제작(이 이력서의 모션 그래픽 페이지도 같은 방식).
+  https://jungrok5.github.io/motion-graphics/ (소스: https://github.com/jungrok5/motion-graphics)
+- **AI 협업 개발 템플릿** (ai-code-collaboration-best-practices): AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿
+  (여러 AI 도구 · 여러 레포). GitHub Actions · Claude Code 플러그인(훅·스킬·서브에이전트) · Make. Claude Code·Copilot·
+  Cursor·Codex·Gemini 어떤 도구로 작업해도 AGENTS.md 하나(약 60줄)의 규칙을 읽고 같은 검사를 통과해야 main에 반영.
+  차단 훅·스킬 11개·서브에이전트 5개, pre-commit·make check, 룰셋·CODEOWNERS·AI 사용 공개 PR 템플릿·워크플로 22개. MIT.
+  https://github.com/jungrok5/ai-code-collaboration-best-practices (설명 페이지: https://jungrok5.github.io/ai-code-collaboration-best-practices/)
 - **Hellfarm** (비공개): 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android).
   Godot · C#. 노드/GC 없는 데이터지향 엔진(SoA 배열 + MultiMesh 드로우콜 1개 + 자작 공간해시)으로
   **동시 1억 2,800만 마리 시뮬레이션 + 만렙 스킬 전투 실측**(스폰·렌더까지는 1억 9,200만 확인).
@@ -89,9 +100,6 @@ AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 �
 - **one-scroll-bible**: 성경 전체의 구속사를 한 화면 스크롤로 풀어낸 다국어 모바일 웹(200개 이상 언어).
   Vanilla JS · Node · Vercel. 라이브: https://one-scroll-bible.com/
   https://github.com/jungrok5/one-scroll-bible
-- **thesauros**: 한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스. Python · Next.js · Supabase.
-  수집 → 분석 → 백테스트 → 알림까지 프로덕션 운영 중.
-  https://github.com/jungrok5/thesauros
 
 ## 수상 · 활동
 

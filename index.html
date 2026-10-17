@@ -34,7 +34,7 @@
 <!-- Open Graph / Twitter (링크 공유 미리보기) -->
 <meta property="og:type" content="profile" />
 <meta property="og:title" content="오정록 · Technical Director / MMO Server Architect" />
-<meta property="og:description" content="20년차 MMO 서버 아키텍트. 분산 서버 · 전 영역 최적화(서버·클라·DB) · AI 개발 생산성. 기본 · 상세 · 3D 인터랙티브 뷰." />
+<meta property="og:description" content="20년차 MMO 서버 아키텍트. 분산 서버 · 전 영역 최적화(서버·클라·DB) · AI 개발 생산성. 기본 · 상세 · 모션 뷰." />
 <meta property="og:url" content="https://jungrok5.github.io/resume/" />
 <meta property="og:locale" content="ko_KR" />
 <meta property="og:locale:alternate" content="en_US" />
@@ -291,7 +291,7 @@
       "@id": "https://jungrok5.github.io/resume/#projects",
       "name": "개인 프로젝트 (GitHub)",
       "description": "AI·모델을 도구로, 각 도메인에서 어디까지 만들 수 있는지 실험해 본 프로젝트들",
-      "numberOfItems": 6,
+      "numberOfItems": 7,
       "itemListOrder": "https://schema.org/ItemListOrderAscending",
       "itemListElement": [
         {
@@ -316,6 +316,49 @@
           "position": 2,
           "item": {
             "@type": "SoftwareSourceCode",
+            "name": "motion-graphics",
+            "description": "코드로 그리는 기술 설명 모션 그래픽 실험. 영상 파일이 아니라 코드로 그리는 웹 페이지로, 모든 프레임이 시간의 순수 함수라 브라우저에서 바로 재생·탐색되고 같은 페이지를 헤드리스 렌더링으로 MP4로 굽는다. MMO 서버·네트워크 12개 주제(서버 틱, 보스 렉, TCP 재전송, Nagle, 러버밴딩 등)를 주제마다 영상·설명·용어집 세트와 모바일 세로 영상으로 제작하고 전문가 관점 검수 단계를 거쳤다. 설명 방식 7가지를 3D(WebGL)로 실험해 주제마다 맞는 방식을 골라 적용했고, 제작 과정을 Claude Code 스킬로 만들어 같은 형식·품질로 반복 제작한다. 사이트: https://jungrok5.github.io/motion-graphics/",
+            "programmingLanguage": [
+              "HTML Canvas",
+              "three.js (WebGL)",
+              "Playwright",
+              "ffmpeg"
+            ],
+            "author": {
+              "@id": "https://jungrok5.github.io/resume/#person"
+            },
+            "creativeWorkStatus": "공개",
+            "codeRepository": "https://github.com/jungrok5/motion-graphics",
+            "url": "https://github.com/jungrok5/motion-graphics"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "SoftwareSourceCode",
+            "name": "AI 협업 개발 템플릿",
+            "alternateName": "ai-code-collaboration-best-practices",
+            "description": "AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿(여러 AI 도구 · 여러 레포). Claude Code·Copilot·Cursor·Codex·Gemini 어떤 도구로 작업해도 AGENTS.md 하나(약 60줄)의 규칙을 읽고 같은 검사를 통과해야 main에 반영된다. 로컬에서는 Claude Code 플러그인(보호 경로 수정·main 커밋·강제 푸시 차단 훅, 스킬 11개, 서브에이전트 5개)과 pre-commit·make check로, GitHub에서는 룰셋(PR·사람 승인·squash)·CODEOWNERS·AI 사용 공개 PR 템플릿과 워크플로 22개(이슈 분류, ai:ready 이슈 구현, AI 리뷰, CI 실패 수정, 설계 겹침 알림, 릴리스)로 관리한다. 설명 페이지: https://jungrok5.github.io/ai-code-collaboration-best-practices/",
+            "programmingLanguage": [
+              "GitHub Actions",
+              "Claude Code 플러그인",
+              "Make"
+            ],
+            "license": "https://opensource.org/licenses/MIT",
+            "author": {
+              "@id": "https://jungrok5.github.io/resume/#person"
+            },
+            "creativeWorkStatus": "공개",
+            "codeRepository": "https://github.com/jungrok5/ai-code-collaboration-best-practices",
+            "url": "https://github.com/jungrok5/ai-code-collaboration-best-practices"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "SoftwareSourceCode",
             "name": "Hellfarm",
             "description": "디아블로식 아이템 파밍과 뱀서라이크(대규모 몹 처치)를 합친 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android). 노드/GC 없는 데이터지향 엔진(SoA 플랫 배열 + 시스템당 MultiMesh 드로우콜 1개 + 물리엔진 대신 자작 공간해시)으로 동시 1억 2,800만 마리 시뮬레이션과 만렙 스킬 전투를 실측했다(스폰·시뮬·렌더까지는 1억 9,200만 확인). 호드 뭉침으로 O(n²)가 되는 이웃 검사를 하드바운드·화면 밖 LOD 시간분할·격프레임 그리드 재구축·무락 병렬화로 프레임당 2,500ms에서 38ms로 38배 최적화했다.",
             "programmingLanguage": [
@@ -330,7 +373,7 @@
         },
         {
           "@type": "ListItem",
-          "position": 3,
+          "position": 5,
           "item": {
             "@type": "SoftwareSourceCode",
             "name": "ZeroLlama",
@@ -347,7 +390,7 @@
         },
         {
           "@type": "ListItem",
-          "position": 4,
+          "position": 6,
           "item": {
             "@type": "SoftwareSourceCode",
             "name": "ondevice-imagen",
@@ -367,7 +410,7 @@
         },
         {
           "@type": "ListItem",
-          "position": 5,
+          "position": 7,
           "item": {
             "@type": "SoftwareSourceCode",
             "name": "one-scroll-bible",
@@ -383,26 +426,6 @@
             "creativeWorkStatus": "공개 · 라이브 운영",
             "codeRepository": "https://github.com/jungrok5/one-scroll-bible",
             "url": "https://github.com/jungrok5/one-scroll-bible"
-          }
-        },
-        {
-          "@type": "ListItem",
-          "position": 6,
-          "item": {
-            "@type": "SoftwareSourceCode",
-            "name": "thesauros",
-            "description": "한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스. 데이터 수집에서 분석·백테스트·알림까지 프로덕션으로 직접 운영한다(Vercel·Supabase·크론 8개·CI).",
-            "programmingLanguage": [
-              "Python",
-              "Next.js",
-              "Supabase"
-            ],
-            "author": {
-              "@id": "https://jungrok5.github.io/resume/#person"
-            },
-            "creativeWorkStatus": "공개 · 라이브 운영",
-            "codeRepository": "https://github.com/jungrok5/thesauros",
-            "url": "https://github.com/jungrok5/thesauros"
           }
         }
       ]
@@ -449,7 +472,7 @@
           "name": "오정록의 개인 프로젝트에는 어떤 것이 있나요?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "AI와 모델을 도구로 각 도메인에서 어디까지 만들 수 있는지 실험한 프로젝트 6종이 있습니다. 게임 렉 백서(jungrok5.github.io/mmo-lag-anatomy)는 온라인 게임 렉 원인 228가지를 13개 층으로 정리하고 원인마다 확인 방법·담당 팀·출처를 단 공개 백과(12개 언어)입니다. Hellfarm은 동시 1억 2,800만 마리 시뮬레이션을 실측한 핵앤슬래시 액션 게임(Godot·C#)이고, ZeroLlama는 8GB VRAM으로 35B급 모델을 구동하는 로컬 LLM 코딩 클라이언트(TypeScript·llama.cpp)입니다. ondevice-imagen은 Stable Diffusion을 안드로이드 네이티브로 구현한 온디바이스 이미지 생성 앱, one-scroll-bible은 200개 이상 언어를 지원하는 다국어 성경 웹(one-scroll-bible.com), thesauros는 한국·미국 주식 분석·알림 서비스입니다."
+            "text": "AI와 모델을 도구로 각 도메인에서 어디까지 만들 수 있는지 실험한 프로젝트 7종이 있습니다. 게임 렉 백서(jungrok5.github.io/mmo-lag-anatomy)는 온라인 게임 렉 원인 228가지를 13개 층으로 정리하고 원인마다 확인 방법·담당 팀·출처를 단 공개 백과(12개 언어)입니다. motion-graphics(jungrok5.github.io/motion-graphics)는 MMO 서버·네트워크 12개 주제를 코드로 그려 브라우저에서 바로 재생하고 같은 페이지를 MP4로도 굽는 기술 설명 모션 그래픽 실험입니다. AI 협업 개발 템플릿(github.com/jungrok5/ai-code-collaboration-best-practices)은 Claude Code·Copilot·Cursor·Codex·Gemini 어떤 AI 도구로 작업해도 AGENTS.md 하나의 규칙을 읽고 같은 검사를 통과해야 main에 반영되게 하는 GitHub 협업 템플릿입니다. Hellfarm은 동시 1억 2,800만 마리 시뮬레이션을 실측한 핵앤슬래시 액션 게임(Godot·C#)이고, ZeroLlama는 8GB VRAM으로 35B급 모델을 구동하는 로컬 LLM 코딩 클라이언트(TypeScript·llama.cpp)입니다. ondevice-imagen은 Stable Diffusion을 안드로이드 네이티브로 구현한 온디바이스 이미지 생성 앱, one-scroll-bible은 200개 이상 언어를 지원하는 다국어 성경 웹(one-scroll-bible.com)입니다."
           }
         },
         {
@@ -473,7 +496,7 @@
           "name": "오정록에게 어떻게 연락하나요?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "이메일 jungrok5@gmail.com 으로 연락할 수 있습니다. GitHub 프로필은 https://github.com/jungrok5, LinkedIn 은 https://www.linkedin.com/in/jungrok5 이며, 웹 이력서는 https://jungrok5.github.io/resume/ 에서 기본·상세·3D 인터랙티브 뷰로 볼 수 있습니다."
+            "text": "이메일 jungrok5@gmail.com 으로 연락할 수 있습니다. GitHub 프로필은 https://github.com/jungrok5, LinkedIn 은 https://www.linkedin.com/in/jungrok5 이며, 웹 이력서는 https://jungrok5.github.io/resume/ 에서 기본·상세·모션 뷰로 볼 수 있습니다."
           }
         }
       ]
@@ -879,7 +902,7 @@
       <div class="switcher" role="tablist">
         <button data-view="design" class="on">기본</button>
         <button data-view="detail">상세</button>
-        <a class="view3d" href="./interactive.html" aria-label="3D 인터랙티브 이력서 보기">3D</a>
+        <a class="view3d" href="./interactive.html" aria-label="모션 그래픽 이력서 보기">모션</a>
       </div>
       <button class="pdfbtn" id="pdfDownload" title="기본 이력서를 PDF로 저장" aria-label="기본 이력서 PDF 다운로드">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>
@@ -1057,6 +1080,34 @@
 
     <div class="job">
       <div class="job-head">
+        <div class="job-title"><a href="https://jungrok5.github.io/motion-graphics/" target="_blank" rel="noopener">motion-graphics</a> <span class="genre">코드로 그리는 기술 설명 모션 그래픽 실험 (MMO 서버·네트워크 12개 주제)</span></div>
+        <div class="job-meta">공개</div>
+      </div>
+      <div class="job-sub"><span class="stack">HTML Canvas · three.js(WebGL) · Playwright · ffmpeg</span></div>
+      <ul class="bul">
+        <li><b>영상 파일이 아니라 코드로 그리는 웹 페이지</b>: 모든 프레임이 시간의 순수 함수라 브라우저에서 바로 재생·탐색되고, 같은 페이지를 헤드리스 렌더링으로 MP4로 굽는다</li>
+        <li><b>MMO 서버·네트워크 <span class="metric">12개 주제</span></b>: 서버 틱, 보스 렉, TCP 재전송, Nagle, 러버밴딩 등을 주제마다 영상·설명·용어집 세트와 모바일 세로 영상으로 제작, 전문가 관점 검수 단계 포함</li>
+        <li><b>설명 방식 7가지를 3D(WebGL)로 실험</b>: 분해해 들어가기, 흐름을 빛으로, 실물 늘어놓기, 게임 화면 재현, 직접 조작, 바닥부터 쌓기, 그려 가며 설명 중 주제마다 맞는 방식을 골라 적용</li>
+        <li><b>제작 과정을 Claude Code 스킬로</b>: 같은 형식·품질로 반복 제작. 이 이력서의 모션 그래픽 페이지도 같은 방식으로 제작</li>
+      </ul>
+    </div>
+
+    <div class="job">
+      <div class="job-head">
+        <div class="job-title"><a href="https://github.com/jungrok5/ai-code-collaboration-best-practices" target="_blank" rel="noopener">AI 협업 개발 템플릿</a> <span class="genre">AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿 (여러 AI 도구 · 여러 레포)</span></div>
+        <div class="job-meta">공개 · MIT</div>
+      </div>
+      <div class="job-sub"><span class="stack">GitHub Actions · Claude Code 플러그인(훅·스킬·서브에이전트) · Make</span></div>
+      <ul class="bul">
+        <li><b>어떤 AI 도구든 같은 규칙·같은 검사</b>: Claude Code·Copilot·Cursor·Codex·Gemini 어떤 도구로 작업해도 AGENTS.md 하나(약 60줄)의 규칙을 읽고 같은 검사를 통과해야 main에 반영되는 구조</li>
+        <li><b>로컬 가드레일</b>: Claude Code 플러그인(보호 경로 수정·main 커밋·강제 푸시 차단 훅, 스킬 11개, 서브에이전트 5개), pre-commit·make check로 사람의 커밋에도 같은 검사</li>
+        <li><b>GitHub 거버넌스·자동화</b>: 룰셋(PR·사람 승인·squash), CODEOWNERS, AI 사용 공개 PR 템플릿, <span class="metric">워크플로 22개</span>(이슈 분류, ai:ready 이슈 구현, AI 리뷰, CI 실패 수정, 설계 겹침 알림, 릴리스)</li>
+        <li><b>실행 환경과 여러 레포 갱신</b>: AI 작업은 각자 자리의 로그인으로 실행(API 키 불필요), 서버 자동화는 사내 로컬 LLM 또는 Anthropic 선택, 여러 레포는 템플릿 복사와 플러그인 마켓플레이스로 갱신 (<a href="https://jungrok5.github.io/ai-code-collaboration-best-practices/" target="_blank" rel="noopener">설명 페이지</a>)</li>
+      </ul>
+    </div>
+
+    <div class="job">
+      <div class="job-head">
         <div class="job-title">Hellfarm <span class="lock" title="비공개 저장소">🔒</span> <span class="genre">디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android)</span></div>
         <div class="job-meta">1인 개발</div>
       </div>
@@ -1113,18 +1164,6 @@
       <ul class="bul">
         <li>단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)</li>
         <li>현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치</li>
-      </ul>
-    </div>
-
-    <div class="job">
-      <div class="job-head">
-        <div class="job-title"><a href="https://github.com/jungrok5/thesauros" target="_blank" rel="noopener">thesauros</a> <span class="genre">한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스</span></div>
-        <div class="job-meta">라이브 운영 중</div>
-      </div>
-      <div class="job-sub"><span class="stack">Python · Next.js · Supabase</span></div>
-      <ul class="bul">
-        <li>데이터 수집 → 분석 → 백테스트 → 알림까지 프로덕션으로 직접 운영 (Vercel · Supabase · 크론 8개 · CI)</li>
-        <li>AI를 활용한 주식 매매의 효용성 리서치</li>
       </ul>
     </div>
   </section>
@@ -1280,6 +1319,24 @@
       <li>한국어 원문과 11개 언어판, 원인·증상별 정적 페이지와 llms.txt·구조화 데이터로 검색엔진·AI 인용 대응</li>
     </ul>
 
+    <div class="exp">motion-graphics: 코드로 그리는 기술 설명 모션 그래픽 실험 (MMO 서버·네트워크 12개 주제) <span class="m">· 공개 · <a href="https://jungrok5.github.io/motion-graphics/" target="_blank" rel="noopener">jungrok5.github.io/motion-graphics</a></span></div>
+    <div class="tech">기술: HTML Canvas, three.js(WebGL), Playwright, ffmpeg</div>
+    <ul>
+      <li>영상 파일이 아니라 코드로 그리는 웹 페이지: 모든 프레임이 시간의 순수 함수라 브라우저에서 바로 재생·탐색되고, 같은 페이지를 헤드리스 렌더링으로 MP4로 굽는다</li>
+      <li>MMO 서버·네트워크 12개 주제(서버 틱, 보스 렉, TCP 재전송, Nagle, 러버밴딩 등)를 주제마다 영상·설명·용어집 세트와 모바일 세로 영상으로 제작, 전문가 관점 검수 단계 포함</li>
+      <li>설명 방식 7가지(분해해 들어가기, 흐름을 빛으로, 실물 늘어놓기, 게임 화면 재현, 직접 조작, 바닥부터 쌓기, 그려 가며 설명)를 3D(WebGL)로 실험하고 주제마다 맞는 방식을 골라 적용</li>
+      <li>제작 과정을 Claude Code 스킬로 만들어 같은 형식·품질로 반복 제작. 이 이력서의 모션 그래픽 페이지도 같은 방식으로 제작</li>
+    </ul>
+
+    <div class="exp">AI 협업 개발 템플릿: AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿 (여러 AI 도구 · 여러 레포) <span class="m">· 공개 · MIT · <a href="https://github.com/jungrok5/ai-code-collaboration-best-practices" target="_blank" rel="noopener">github.com/jungrok5/ai-code-collaboration-best-practices</a></span></div>
+    <div class="tech">기술: GitHub Actions, Claude Code 플러그인(훅·스킬·서브에이전트), Make</div>
+    <ul>
+      <li>Claude Code·Copilot·Cursor·Codex·Gemini 어떤 도구로 작업해도 AGENTS.md 하나(약 60줄)의 규칙을 읽고 같은 검사를 통과해야 main에 반영되는 구조</li>
+      <li>로컬 가드레일: Claude Code 플러그인(보호 경로 수정·main 커밋·강제 푸시 차단 훅, 스킬 11개, 서브에이전트 5개), pre-commit·make check로 사람의 커밋에도 같은 검사</li>
+      <li>GitHub 거버넌스·자동화: 룰셋(PR·사람 승인·squash), CODEOWNERS, AI 사용 공개 PR 템플릿, 워크플로 22개(이슈 분류, ai:ready 이슈 구현, AI 리뷰, CI 실패 수정, 설계 겹침 알림, 릴리스)</li>
+      <li>AI 작업은 각자 자리의 로그인으로 실행(API 키 불필요), 서버 자동화는 사내 로컬 LLM 또는 Anthropic 선택, 여러 레포는 템플릿 복사와 플러그인 마켓플레이스로 갱신</li>
+    </ul>
+
     <div class="exp">Hellfarm <span title="비공개 저장소">🔒</span>: 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android) <span class="m">· 1인 개발 · 🔒 비공개</span></div>
     <div class="tech">기술: Godot, C#</div>
     <ul>
@@ -1312,13 +1369,6 @@
     <ul>
       <li>단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap)</li>
       <li>현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치</li>
-    </ul>
-
-    <div class="exp">thesauros: 한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스 <span class="m">· 라이브 운영 · <a href="https://github.com/jungrok5/thesauros" target="_blank" rel="noopener">github.com/jungrok5/thesauros</a></span></div>
-    <div class="tech">기술: Python, Next.js, Supabase</div>
-    <ul>
-      <li>데이터 수집 → 분석 → 백테스트 → 알림까지 프로덕션으로 직접 운영 (Vercel·Supabase·크론 8개·CI)</li>
-      <li>AI를 활용한 주식 매매의 효용성 리서치</li>
     </ul>
 
     <h2>기술 스택</h2>
@@ -1950,7 +2000,29 @@
 </ul>
 <hr />
 
-<h3>4-2. Hellfarm 🔒: 핵앤슬래시 액션 게임 (Windows·Android)</h3>
+<h3>4-2. motion-graphics: 코드로 그리는 기술 설명 모션 그래픽 (MMO 서버·네트워크 12개 주제)</h3>
+<ul>
+<li><strong>무엇</strong>: 코드로 그리는 기술 설명 모션 그래픽 실험. MMO 서버·네트워크 12개 주제를 다룬다.</li>
+<li><strong>기술</strong>: HTML Canvas · three.js(WebGL) · Playwright · ffmpeg · <a href="https://jungrok5.github.io/motion-graphics/" target="_blank" rel="noopener">jungrok5.github.io/motion-graphics</a> · <a href="https://github.com/jungrok5/motion-graphics" target="_blank" rel="noopener">github.com/jungrok5/motion-graphics</a> (공개)</li>
+<li><strong>구조</strong>: 영상 파일이 아니라 코드로 그리는 웹 페이지. 모든 프레임이 시간의 순수 함수라 브라우저에서 바로 재생·탐색되고, 같은 페이지를 헤드리스 렌더링으로 MP4로 굽는다.</li>
+<li><strong>주제</strong>: MMO 서버·네트워크 12개 주제(서버 틱, 보스 렉, TCP 재전송, Nagle, 러버밴딩 등). 주제마다 영상·설명·용어집 세트와 모바일 세로 영상으로 제작하고, 전문가 관점 검수 단계를 거친다.</li>
+<li><strong>설명 방식</strong>: 7가지(분해해 들어가기, 흐름을 빛으로, 실물 늘어놓기, 게임 화면 재현, 직접 조작, 바닥부터 쌓기, 그려 가며 설명)를 3D(WebGL)로 실험하고 주제마다 맞는 방식을 골라 적용.</li>
+<li><strong>제작 자동화</strong>: 제작 과정을 Claude Code 스킬로 만들어 같은 형식·품질로 반복 제작. 이 이력서의 모션 그래픽 페이지도 같은 방식으로 제작.</li>
+</ul>
+<hr />
+
+<h3>4-3. AI 협업 개발 템플릿: AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿 (여러 AI 도구 · 여러 레포)</h3>
+<ul>
+<li><strong>무엇</strong>: AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿. 여러 AI 도구와 여러 레포를 전제로 한다. 저장소 이름은 ai-code-collaboration-best-practices.</li>
+<li><strong>기술</strong>: GitHub Actions · Claude Code 플러그인(훅·스킬·서브에이전트) · Make · <a href="https://jungrok5.github.io/ai-code-collaboration-best-practices/" target="_blank" rel="noopener">jungrok5.github.io/ai-code-collaboration-best-practices</a> · <a href="https://github.com/jungrok5/ai-code-collaboration-best-practices" target="_blank" rel="noopener">github.com/jungrok5/ai-code-collaboration-best-practices</a> (공개 · MIT)</li>
+<li><strong>구조</strong>: Claude Code·Copilot·Cursor·Codex·Gemini 어떤 도구로 작업해도 AGENTS.md 하나(약 60줄)의 규칙을 읽고 같은 검사를 통과해야 main에 반영된다.</li>
+<li><strong>로컬 가드레일</strong>: Claude Code 플러그인(보호 경로 수정·main 커밋·강제 푸시 차단 훅, 스킬 11개, 서브에이전트 5개), pre-commit·make check로 사람의 커밋에도 같은 검사.</li>
+<li><strong>GitHub 거버넌스·자동화</strong>: 룰셋(PR·사람 승인·squash), CODEOWNERS, AI 사용 공개 PR 템플릿, 워크플로 22개(이슈 분류, ai:ready 이슈 구현, AI 리뷰, CI 실패 수정, 설계 겹침 알림, 릴리스).</li>
+<li><strong>운영</strong>: AI 작업은 각자 자리의 로그인으로 실행(API 키 불필요), 서버 자동화는 사내 로컬 LLM 또는 Anthropic 중 선택, 여러 레포는 템플릿 복사와 플러그인 마켓플레이스로 갱신.</li>
+</ul>
+<hr />
+
+<h3>4-4. Hellfarm 🔒: 핵앤슬래시 액션 게임 (Windows·Android)</h3>
 <div class="shots shots--one">
   <a href="hellfarm/battle_100m.mp4" target="_blank" rel="noopener">
     <video src="hellfarm/battle_100m.mp4" poster="hellfarm/battle_100m.jpg" autoplay loop muted playsinline controls></video>
@@ -1969,7 +2041,7 @@
 <li><strong>그리드 빌드 융합</strong>: 직렬 100만 삽입 루프 대신 병렬 이동 패스 안에서 무락(lock-free) 버킷 푸시(CAS)로 재구축. 마지막 직렬 O(n) 단계를 제거해 다중코어 암달 병목 방지. 버킷 체인 순서의 비결정성은 모든 쿼리가 실좌표 거리검사를 하므로 무해.</li>
 </ul>
 <hr />
-<h3>4-3. ZeroLlama 🔒: 소비자용 GPU에서 로컬 모델로 코딩하려고 만든 에이전틱 코딩 클라이언트 (VS Code 확장)</h3>
+<h3>4-5. ZeroLlama 🔒: 소비자용 GPU에서 로컬 모델로 코딩하려고 만든 에이전틱 코딩 클라이언트 (VS Code 확장)</h3>
 <ul>
 <li><strong>무엇</strong>: 소비자용 GPU(4~24GB)에서 양자화된 로컬 모델로 코딩할 수 있게 만든 에이전틱 코딩 클라이언트. 기존 에이전트/런타임은 클라우드 대형 모델을 전제로 설계돼 이 환경에서 제약이 큰데, 그 격차를 아래 레이어로 메웠다.</li>
 <li><strong>기술</strong>: TypeScript · llama.cpp · 🔒 비공개 (pre-alpha) · <code>src/zerollama/</code> 아래 35개 모듈 <strong>27,515 LOC(테스트 제외)</strong> 서브시스템</li>
@@ -1985,7 +2057,7 @@
 <li><strong>리서치</strong>: 소비자용 GPU에서 로컬 모델 코딩이 어느 수준까지 되는지 리서치.</li>
 </ul>
 <hr />
-<h3>4-4. ondevice-imagen: 온디바이스 이미지 생성 앱</h3>
+<h3>4-6. ondevice-imagen: 온디바이스 이미지 생성 앱</h3>
 <ul>
 <li><strong>무엇</strong>: 날씨·장소·시간 같은 메타정보를 토대로 그림엽서 이미지를 온디바이스에서 생성하는 앱.</li>
 <li><strong>기술</strong>: Kotlin · ONNX Runtime · Python · <a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">github.com/jungrok5/ondevice-imagen</a> (실기기 검증, 연구 R&amp;D)</li>
@@ -1993,20 +2065,12 @@
 <li><strong>리서치</strong>: 모바일 기기에서 로컬 모델을 이용한 이미지 생성이 어느 수준까지 되는지 리서치.</li>
 </ul>
 <hr />
-<h3>4-5. one-scroll-bible: 다국어 성경 스크롤 웹 (200+개 언어)</h3>
+<h3>4-7. one-scroll-bible: 다국어 성경 스크롤 웹 (200+개 언어)</h3>
 <ul>
 <li><strong>무엇</strong>: 성경 전체의 구속사를 한 화면 스크롤로 풀어낸 다국어 모바일 웹 (200+개 언어).</li>
 <li><strong>기술</strong>: Vanilla JS · Node · Vercel · <a href="https://github.com/jungrok5/one-scroll-bible" target="_blank" rel="noopener">github.com/jungrok5/one-scroll-bible</a> (라이브 · <a href="https://one-scroll-bible.com/" target="_blank" rel="noopener">one-scroll-bible.com</a>)</li>
 <li><strong>구현</strong>: 단일 HTML 앱 + 언어별 정적 페이지 프리렌더 빌드 파이프라인, SEO(JSON-LD·hreflang·sitemap).</li>
 <li><strong>리서치</strong>: 현세대 LLM 모델의 다국어 언어 자원의 한계를 리서치.</li>
-</ul>
-<hr />
-<h3>4-6. thesauros: 주식 분석·알림 서비스 (한국·미국)</h3>
-<ul>
-<li><strong>무엇</strong>: 한국·미국 주식의 매수 타이밍을 분석·알림하는 서비스.</li>
-<li><strong>기술</strong>: Python · Next.js · Supabase · <a href="https://github.com/jungrok5/thesauros" target="_blank" rel="noopener">github.com/jungrok5/thesauros</a> (라이브 운영 중)</li>
-<li><strong>구현</strong>: 데이터 수집 → 분석 → 백테스트 → 알림까지 프로덕션으로 직접 운영 (Vercel·Supabase·크론 8개·CI).</li>
-<li><strong>리서치</strong>: AI를 활용한 주식 매매의 효용성 리서치.</li>
 </ul>
 <hr />
 <h2>5. 기술 스택</h2>
