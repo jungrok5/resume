@@ -98,7 +98,7 @@ export default function MotionSection({ s, n, flip, tall }) {
     }
   }
 
-  const poster = base + (tall ? 'poster-tall.png' : 'poster.png')
+  const poster = base + (tall ? 'poster-tall.jpg' : 'poster.jpg')
   const solo = `${base}index.html${tall ? '?layout=tall' : ''}`
 
   return (

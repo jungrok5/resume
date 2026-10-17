@@ -44,7 +44,7 @@ src/
     FallbackDoc.jsx     static résumé (prefers-reduced-motion)
 public/motion/
   <id>/index.html       one piece per highlight id (self-contained)
-  <id>/poster.png       16:9 first frame, <id>/poster-tall.png 4:5 first frame
+  <id>/poster.jpg       16:9 first frame, <id>/poster-tall.jpg 4:5 first frame
   assets/               vendored three.js 0.170 + Pretendard / JetBrains Mono
 ```
 
@@ -74,7 +74,7 @@ public/motion/
 ### Add or replace a piece
 
 1. Build `public/motion/<id>/index.html` to the contract above (copy an
-   existing piece's engine section), plus `poster.png` and `poster-tall.png`.
+   existing piece's engine section), plus `poster.jpg` and `poster-tall.jpg` (JPEG, ~100–350 KB).
 2. Add `<id>` to `highlights` in `src/data/resume.js` (the section with that id
    provides the text panel; give it a one-line `hook`).
 3. Stills / MP4: `node <motion-graphics>/scripts/render.mjs public/motion/<id>/index.html out/ --stills 0,10,20`

@@ -29,7 +29,7 @@ index.html                document résumé (3 views, self-contained)
 interactive.html          motion résumé entry point
 linkedin.html             copy-paste helper (noindex)
 public/                   robots.txt · sitemap.xml · llms.txt · og.png
-  motion/<id>/            one motion piece per highlight (index.html + poster.png + poster-tall.png)
+  motion/<id>/            one motion piece per highlight (index.html + poster.jpg + poster-tall.jpg)
   motion/assets/          shared three.js build and fonts for the pieces
 src/
   data/resume.js          ← content SSOT (edit here)
@@ -55,7 +55,7 @@ src/
   under the stuck stage.
 - `q` lowers the piece's internal resolution to what the stage actually shows.
 - Only stages within about two screens are mounted, so at most 2–3 WebGL
-  contexts exist at a time; the rest show `poster.png`.
+  contexts exist at a time; the rest show `poster.jpg`.
 - Every piece also plays on its own (open `motion/<id>/` directly): player,
   chapters, a short note, and a link back.
 
