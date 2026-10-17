@@ -18,119 +18,81 @@ https://jungrok5.github.io/resume/ (see `.github/workflows/deploy.yml`).
 
 ## What this is
 
-A Korean, scroll-driven 3D résumé for a 20-year MMO server architect. A fixed
-full-screen WebGL canvas sits behind HTML panels; scrolling drives which scene
-is active plus a cinematic camera. **Content is primary, visualization is
-supporting** — every résumé fact (company, role, period, education, awards,
-stack) must stay present even as scenes come and go.
+A Korean résumé for a 20-year MMO server architect, in two pages: the document
+(`index.html`) and the motion page (`interactive.html`). On the motion page,
+eight headline projects are explained as scroll-scrubbed motion graphics, each
+next to its résumé bullets. **Content is primary** — every résumé fact (company,
+role, period, education, awards, stack) stays present as text.
+
+The motion pieces follow the explainer approach from the
+`jungrok5/motion-graphics` repo: a "style" is a way of explaining (open it up,
+make the flow visible, real artifacts in space, in-game replay …), and the look
+of each piece comes from its own subject. Numbers on screen come only from the
+résumé; anything illustrative is labelled 개념도 or 예시.
 
 ## Architecture
 
 ```
 src/
-  data/resume.js        SSOT: `sections[]` drives overlay, progress rail, fallback.
-                        profile / timeline / stack live here too. EDIT CONTENT HERE.
+  data/resume.js        SSOT: sections[], highlights[], profile, timeline, projects, stack
   App.jsx               reduced-motion switch → Experience vs. static FallbackDoc
   components/
-    Experience.jsx      <Canvas> + drei <ScrollControls pages={sections.length}>
-                        + postprocessing. Holds the mount-time resize kick.
-    Overlay.jsx         HTML panels rendered over 3D via <Scroll html>.
-                        Special cases: hero (no glass card), isTimeline (career
-                        list), summary (education/awards/stack on the last panel).
-    Chrome.jsx          fixed brand / links / progress rail (reads scrollStore)
-    FallbackDoc.jsx     static, fully-readable résumé (prefers-reduced-motion)
-  three/
-    SceneRig.jsx        REGISTRY maps section.scene → component; mounts all,
-                        each scene culls itself by scroll range.
-    CameraRig.jsx       interpolates per-section camera keyframes (lib/cameras.js)
-    ScrollBridge.jsx    publishes drei scroll offset to scrollStore (for Chrome)
-    Effects.jsx         Bloom + Vignette (disabled on mobile)
-    scenes/             one file per section (17)
-    lib/                palette.js (colors), util.js (math), useScene.js
-                        (per-scene frame hook: gives localProgress + active),
-                        cameras.js (keyframes keyed by section id)
+    Experience.jsx      the page; also updates the top bar, gauge and GA events on scroll
+    MotionSection.jsx   one highlight: sticky stage (iframe) + text panel
+    Parts.jsx           Metric, Points, Timeline, Contact, Summary
+    Chrome.jsx          fixed top bar (reads lib/scrollStore)
+    FallbackDoc.jsx     static résumé (prefers-reduced-motion)
+public/motion/
+  <id>/index.html       one piece per highlight id (self-contained)
+  <id>/poster.png       16:9 first frame, <id>/poster-tall.png 4:5 first frame
+  assets/               vendored three.js 0.170 + Pretendard / JetBrains Mono
 ```
 
-Data flow: `useScene(index, total, (p, active, state, dt) => …)` runs every
-frame, hands each scene its local progress `p` (0..1 within its scroll slot) and
-whether it's `active`; the scene toggles `group.visible` and animates by `p`.
+## The eight pieces
 
-## The 17 scenes (résumé order)
+| id | Résumé item | Approach |
+|---|---|---|
+| `combat` | AION2 channel-less 1,000 vs 1,000, 13M packets/s | make the flow visible |
+| `trickster` | TricksterM dispatch, stable CCU 2,000 → 8,000 | open it up |
+| `densebuild` | 50M props full tick + 2,000 builders, single dispatcher | make the flow visible |
+| `spatial` | 51억 props / 422 GB → 집터 · 청크 · 셀 + SightIn | open it up |
+| `renderopt` | draw calls 20,967 → 503, FPS 16.5 → 47.4 | in-game replay |
+| `ownership` | client-delegated NPC simulation, ownership migration | make the flow visible |
+| `pipeline` | proto single source → code · CSV · validation | real artifacts in space |
+| `ai` | in-house MCP server, agent team, local LLM | real artifacts in space |
 
-hero · career timeline · Orleans actors (Panthera) · proto pipeline (Panthera) ·
-sharding+load-test (Panthera) · dense build 50M props (Miniverse UE5) ·
-3-tier spatial partition + SightIn · render/physics opt · dynamic voxel navmesh ·
-client-delegated distributed sim · circuit logic kit (redstone-like) ·
-web collab 1000+ cursors (Miniverse Web) · prop mini-games · channel-less
-1000v1000 (AION2, NCDP 2019) · 3D flight navigation (AION2) · TricksterM 2k→8k ·
-AI-driven dev (MCP) + contact/summary. Order mirrors the document résumé
-(기본 뷰), newest first, grouped by company/period.
+### Piece contract
 
-All animations are **scroll-driven visual mocks** (choreographed to *look* like
-the real algorithm) — the one exception is the flight-nav scene: the flight path is a choreographed
-closed curve that weaves between procedurally placed obstacles (clearance is
-verified), while the forward-cone rays are genuinely tested against the
-obstacle spheres each frame — so red "blocked" rays are real hits.
+- `window.DURATION` (s), `window.ready` (Promise), `window.renderAt(t)`; every
+  frame is a pure function of `t` (seeded randomness, no frame-to-frame state),
+  so scrolling backward works.
+- `?embed` → canvas only, no player, no loop of its own. `?layout=tall` → 1080×1350
+  composition (default 1920×1080). `?q=0.4–1` → internal resolution scale.
+  `?render` → no player (used by the render script).
+- t = 0 is a meaningful frame (it is the poster); the last ~3 s hold the result.
 
-### Add / edit a scene
+### Add or replace a piece
 
-1. Content: add or edit an entry in `sections[]` in `src/data/resume.js`
-   (`id`, `scene`, `align`, `accent`, `kicker`, `title`, `year`, `blurb`,
-   `metric`, `tags`). Omit `scene` for a text-only section.
-2. Scene component: `src/three/scenes/XxxScene.jsx`, signature
-   `({ index, total }) `, use `useScene(...)`; keep counts modest and animate by
-   `p` (see existing scenes as templates).
-3. Register it in `src/three/SceneRig.jsx` `REGISTRY`.
-4. Camera: add a keyframe entry under the section `id` in
-   `src/three/lib/cameras.js` (`[localProgress, [pos], [target]]`).
+1. Build `public/motion/<id>/index.html` to the contract above (copy an
+   existing piece's engine section), plus `poster.png` and `poster-tall.png`.
+2. Add `<id>` to `highlights` in `src/data/resume.js` (the section with that id
+   provides the text panel; give it a one-line `hook`).
+3. Stills / MP4: `node <motion-graphics>/scripts/render.mjs public/motion/<id>/index.html out/ --stills 0,10,20`
+   (add `--query layout=tall --size 1080x1350` for the phone composition), run from this repo's root.
 
 ## Conventions & gotchas (hard-won — keep these)
 
-- **No `React.StrictMode`** (`src/main.jsx`). Its dev double-mount makes drei's
-  `<ScrollControls>` call `createRoot()` twice on the same container and throw.
-- **Mount-time resize kick** in `Experience.jsx`. R3F sometimes measures its
-  container as 0×0 on mount and never fires the observer; we dispatch a `resize`
-  on mount (+rAF +timeout). Harmless in real browsers, required in some headless
-  environments. Don't remove it.
 - **`base: './'`** in `vite.config.js` so the same build works at a domain root
   (Vercel) and under `/<repo>/` (GitHub Pages). Don't hardcode an absolute base.
-- **Legibility**: text panels use a dark glass card (`.panel` in `theme.css`) so
-  gray text stays readable over bright scenes. Hero is the exception (`.panel--hero`).
-- Accent colors: `src/three/lib/palette.js` (JS) mirrors the CSS vars in
-  `theme.css`. Change both if you add a color.
+- **Scroll goes to the page, not the iframe**: stage iframes have
+  `pointer-events: none`; keep it, or wheel/touch scrolling stops over the stage.
 - Korean font: Noto Sans KR (loaded in `index.html`); Latin uses Space Grotesk.
 
-## Verifying scenes without a visible browser
+## Verifying
 
-Scroll-driven WebGL is awkward to screenshot in a headless/background preview:
-a hidden tab pauses `requestAnimationFrame`, so R3F's loop never advances and
-the canvas reads black even though the code is fine. To verify anyway:
-
-- Temporarily expose R3F state from a component inside `<Canvas>`:
-  `const s = useThree(); window.__advance = s.advance; window.__three = s;`
-  and `const scroll = useScroll(); window.__scroll = scroll;`.
-- If the viewport is 0×0, force size: set `width/height` on
-  `documentElement`/`body`/`#root` and dispatch `resize`.
-- Drive it: set `window.__scroll.offset` directly (programmatic `scrollTop`
-  doesn't update drei's offset in a hidden tab), then call
-  `window.__advance(ts, true)` ~20× with an increasing timestamp.
-- Read `window.__three.gl.info.render.calls / .triangles` per offset to confirm
-  each scene renders distinct geometry, or `drawImage` the canvas to a 2D canvas
-  for a thumbnail (needs `gl={{ preserveDrawingBuffer: true }}` while capturing).
-- Remove all of that before committing. A plain `npm run build` catches
-  compile/import errors across every scene.
-
-## Polish / TODO backlog (iterative)
-
-- **Verify the newer scenes against real experience.** timeline / data pipeline /
-  sharding / prop mini-games were built from the résumé + a short brief; wording
-  and specifics may need the owner's corrections.
-- Per-scene aesthetic tuning: camera framing, timing, particle/instance counts,
-  bloom strength. Each scene file is self-contained — tune the constants at top.
-- Mobile pass: `useIsMobile` lowers counts/DPR and drops postprocessing < 768px;
-  test on a real device and tune.
-- Bundle is ~1 MB (Three.js). Fine for a portfolio; if desired, code-split with
-  `manualChunks` or lazy-load heavier scenes.
-- GH Actions logs a Node-20 deprecation warning (non-blocking); bump
-  `actions/*` versions when convenient.
-- Optional: a nicer Korean display font (e.g. Pretendard) for headings.
+- `npm run build` catches compile/import errors.
+- Screenshot the built page at desktop and phone widths with Playwright: scroll
+  to a highlight, wait for `.ms-poster.off` (the piece is live), then capture.
+  Headless Chromium needs software WebGL (`--use-angle=swiftshader`). The stage
+  eases toward the scroll target with requestAnimationFrame, so a hidden or
+  background tab does not update; use a normal headless page.

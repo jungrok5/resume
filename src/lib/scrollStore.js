@@ -1,10 +1,9 @@
 import { useSyncExternalStore } from 'react'
 
-// Tiny external store so DOM chrome *outside* the R3F Canvas (progress rail,
-// active-section indicator) can read the scroll offset that lives *inside*
-// drei's <ScrollControls>. A bridge component inside the Canvas writes here.
+// 스크롤 위치에서 나온 값(지금 보는 블록, 최상단 여부)을 상단바(Chrome)에 전달하는 작은 저장소.
+// 값이 바뀔 때만 발행해 스크롤 중 매 프레임 리렌더를 피한다.
 
-let state = { index: 0, atTop: true, total: 1, el: null }
+let state = { id: 'hero', now: '', atTop: true }
 const subs = new Set()
 
 export const scrollStore = {
@@ -16,13 +15,6 @@ export const scrollStore = {
   subscribe(f) {
     subs.add(f)
     return () => subs.delete(f)
-  },
-  // scroll the ScrollControls host to a given section index
-  scrollTo(index) {
-    const { el, total } = state
-    if (!el || total < 2) return
-    const max = el.scrollHeight - el.clientHeight
-    el.scrollTo({ top: (index / (total - 1)) * max, behavior: 'smooth' })
   },
 }
 

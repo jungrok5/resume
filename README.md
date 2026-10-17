@@ -5,7 +5,7 @@ My résumé, hosted on GitHub Pages in two forms:
 | Path | What |
 |------|------|
 | `/` (`index.html`) | **Document résumé** — 기본 · 출력 · 상세 views, dark mode, print. Static HTML, ATS-friendly. Default landing. |
-| `/interactive.html` | **3D résumé** — the same content visualized as 17 scroll-driven WebGL scenes, one per section. |
+| `/interactive.html` | **Motion résumé** — eight headline projects explained as scroll-scrubbed motion graphics, plus the rest of the résumé as cards. |
 
 Both pages share one fixed top bar (tabs · current-section label · scroll
 gauge), so switching feels like a single site.
@@ -14,11 +14,11 @@ gauge), so switching feels like a single site.
 
 - **Document page** — hand-written static HTML/CSS/JS, no framework: the three
   views + a print stylesheet in one self-contained file.
-- **3D page** — React 18 · Vite 5 · three.js · @react-three/fiber ·
-  @react-three/drei (`ScrollControls`) · @react-three/postprocessing
-  (Bloom/Vignette, desktop-only, lazy-loaded).
+- **Motion page** — React 18 · Vite 5 for the page; each motion piece is a
+  self-contained HTML page in `public/motion/<id>/` (three.js 0.170 vendored,
+  canvas 2D overlay) whose every frame is a pure function of time `t`.
 - **Content SSOT** — [`src/data/resume.js`](src/data/resume.js): sections,
-  bullets, metrics, timeline. Overlay, fallback, and scenes all derive from it.
+  bullets, metrics, timeline, and `highlights` (which items get a motion piece, in order).
 - Analytics, SEO / `llms.txt`, and the GitHub Actions → Pages deploy are set up
   separately — see [`SETUP.md`](SETUP.md).
 
@@ -26,49 +26,38 @@ gauge), so switching feels like a single site.
 
 ```
 index.html                document résumé (3 views, self-contained)
-interactive.html          3D entry point
+interactive.html          motion résumé entry point
 linkedin.html             copy-paste helper (noindex)
 public/                   robots.txt · sitemap.xml · llms.txt · og.png
+  motion/<id>/            one motion piece per highlight (index.html + poster.png + poster-tall.png)
+  motion/assets/          shared three.js build and fonts for the pieces
 src/
   data/resume.js          ← content SSOT (edit here)
   App.jsx                 reduced-motion switch: Experience vs. static FallbackDoc
-  components/             Experience (Canvas+ScrollControls) · Overlay · Chrome · FallbackDoc
-  three/
-    SceneRig.jsx          scene registry; each scene culls itself by scroll range
-    CameraRig.jsx         per-section camera keyframes (lib/cameras.js)
-    ScrollBridge.jsx      scroll → store/gauge/GA bridge (no re-renders)
-    lib/scrollMap.js      measured panel centers → scroll-offset timewarp (scene sync)
-    scenes/               one file per section (17)
+  components/
+    Experience.jsx        page: hero + index, career, highlights, other work, contact
+    MotionSection.jsx     sticky stage + text panel; scroll progress → piece time t
+    Parts.jsx             metric / bullets / timeline / contact / summary blocks
+    Chrome.jsx            fixed top bar (current block, tabs, scroll gauge)
+    FallbackDoc.jsx       static résumé for prefers-reduced-motion
 ```
 
-## Optimization
+## How the motion page works
 
-The 3D page aims to stay smooth (steady frame rate, no scroll stutter) on
-mobile as well as desktop.
-
-- **Draw calls** — GPU instancing for every high-count element (each dense
-  scene collapses to a single draw call); the dense-combat link web is one
-  `LineSegments` with positions rewritten in place; one material per mesh,
-  per-instance color via `instanceColor`, no textures.
-- **Culling** — all 17 scenes stay mounted but only the active 1–2 render
-  (`group.visible`); the rest early-return before touching the GPU. Fog + a
-  tight far plane bound overdraw.
-- **Shading / fillrate** — no shadow maps (emissive + bloom art style),
-  `AdaptiveDpr` + capped DPR (mobile ≤ 1.5), desktop MSAA off (the composer
-  renders offscreen), no `backdrop-filter`.
-- **CPU / GC** — allocation-free frame loops (temp vectors reused, no literals
-  in hot paths); zero React re-renders while scrolling (external store publishes
-  only on section change, gauge driven by a compositor-only `transform`); scene
-  models precomputed once.
-- **Loading** — `<Preload all />` compiles shaders up front (no mid-scroll
-  hitches); `three` / `r3f` / `react` split into cache-stable chunks so a
-  content edit re-ships only the ~62 KB app chunk; post-processing is a lazy
-  chunk, never downloaded on mobile.
-- **Scroll** — native scroll input with a damped camera/overlay follow; a
-  scrollbar-width-compensated top bar for zero layout shift between pages;
-  panel centers measured at runtime and remapped through a piecewise-linear
-  timewarp so each scene peaks as its text reaches screen center, on any
-  viewport.
+- Each highlight section is ~3 screens tall. Its stage sticks to the screen and
+  the scroll position inside the section maps to `t ∈ [0, DURATION]`.
+- The stage is a same-origin iframe: `motion/<id>/index.html?embed&layout=wide|tall&q=…`.
+  The page waits for `contentWindow.ready`, then calls `contentWindow.renderAt(t)`
+  only when `t` changes (eased toward the scroll target). No animation loop runs
+  while you are not scrolling.
+- Desktop uses the 16:9 composition (`layout=wide`, 1920×1080); phones (≤ 820 px)
+  use the 4:5 composition (`layout=tall`, 1080×1350) with the text scrolling
+  under the stuck stage.
+- `q` lowers the piece's internal resolution to what the stage actually shows.
+- Only stages within about two screens are mounted, so at most 2–3 WebGL
+  contexts exist at a time; the rest show `poster.png`.
+- Every piece also plays on its own (open `motion/<id>/` directly): player,
+  chapters, a short note, and a link back.
 
 ## Run locally
 

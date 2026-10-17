@@ -1,6 +1,6 @@
 // 콘텐츠 + 씬 메타데이터의 단일 원본(SSOT).
-// 각 섹션은 하나의 3D 씬과 하나의 HTML 오버레이 패널에 1:1로 대응된다.
-// 시각화가 자연스러운 항목엔 scene을 붙이고, 순수 텍스트 항목은 scene 없이 둔다.
+// 각 섹션은 이력 한 항목. 대표 항목(highlights)은 모션 그래픽과 함께 보여준다.
+// (scene 필드는 예전 R3F 씬 이름으로, 지금 페이지는 쓰지 않는다.)
 
 export const profile = {
   name: '오정록',
@@ -29,7 +29,7 @@ export const profile = {
 
 // accent 키는 theme.css / palette.js 의 색상 변수에 매핑된다.
 // 패널 구성 원칙: 이력서(기본 뷰)를 충실히 요약한 핵심 불릿 + 대표 수치 하나.
-// 장식성 요소(태그·중복 서브타이틀)는 두지 않는다. 씬이 '어떻게'를 보여주고,
+// 장식성 요소(태그·중복 서브타이틀)는 두지 않는다. 모션 그래픽이 '어떻게'를 보여주고,
 // 불릿이 '무엇을 했는지'를 말한다.
 export const sections = [
   {
@@ -75,6 +75,7 @@ export const sections = [
   },
   {
     id: 'pipeline',
+    hook: 'proto 하나로 서버·클라 코드 · CSV · 검증 생성', // 인터랙티브 페이지 첫 화면 목차의 한 줄
     scene: 'dataPipeline',
     align: 'left',
     accent: 'blue',
@@ -109,6 +110,7 @@ export const sections = [
   // ───────── NCSOFT · Miniverse PC / UE5 (2023 – 2024) ─────────
   {
     id: 'densebuild',
+    hook: '5,000만 프랍 풀 틱 · 동시 2,000명 건축', // 인터랙티브 페이지 첫 화면 목차의 한 줄
     scene: 'denseBuild',
     align: 'left',
     accent: 'green',
@@ -124,6 +126,7 @@ export const sections = [
   },
   {
     id: 'spatial',
+    hook: '최악 51억 프랍 · 422GB → 활성량만 처리', // 인터랙티브 페이지 첫 화면 목차의 한 줄
     scene: 'spatialTiers',
     align: 'right',
     accent: 'blue',
@@ -139,6 +142,7 @@ export const sections = [
   },
   {
     id: 'renderopt',
+    hook: '드로우콜 20,967 → 503 · FPS 16.5 → 47.4', // 인터랙티브 페이지 첫 화면 목차의 한 줄
     scene: 'renderOpt',
     align: 'right',
     accent: 'green',
@@ -174,6 +178,7 @@ export const sections = [
   },
   {
     id: 'ownership',
+    hook: 'NPC 시뮬레이션을 가까운 클라이언트에 위임', // 인터랙티브 페이지 첫 화면 목차의 한 줄
     scene: 'clientNpc',
     align: 'right',
     accent: 'green',
@@ -240,6 +245,7 @@ export const sections = [
   // ───────── NCSOFT · AION2 (2016 – 2021) ─────────
   {
     id: 'combat',
+    hook: '1,000 vs 1,000 · 초당 1,300만 패킷 · NCDP 2019 최우수상', // 인터랙티브 페이지 첫 화면 목차의 한 줄
     scene: 'denseCombat',
     align: 'left',
     accent: 'amber',
@@ -271,6 +277,7 @@ export const sections = [
   // ───────── NCSOFT · 기술 자문 파견 ─────────
   {
     id: 'trickster',
+    hook: '3개월 파견 · 안정 동접 4배', // 인터랙티브 페이지 첫 화면 목차의 한 줄
     scene: 'trickster',
     align: 'left',
     accent: 'green',
@@ -290,6 +297,7 @@ export const sections = [
   // ───────── 현재 · 마무리 ─────────
   {
     id: 'ai',
+    hook: '자체 MCP 서버 · AI 에이전트 팀 · 로컬 LLM', // 인터랙티브 페이지 첫 화면 목차의 한 줄
     scene: 'aiDev',
     align: 'center',
     accent: 'blue',
@@ -308,7 +316,12 @@ export const sections = [
   },
 ]
 
-// 타임라인 씬 + 폴백 문서가 쓰는 경력 요약 (최신 → 과거)
+// 인터랙티브 페이지에서 모션 그래픽으로 보여주는 대표 이력 (보여줄 순서).
+// 각 id는 public/motion/<id>/index.html 의 모션 그래픽과 1:1로 대응한다.
+// 나머지 섹션은 '그 밖의 주요 작업' 카드로 텍스트만 노출한다.
+export const highlights = ['combat', 'trickster', 'densebuild', 'spatial', 'renderopt', 'ownership', 'pipeline', 'ai']
+
+// 타임라인 + 폴백 문서가 쓰는 경력 요약 (최신 → 과거)
 export const timeline = [
   ['2024 – 현재', 'NCSOFT · Panthera', '블소 IP 키우기류 RPG · 분산 서버 백엔드 (Orleans / .NET / UE5)'],
   ['2023 – 2024', 'NCSOFT · Miniverse (UE5)', 'UGC 샌드박스 MMO · 5,000만 프랍 · 2,000명'],

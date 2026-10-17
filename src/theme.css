@@ -34,11 +34,9 @@
 }
 
 html,
-body,
-#root {
+body {
   margin: 0;
   padding: 0;
-  height: 100%;
 }
 
 body {
@@ -47,7 +45,7 @@ body {
   font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overflow: hidden; /* the R3F ScrollControls host owns scrolling */
+  overflow-x: hidden;
 }
 
 ::selection {
@@ -60,7 +58,7 @@ a {
   text-decoration: none;
 }
 
-/* ---- fixed UI chrome over the canvas ---- */
+/* ---- fixed UI chrome ---- */
 .chrome {
   position: fixed;
   inset: 0;
@@ -209,51 +207,6 @@ a {
   50% { transform: translateX(-50%) translateY(6px); opacity: 1; }
 }
 
-/* ---- scroll overlay sections (rendered inside <Scroll html>) ---- */
-.section {
-  width: 100vw;
-  /* 100vh는 모바일(iOS 주소창)에서 실제 가시 영역보다 커서 섹션마다 오차가
-     쌓여 마지막 씬이 스크롤 범위 밖으로 밀린다 → svh(작은 뷰포트) 우선 사용 */
-  min-height: 100vh;
-  min-height: 100svh;
-  display: flex;
-  align-items: center;
-  padding: 0 8vw;
-}
-.section.right {
-  justify-content: flex-end;
-  text-align: right;
-}
-.section.center {
-  justify-content: center;
-  text-align: center;
-}
-
-.panel {
-  max-width: 560px;
-  pointer-events: auto;
-  /* 블러 없음(backdrop-filter는 움직이는 캔버스 위에서 상시 GPU 비용) —
-     뒤의 씬이 비쳐 보일 만큼 투명하게 유지하고, 가독성은 강한 텍스트
-     새도우(이중)로 확보한다. */
-  background: linear-gradient(180deg, rgba(5, 7, 12, 0.38), rgba(5, 7, 12, 0.26));
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 30px 34px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
-  text-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.9),
-    0 2px 14px rgba(0, 0, 0, 0.7);
-}
-.section.center .panel {
-  max-width: 720px;
-}
-/* hero: no card, let the name float over the scene */
-.panel--hero {
-  /* 다른 씬 패널과 같은 카드 배경(.panel 기본 스타일 상속) — 폭만 넓게 */
-  max-width: 860px;
-  padding: 40px 44px;
-}
-
 .kicker {
   font-family: var(--mono);
   font-size: 12.5px;
@@ -265,29 +218,9 @@ a {
   align-items: center;
   gap: 12px;
 }
-.section.right .kicker {
-  justify-content: flex-end;
-}
+
 .kicker .num {
   color: var(--ink-faint);
-}
-
-h1.hero-name {
-  font-size: clamp(46px, 9vw, 120px);
-  line-height: 0.98;
-  letter-spacing: -0.02em;
-  margin: 0;
-  font-weight: 900;
-  text-shadow: 0 4px 40px rgba(0, 0, 0, 0.6);
-}
-h1.hero-name .sub {
-  display: block;
-  font-size: clamp(15px, 2.4vw, 26px);
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  line-height: 1.6; /* h1의 0.98을 상속받아 줄간격이 좁아지던 것 교정 */
-  color: var(--ink-dim);
-  margin-top: 22px;
 }
 
 h2.title {
@@ -310,9 +243,7 @@ h2.title {
   flex-direction: column;
   margin: 6px 0 26px;
 }
-.section.right .metric {
-  align-items: flex-end;
-}
+
 .metric .big {
   font-family: var(--mono);
   font-weight: 700;
@@ -344,9 +275,7 @@ h2.title {
   gap: 14px;
   margin: 6px 0 26px;
 }
-.section.right .pairs {
-  align-items: flex-end;
-}
+
 .pair {
   display: flex;
   flex-direction: column;
@@ -408,18 +337,14 @@ h2.title {
   background: var(--cyan);
   box-shadow: 0 0 10px rgba(53, 230, 255, 0.5);
 }
-.section.right .points {
-  margin-left: auto;
-}
+
 
 .tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-.section.right .tags {
-  justify-content: flex-end;
-}
+
 .tag {
   font-family: var(--mono);
   font-size: 12px;
@@ -546,31 +471,367 @@ h2.title {
   max-width: 820px;
   margin: 0 auto;
   padding: 80px 24px 120px;
-  overflow-y: auto;
-  height: 100%;
 }
 
-@media (max-width: 720px) {
-  .section {
-    padding: 0 4vw;
+
+/* ================= 모션 이력서 레이아웃 ================= */
+.mx {
+  --gut: max(20px, 4vw);
+  --barh: 41px;
+}
+.block {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding-block: 120px 80px;
+  padding-left: max(var(--gut), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--gut), env(safe-area-inset-right, 0px));
+}
+
+/* hero */
+.hero {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: calc(var(--barh) + 64px);
+}
+h1.hero-name {
+  font-family: var(--kr);
+  font-size: clamp(52px, 9vw, 118px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  margin: 0;
+  font-weight: 900;
+}
+.hero-sub {
+  font-family: var(--kr);
+  font-size: clamp(16px, 1.9vw, 22px);
+  line-height: 1.65;
+  color: var(--ink-dim);
+  max-width: 46em;
+  margin: 24px 0 0;
+  text-wrap: pretty;
+}
+.hero-how {
+  font-size: 14px;
+  color: var(--ink-faint);
+  margin: 36px 0 14px;
+}
+.hl-index {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr));
+  gap: 10px;
+}
+.hl-index a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-soft);
+  color: var(--ink);
+  transition: border-color 0.2s, background 0.2s;
+  height: 100%;
+}
+.hl-index a:hover {
+  border-color: rgba(53, 230, 255, 0.55);
+  background: #0d1220;
+}
+.hl-index .n {
+  grid-row: span 2;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--cyan);
+  padding-top: 3px;
+}
+.hl-index .t {
+  font-family: var(--kr);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.hl-index .m {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+/* career */
+.career .points {
+  margin-bottom: 26px;
+}
+.tl {
+  max-width: 820px;
+}
+
+/* 대표 이력 = sticky 무대 + 패널. 섹션 높이가 곧 스크럽 길이 */
+.ms {
+  position: relative;
+  height: 290vh;
+}
+.ms-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  max-width: 1600px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  gap: clamp(24px, 3vw, 52px);
+  align-items: center;
+  padding-block: calc(var(--barh) + 24px) 28px;
+  padding-left: max(var(--gut), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--gut), env(safe-area-inset-right, 0px));
+}
+.ms.flip .ms-pin {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.75fr);
+}
+.ms.flip .ms-media {
+  order: 2;
+}
+.ms-media {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
+.ms-stage {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #000;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+.ms-stage.wide {
+  aspect-ratio: 16 / 9;
+  /* 무대 높이가 화면을 넘지 않게 폭을 제한 */
+  width: min(100%, calc((100svh - var(--barh) - 110px) * 16 / 9));
+  margin-inline: auto;
+}
+.ms-stage.tall {
+  aspect-ratio: 4 / 5;
+}
+.ms-stage img,
+.ms-stage iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+.ms-stage iframe {
+  /* 휠·터치 스크롤이 iframe에 먹히지 않고 페이지로 가게 */
+  pointer-events: none;
+}
+.ms-poster {
+  object-fit: cover;
+  z-index: 1;
+  transition: opacity 0.35s ease;
+}
+.ms-poster.off {
+  opacity: 0;
+}
+.ms-under {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+.ms-stage.wide + .ms-under {
+  width: min(100%, calc((100svh - var(--barh) - 110px) * 16 / 9));
+  margin-inline: auto;
+}
+.ms-track {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(120, 140, 190, 0.22);
+  overflow: hidden;
+}
+.ms-track i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--cyan);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.ms-under a {
+  font-family: var(--kr);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+.ms-under a:hover {
+  color: var(--cyan);
+}
+.ms-panel {
+  min-width: 0;
+  max-height: calc(100svh - var(--barh) - 60px);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.ms-panel h2.title {
+  font-family: var(--kr);
+  font-weight: 800;
+  font-size: clamp(26px, 2.6vw, 40px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  margin: 0 0 16px;
+}
+.ms-panel .points li {
+  font-size: clamp(14px, 1.05vw, 16px);
+}
+.ms-tail {
+  display: none;
+}
+
+/* 그 밖의 작업 */
+h2.title {
+  font-family: var(--kr);
+  font-weight: 800;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 16px;
+}
+.card {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg-soft);
+  padding: 22px 22px 24px;
+}
+.card .kicker {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+}
+.card h3 {
+  font-family: var(--kr);
+  font-size: 20px;
+  line-height: 1.35;
+  margin: 0 0 12px;
+  text-wrap: balance;
+}
+.card .metric {
+  margin: 0 0 14px;
+}
+.card .metric .big {
+  font-size: 26px;
+}
+.card .pairs {
+  margin: 0 0 14px;
+}
+.card .points li {
+  font-size: 14px;
+}
+
+/* 마지막 */
+.final .cta {
+  justify-content: flex-start;
+  margin-top: 4px;
+}
+.summary-lede {
+  margin: 0 0 10px !important;
+  color: var(--ink-faint) !important;
+  font-size: 0.92em;
+}
+.summary-media {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 14px;
+  max-width: 640px;
+}
+.summary-media figure {
+  margin: 0;
+}
+.summary-media video {
+  width: 100%;
+  display: block;
+  border-radius: 8px;
+  background: #000;
+}
+.summary-media figcaption {
+  margin-top: 6px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+.summary .faint {
+  color: var(--ink-faint);
+}
+.summary .stack {
+  display: grid;
+  gap: 6px;
+}
+
+/* 폰: 무대는 화면 위에 붙고 텍스트가 그 아래로 지나간다 */
+@media (max-width: 820px) {
+  .mx {
+    --gut: 16px;
   }
-  .panel {
-    max-width: 100%;
-    padding: 20px 18px;
-    /* 내부 스크롤 없음 — 긴 패널은 섹션(min-height)을 자연스럽게 늘리고,
-       전체 스크롤 길이는 Experience가 오버레이 실제 높이를 재서 pages로 보정 */
+  .block {
+    padding-block: 88px 56px;
   }
-  .section {
-    padding-top: 64px; /* 상단 고정 크롬(← 이력서)과 겹치지 않게 */
-    padding-bottom: 32px;
+  .ms {
+    height: auto;
   }
-  h2.title {
-    font-size: clamp(26px, 7.4vw, 34px);
+  .ms-pin,
+  .ms.flip .ms-pin {
+    position: static;
+    height: auto;
+    display: block;
+    padding: 0;
   }
-  .blurb {
-    font-size: 14.5px;
+  .ms-media {
+    position: sticky;
+    top: var(--barh);
+    z-index: 2;
+    background: var(--bg);
+    padding: 10px max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px));
+  }
+  .ms-stage.tall {
+    width: min(100%, calc((100svh - var(--barh) - 220px) * 4 / 5));
+    margin-inline: auto;
+    border-radius: 12px;
+  }
+  .ms-stage.tall + .ms-under {
+    width: min(100%, calc((100svh - var(--barh) - 220px) * 4 / 5));
+    margin-inline: auto;
+  }
+  .ms-panel {
+    max-height: none;
+    overflow: visible;
+    padding: 18px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+  }
+  .ms-tail {
+    display: block;
+    height: 110svh;
+  }
+  .kicker {
+    font-size: 11px;
+    letter-spacing: 0.14em;
   }
   .summary .stackrow {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .tl-row {
     grid-template-columns: 1fr;
     gap: 2px;
   }
