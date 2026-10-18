@@ -25,7 +25,7 @@ next to its résumé bullets. **Content is primary** — every résumé fact (co
 role, period, education, awards, stack) stays present as text.
 
 The motion pieces follow the explainer approach from the
-`jungrok5/motion-graphics` repo: a "style" is a way of explaining (open it up,
+`jungrok5/mmo-server-explained` repo: a "style" is a way of explaining (open it up,
 make the flow visible, real artifacts in space, in-game replay …), and the look
 of each piece comes from its own subject. Numbers on screen come only from the
 résumé; anything illustrative is labelled 개념도 or 예시.
@@ -82,7 +82,7 @@ public/motion/
    existing piece's engine section), plus `poster.jpg` and `poster-tall.jpg` (JPEG, ~100–350 KB).
 2. Add `<id>` to `highlights` in `src/data/resume.js` (the section with that id
    provides the text panel; give it a one-line `hook`).
-3. Stills / MP4: `node <motion-graphics>/scripts/render.mjs public/motion/<id>/index.html out/ --stills 0,10,20`
+3. Stills / MP4: `node <mmo-server-explained>/scripts/render.mjs public/motion/<id>/index.html out/ --stills 0,10,20`
    (add `--query layout=tall --size 1080x1350` for the phone composition), run from this repo's root.
 4. MP4: render in short segments with the same script and join them with ffmpeg, e.g.
    `--query "embed&q=0.6667" --from 0 --to 6 --crf 16` (wide → 1280×720) or

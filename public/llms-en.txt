@@ -84,14 +84,14 @@ Full detail (Korean): https://jungrok5.github.io/resume/llms-full.txt
   owning team (game dev, infra, external) and authoritative sources (630 source URLs, 83 publishers).
   28 interactive experiments and 12 public postmortems. Korean original with 11 translations. MIT.
   https://jungrok5.github.io/mmo-lag-anatomy/en/ (AI summary: https://jungrok5.github.io/mmo-lag-anatomy/en/llms.txt)
-- **motion-graphics**: motion graphics drawn in code to explain tech (12 MMO server/network topics).
+- **mmo-server-explained**: 12 MMO server and network topics, explained in motion graphics drawn in code.
   HTML Canvas, three.js (WebGL), Playwright, ffmpeg. A web page drawn in code rather than a video file:
   every frame is a pure function of time, so it plays and seeks in the browser, and the same page is
   rendered headlessly to MP4. Topics such as server ticks, boss lag, TCP retransmission, Nagle and
   rubber-banding each get a video, explanation and glossary set plus a vertical mobile video, with an
   expert-perspective review step. Seven explanation styles explored in 3D (WebGL); production is a
   Claude Code skill (the motion-graphics page of this resume was made the same way).
-  https://jungrok5.github.io/motion-graphics/ (source: https://github.com/jungrok5/motion-graphics)
+  https://jungrok5.github.io/mmo-server-explained/ (source: https://github.com/jungrok5/mmo-server-explained)
 - **AI Collaboration Dev Template** (ai-code-collaboration-best-practices): GitHub collaboration template
   for teams working with AI agents (multiple AI tools, multiple repos). GitHub Actions, Claude Code plugin
   (hooks, skills, subagents), Make. Whether the work is done with Claude Code, Copilot, Cursor, Codex or

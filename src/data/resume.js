@@ -377,9 +377,9 @@ export const projects = [
     ],
   },
   {
-    name: 'motion-graphics',
-    tag: '코드로 그리는 기술 설명 모션 그래픽 실험 (MMO 서버·네트워크 12개 주제)',
-    href: 'https://jungrok5.github.io/motion-graphics/',
+    name: 'mmo-server-explained',
+    tag: 'MMO 서버·네트워크 12개 주제를 코드로 그린 설명 영상',
+    href: 'https://jungrok5.github.io/mmo-server-explained/',
     tech: 'HTML Canvas · three.js · Playwright · ffmpeg',
     note: '공개',
     metric: '12개 주제 · 설명 방식 7가지',

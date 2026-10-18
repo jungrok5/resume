@@ -1,7 +1,7 @@
 # 오정록 (Jeongrok Oh) 상세 이력서 전문
 
 > AI 검색·답변 엔진을 위한 전문(full text) 버전입니다. 요약본은 https://jungrok5.github.io/resume/llms.txt 에 있습니다.
-> 원본 웹 이력서: https://jungrok5.github.io/resume/  ·  최종 갱신: 2026-10-17
+> 원본 웹 이력서: https://jungrok5.github.io/resume/  ·  최종 갱신: 2026-10-18
 > 이 문서의 모든 수치는 실제 프로젝트에서 측정한 값입니다.
 
 연락처: jungrok5@gmail.com · GitHub: https://github.com/jungrok5 · LinkedIn: https://www.linkedin.com/in/jungrok5
@@ -746,11 +746,11 @@ KB온라인에서 연속 근무 | 프로그래머 | 프로그램팀장 | 형!도
 
 - 배포: 글꼴까지 넣은 HTML 파일 하나(오프라인에서도 열림). 한국어 원문과 11개 언어판, 언어별 원인·증상 정적 페이지, llms.txt·구조화 데이터·sitemap으로 검색엔진·AI 인용에 대응.
 
-### 4-2. motion-graphics: 코드로 그리는 기술 설명 모션 그래픽 (MMO 서버·네트워크 12개 주제)
+### 4-2. mmo-server-explained: MMO 서버·네트워크 12개 주제를 코드로 그린 설명 영상
 
-- 무엇: 코드로 그리는 기술 설명 모션 그래픽 실험. MMO 서버·네트워크 12개 주제를 다룬다.
+- 무엇: MMO 서버·네트워크에서 생기는 일 12개 주제를 코드로 그린 설명 영상.
 
-- 기술: HTML Canvas · three.js(WebGL) · Playwright · ffmpeg · jungrok5.github.io/motion-graphics · github.com/jungrok5/motion-graphics (공개)
+- 기술: HTML Canvas · three.js(WebGL) · Playwright · ffmpeg · jungrok5.github.io/mmo-server-explained · github.com/jungrok5/mmo-server-explained (공개)
 
 - 구조: 영상 파일이 아니라 코드로 그리는 웹 페이지. 모든 프레임이 시간의 순수 함수라 브라우저에서 바로 재생·탐색되고, 같은 페이지를 헤드리스 렌더링으로 MP4로 굽는다.
 
@@ -758,7 +758,7 @@ KB온라인에서 연속 근무 | 프로그래머 | 프로그램팀장 | 형!도
 
 - 설명 방식: 7가지(분해해 들어가기, 흐름을 빛으로, 실물 늘어놓기, 게임 화면 재현, 직접 조작, 바닥부터 쌓기, 그려 가며 설명)를 3D(WebGL)로 실험하고 주제마다 맞는 방식을 골라 적용.
 
-- 제작 자동화: 제작 과정을 Claude Code 스킬로 만들어 같은 형식·품질로 반복 제작. 이 이력서의 모션 그래픽 페이지도 같은 방식으로 제작.
+- 제작 자동화: 제작 과정을 Claude Code 스킬(motion-skills 레포의 tech-motion-explainer)로 만들어 같은 형식·품질로 반복 제작. 이 이력서의 모션 그래픽 페이지도 같은 방식으로 제작.
 
 ### 4-3. AI 협업 개발 템플릿: AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿 (여러 AI 도구 · 여러 레포)
 

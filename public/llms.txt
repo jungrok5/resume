@@ -74,12 +74,12 @@ English version: https://jungrok5.github.io/resume/llms-en.txt
   원인마다 증상·그래프 모양·확인 방법·주 담당 팀(게임개발팀·인프라팀·외부)·공신력 있는 출처(출처 주소 630개, 발행처 83곳).
   조건을 바꿔 증상을 재현하는 실험 28개, 공개 장애 사후 분석 12건. 한국어 원문과 11개 언어판. MIT.
   https://jungrok5.github.io/mmo-lag-anatomy/ (AI용 요약: https://jungrok5.github.io/mmo-lag-anatomy/llms.txt)
-- **motion-graphics**: 코드로 그리는 기술 설명 모션 그래픽 실험 (MMO 서버·네트워크 12개 주제).
+- **mmo-server-explained**: MMO 서버·네트워크 12개 주제를 코드로 그린 설명 영상.
   HTML Canvas · three.js(WebGL) · Playwright · ffmpeg. 영상 파일이 아니라 코드로 그리는 웹 페이지로, 모든 프레임이
   시간의 순수 함수라 브라우저에서 바로 재생·탐색되고 같은 페이지를 헤드리스 렌더링으로 MP4로 굽는다.
   서버 틱·보스 렉·TCP 재전송·Nagle·러버밴딩 등 주제마다 영상·설명·용어집 세트와 모바일 세로 영상, 전문가 관점 검수.
   설명 방식 7가지를 3D(WebGL)로 실험, 제작 과정은 Claude Code 스킬로 반복 제작(이 이력서의 모션 그래픽 페이지도 같은 방식).
-  https://jungrok5.github.io/motion-graphics/ (소스: https://github.com/jungrok5/motion-graphics)
+  https://jungrok5.github.io/mmo-server-explained/ (소스: https://github.com/jungrok5/mmo-server-explained)
 - **AI 협업 개발 템플릿** (ai-code-collaboration-best-practices): AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿
   (여러 AI 도구 · 여러 레포). GitHub Actions · Claude Code 플러그인(훅·스킬·서브에이전트) · Make. Claude Code·Copilot·
   Cursor·Codex·Gemini 어떤 도구로 작업해도 AGENTS.md 하나(약 60줄)의 규칙을 읽고 같은 검사를 통과해야 main에 반영.
