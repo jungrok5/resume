@@ -101,10 +101,10 @@
 <section class="notes" id="notes">
 <h2>AI 네이티브 팀 개발 구조 <small>· 개인 프로젝트 · 공개 · MIT · 2026</small></h2>
 <article data-ch="01"><p><span class="n">병목</span>AI로 코드 작성이 빨라진 팀에서는 병목이 다른 단계로 옮겨 갑니다. 리뷰를 기다리는 PR이 쌓입니다. 두 사람의 AI가 같은 영역을 따로 작업하기도 하고 레포 사이의 API·이벤트·스키마가 알림 없이 깨지기도 합니다. 이 레포는 세 병목마다 대응 장치를 설계해 공개했습니다.</p></article>
-<article data-ch="02"><p><span class="n">설계 먼저</span>일의 크기에 따라 절차를 나눕니다. T0(한 문장으로 설명되는 변경)는 이슈와 PR, T1(여러 파일)은 PR 본문 맨 위에 AI 계획, T2(여러 모듈·레포, 계약 변경, 하루 이상)는 1쪽 설계 PR을 먼저 머지합니다. 허브의 팀 작업 보드는 30분마다 모든 레포의 활성 설계와 열린 PR을 모읍니다. LLM 없이 결정적으로 동작해 토큰을 쓰지 않습니다. 작업 전에 <code>/check-overlap</code>이나 <code>make overlap</code>으로 같은 영역(<code>src/auth/**</code> 같은 경로 글롭)을 누가 작업 중인지 확인합니다. 겹치면 담당자와 대화해 합치거나 영역을 나누거나 순서를 정합니다.</p></article>
-<article data-ch="03"><p><span class="n">계약 먼저</span>여러 레포가 함께 일할 때 비용이 가장 큰 사고는 API·이벤트·스키마가 알림 없이 깨지는 경우입니다. 계약 PR을 구현 PR보다 먼저 머지합니다. <code>contract-check</code> 워크플로가 계약 파일이 바뀐 PR에 댓글을 답니다. OpenAPI는 oasdiff, protobuf는 buf로 깨지는 변경을 찾습니다. 깨지는 변경은 소비자와 전환 계획을 합의했다는 <code>breaking-change</code> 라벨이 있어야 통과합니다.</p></article>
-<article data-ch="04"><p><span class="n">리뷰</span>리뷰 시간은 늘릴 수 없으므로 유입량을 조절합니다. <code>pr-checks</code>의 Review load가 1인당 리뷰 대기 PR 상한(<code>MAX_OPEN_PRS_PER_AUTHOR</code>, 기본 3)을 넘으면 알립니다. 차단하지는 않습니다. PR 템플릿의 Reviewer guide에는 먼저 볼 곳, 확인한 것, 확인 못 한 것을 적습니다. AI 리뷰는 참고용이고 승인은 사람 CODEOWNER가 합니다. 같은 지적이 두 번 나오면 규칙으로 바꿉니다. 매주 월요일 <code>review-comments.sh</code>가 지난주 리뷰 댓글을 토큰 없이 모읍니다. 유지보수 리포트는 2개 이상의 PR에서 나온 주제마다 수정 방법을 하나씩 제안합니다. 린트 규칙이나 테스트가 먼저이고 <code>AGENTS.md</code> 한 줄은 그다음입니다. 제안은 이슈로 등록되고 반영은 사람이 PR로 합니다. 팀 스킬도 긍정·부정 평가 케이스(<code>design-for-cross-area-work</code>, <code>no-design-for-typo</code>)로 테스트합니다.</p></article>
-<article data-ch="05"><p><span class="n">기반</span>모든 장치는 같은 기반 위에서 동작합니다. AI 도구 5종(Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Gemini)의 도구별 파일이 <code>AGENTS.md</code>(약 60줄)를 먼저 읽게 합니다. <code>make check</code>는 CI와 같은 명령을 실행합니다. 사람은 <code>ai:ready</code> 부여와 CODEOWNER 승인 두 곳에서 판단합니다. 훅은 보호 경로 수정, main 커밋, 공유 브랜치 강제 푸시를 막습니다. <code>agent-approval-check</code>는 Claude·Copilot 커밋이 든 PR의 사람 승인을 한 번 더 확인합니다. 허브 레포 하나가 템플릿(<code>make new-repo</code>)과 플러그인 마켓플레이스(<code>claude plugin update</code>)로 규칙, 훅, 스킬을 여러 레포에 배포합니다. 워크플로는 23개, 스킬 11개, 서브에이전트 5개입니다.</p>
+<article data-ch="02"><p><span class="n">설계 먼저</span>일의 크기에 따라 절차를 나눕니다. T0(한 문장으로 설명되는 변경)는 이슈와 PR, T1(여러 파일, 접근법이 열려 있음)은 PR 본문 맨 위에 AI 계획, T2(여러 모듈·레포, 계약 변경, 하루 이상)는 1쪽 설계 PR을 먼저 머지합니다. 설계를 먼저 머지하는 것은 팀 절차입니다. <code>design-check</code>는 설계 링크가 없는 큰 PR에 알림을 답니다. 허브의 팀 작업 보드는 30분마다 등록한 레포의 설계와 열린 PR을 모읍니다. 보드에는 설계에 선언한 영역과 열린 PR만 보입니다. 보드 집계는 LLM 없이 결정적으로 동작해 토큰을 쓰지 않습니다. 작업 전에 <code>/check-overlap</code>(수백 토큰)이나 <code>make overlap</code>으로 같은 영역(<code>src/auth/**</code> 같은 경로 글롭)을 누가 작업 중인지 확인합니다. 겹치면 담당자와 대화해 합치거나 영역을 나누거나 순서를 정합니다.</p></article>
+<article data-ch="03"><p><span class="n">계약 먼저</span>여러 레포가 함께 일할 때 비용이 가장 큰 사고는 API·이벤트·스키마가 알림 없이 깨지는 경우입니다. 계약 PR을 구현 PR보다 먼저 머지합니다. <code>contract-check</code> 워크플로가 계약 파일이 바뀐 PR에 댓글을 답니다. 깨지는 변경을 자동으로 찾는 대상은 OpenAPI(oasdiff)와 protobuf(buf)뿐입니다. 깨지는 변경은 <code>breaking-change</code> 라벨이 있어야 통과합니다. 라벨을 붙이기 전에 소비자와 전환 계획을 합의하는 것은 팀 규칙입니다.</p></article>
+<article data-ch="04"><p><span class="n">리뷰</span>리뷰 시간은 늘릴 수 없으므로 유입량을 조절합니다. <code>pr-checks</code>의 Review load가 1인당 리뷰 대기 PR 상한(<code>MAX_OPEN_PRS_PER_AUTHOR</code>, 기본 3)을 넘으면 알립니다. 차단하지는 않습니다. PR 템플릿의 Reviewer guide에는 먼저 볼 곳, 확인한 것, 확인 못 한 것을 적습니다. AI 리뷰는 참고용이고 승인은 사람 CODEOWNER가 합니다. 같은 지적이 두 번 나오면 규칙으로 바꿉니다. 주간 유지보수 리포트(<code>AI_BACKEND</code>를 켜면 매주 월요일, 또는 <code>make ai-maintenance</code>)가 <code>review-comments.sh</code>로 지난주 리뷰 댓글을 모으고(수집은 토큰 0) 2개 이상 PR에서 나온 주제마다 수정 방법을 이슈로 제안합니다. 린트 규칙이나 테스트가 먼저이고 <code>AGENTS.md</code> 한 줄은 그다음입니다. 반영은 사람이 PR로 합니다. 핵심 팀 스킬은 긍정·부정 평가 케이스(<code>design-for-cross-area-work</code>, <code>no-design-for-typo</code>)로 테스트합니다.</p></article>
+<article data-ch="05"><p><span class="n">기반</span>모든 장치는 같은 기반 위에서 동작합니다. AI 도구 5종(Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Gemini)의 도구별 파일이 <code>AGENTS.md</code>(약 60줄)를 먼저 읽게 합니다. 내 자리에서도 CI가 실행하는 검사(<code>make check</code>)를 그대로 실행합니다. 에이전트 작업의 사람 판단은 두 곳으로 <code>ai:ready</code> 부여와 CODEOWNER 승인입니다. Claude Code 훅은 보호 경로 수정, main 커밋, 공유 브랜치 강제 푸시를 막고, 다른 도구는 pre-commit과 룰셋이 막습니다. <code>agent-approval-check</code>는 Claude·Copilot 커밋이 든 PR의 사람 승인을 한 번 더 확인합니다. 허브 레포 하나에서 규칙은 템플릿(<code>make new-repo</code>)으로, 훅과 스킬은 플러그인 마켓플레이스(<code>claude plugin update</code>)로 여러 레포에 배포합니다. 워크플로는 23개, 스킬 11개, 서브에이전트 5개입니다.</p>
 <p><small>화면의 그래프는 개념도입니다. 레인 수, A·B, <code>svc-a</code>·<code>web</code>, <code>src/auth/**</code>는 예시입니다. 도입 사례나 측정한 효과가 아니라 설계해 공개한 참조 구현입니다.</small></p></article>
 </section>
 <script type="importmap">{"imports": {"three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/"}}</script>
@@ -161,12 +161,12 @@ const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const HEAD = [
   [0.0, '01', '병목', 'AI로 코드는 빨라졌다', '병목은 리뷰 · 중복 작업 · 레포 간 계약으로', '병목은 리뷰 · 중복 · 계약으로'],
   [7.0, '02', '설계 · 겹침', '큰 일은 설계 먼저', '일의 크기에 따라 3단계 · T2는 1쪽 설계 PR을 먼저 머지', 'T2는 1쪽 설계 PR을 먼저 머지'],
-  [10.6, '', '', '같은 영역 작업은 코드 전에 찾음', '팀 작업 보드 · /check-overlap', '팀 작업 보드 · /check-overlap'],
-  [16.0, '03', '계약', '레포 사이의 계약 먼저', '계약 PR을 구현 PR보다 먼저 머지 · 깨지는 변경은 검사에서 실패', '계약 PR 먼저 · 깨지는 변경은 실패'],
+  [10.6, '', '', '같은 영역 작업은 시작 전에 확인', '설계·열린 PR과 영역 겹침 · /check-overlap', '설계·열린 PR과 겹침 · /check-overlap'],
+  [16.0, '03', '계약', '레포 사이의 계약 먼저', '계약 PR을 구현 PR보다 먼저 머지 · OpenAPI·protobuf의 깨지는 변경은 검사 실패', '계약 PR 먼저 · OpenAPI·protobuf 깨짐은 검사 실패'],
   [22.5, '04', '리뷰', '리뷰 대기에 상한', '1인당 리뷰 대기 PR 기본 3개 · 넘으면 알림 · 승인은 사람', '1인당 기본 3개 · 넘으면 알림'],
-  [27.2, '', '', '같은 지적이 두 번 나오면 규칙으로', '매주 리뷰 댓글 수집 → 수정 제안 → 사람이 반영', '매주 수집 → 수정 제안 → 사람이 반영'],
+  [27.2, '', '', '같은 지적이 두 번 나오면 규칙으로', '리뷰 댓글 수집 → 수정 제안 → 사람이 반영', '댓글 수집 → 수정 제안 → 사람이 반영'],
   [31.6, '05', '기반', 'AI 도구 5종, 규칙 파일 하나', 'TOOLS', 'TOOLS'],
-  [34.2, '', '', '허브 레포 하나에서 여러 레포로', '템플릿 make new-repo · 플러그인 claude plugin update', '템플릿 · 플러그인 마켓플레이스'],
+  [34.2, '', '', '허브 레포 하나에서 여러 레포로', '규칙은 템플릿 make new-repo · 훅·스킬은 claude plugin update', '규칙은 템플릿 · 훅·스킬은 플러그인'],
   [36.6, '', '결과', '', '', ''],
 ];
 const T_END = 36.6;
@@ -1041,7 +1041,7 @@ function sceneLabels(t) {
     const a = win(t, 11.0, 16.2, .4);
     if (a > 0) {
       const P = TALL ? at(BOARD.s, BOARD.a + .4) : at(BOARD.s, BOARD.a + .42);
-      const r1 = [['팀 작업 보드', INK]], r2 = [['모든 레포 설계 · 열린 PR', DIM]], r3 = [['30분마다 · LLM 없음 · 토큰 0', ACC]];
+      const r1 = [['팀 작업 보드', INK]], r2 = [['등록한 레포의 설계 · 열린 PR', DIM]], r3 = [['30분마다 · LLM 없음 · 토큰 0', ACC]];
       if (TALL) { const T0 = at(BOARD.s - 1.75, BOARD.a); card([r1, r2, r3], T0.x - 120, T0.y, { size: 34, alpha: a, ax: 0, ay: 1, lh: 1.36 }); }
       else { const R = at(BOARD.s + .95, BOARD.a); card([r1, r2, r3], R.x, R.y, { size: fz, alpha: a, ax: 0, ay: .5, lh: 1.36 }); }
     }
@@ -1075,7 +1075,7 @@ function sceneLabels(t) {
         const la = win(t, 20.5, 22.6, .3);
         if (la > 0) {
           const y = rp.y + (fz * 1.5 + 10) * 2;
-          const box = label([['breaking-change', HUMAN, true], ['  라벨 · 소비자와 합의', HUMAN]], rp.x + (TALL ? 0 : 44), y, { size: fz, alpha: la, ax: rp.ax, ay: rp.ay === .5 ? .5 : 0, stroke: WARM_ST(.7) });
+          const box = label([['breaking-change', HUMAN, true], ['  라벨 · 합의는 팀 규칙', HUMAN]], rp.x + (TALL ? 0 : 44), y, { size: fz, alpha: la, ax: rp.ax, ay: rp.ay === .5 ? .5 : 0, stroke: WARM_ST(.7) });
           if (box) personGlyph(box.x - fz * .7, box.y + box.h / 2, fz * .55, HUMAN, la);
         }
       }
@@ -1085,8 +1085,8 @@ function sceneLabels(t) {
   {
     const ca = win(t, 22.9, 27.3, .4), cl = win(t, 22.9, 25.5, .4);
     if (ca > 0) {
-      if (TALL) { const P = at(FRONT - GAP * 8.2, 0); label([['상한 3', INK], ['  MAX_OPEN_PRS_PER_AUTHOR', ACC, true]], W / 2, P.y, { size: 34, alpha: cl, ay: 1 }); }
-      else { const P = at(S_CAP, A_TOP + HM + .05); label([['상한 3  ', INK], ['MAX_OPEN_PRS_PER_AUTHOR', ACC, true]], P.x + 20, P.y - 12, { size: fz, alpha: cl, ax: .75, ay: 1 }); }
+      if (TALL) { const P = at(FRONT - GAP * 8.2, 0); label([['기본 3', INK], ['  MAX_OPEN_PRS_PER_AUTHOR', ACC, true]], W / 2, P.y, { size: 34, alpha: cl, ay: 1 }); }
+      else { const P = at(S_CAP, A_TOP + HM + .05); label([['기본 3  ', INK], ['MAX_OPEN_PRS_PER_AUTHOR', ACC, true]], P.x + 20, P.y - 12, { size: fz, alpha: cl, ax: .75, ay: 1 }); }
       // alert tag on the deepest queue
       const al = win(t, 23.6, TALL ? 25.5 : 27.3, .4);
       const pick = STATE.alerts.filter(q => q.i === 3).sort((x, y) => x.s - y.s)[0] || STATE.alerts[0];
@@ -1110,8 +1110,8 @@ function sceneLabels(t) {
     const a1 = win(t, 27.5, 31.5, .4);
     if (a1 > 0) {
       const P = proj(ARC0);
-      if (TALL) label([['review-comments.sh', INK, true], ['  매주 월 · 토큰 0', ACC]], P.x + 30, P.y + 30, { size: 34, alpha: a1, ax: 0, ay: 0 });
-      else label([['review-comments.sh', INK, true], ['  매주 월요일 · 토큰 0', ACC]], P.x + 30, P.y, { size: fz, alpha: a1, ax: 0, ay: .5 });
+      if (TALL) label([['review-comments.sh', INK, true], ['  수집은 토큰 0', ACC]], P.x + 30, P.y + 30, { size: 34, alpha: a1, ax: 0, ay: 0 });
+      else label([['review-comments.sh', INK, true], ['  수집은 토큰 0', ACC]], P.x + 30, P.y, { size: fz, alpha: a1, ax: 0, ay: .5 });
     }
     const a2 = win(t, 28.6, 30.2, .3);
     if (a2 > 0) {
@@ -1140,7 +1140,7 @@ function sceneLabels(t) {
     if (a > 0) {
       gateLabel(S_RULE, [['AGENTS.md', INK, true], ['  약 60줄', DIM]], a, { side: TALL ? 1 : -1, stroke: 'rgba(220,235,247,.6)' });
       humanLabel(S_READY, 'ai:ready', a, { side: 1, mono: true, dx: TALL ? 0 : 60 });
-      gateLabel(S_CI, [['같은 검사  ', INK], ['make check', ACC, true], [' = CI', DIM]], a, { side: TALL ? 1 : -1 });
+      gateLabel(S_CI, [['같은 검사  ', INK], ['make check', ACC, true], [' · CI', DIM]], a, { side: TALL ? 1 : -1 });
     }
     // hub
     if (hk > 0) {
@@ -1217,11 +1217,10 @@ function endCard(t) {
     });
   });
   const ys = y0 + (main.length - 1) * lh + (TALL ? 76 : 70), sz = TALL ? 38 : 36;
-  const parts = [['AI 도구 5종 · 규칙 1개 · ', DIM], ['사람 판단 2곳', HUMAN], [' · 워크플로 23', DIM]];
+  const parts = [['AI 도구 5종 · 규칙 1개 · ', DIM], ['에이전트 작업의 사람 판단 2곳', HUMAN], [' · 워크플로 23', DIM]];
   if (TALL) {
-    txt('AI 도구 5종 · 규칙 1개', HX, ys, { size: sz, weight: 700, color: DIM, alpha: k2 });
-    txt('사람 판단 2곳', HX, ys + sz * 1.35, { size: sz, weight: 700, color: HUMAN, alpha: k2 });
-    txt(' · 워크플로 23', HX + tw('사람 판단 2곳', sz, 700), ys + sz * 1.35, { size: sz, weight: 700, color: DIM, alpha: k2 });
+    txt('AI 도구 5종 · 규칙 1개 · 워크플로 23', HX, ys, { size: sz, weight: 700, color: DIM, alpha: k2 });
+    txt('에이전트 작업의 사람 판단 2곳', HX, ys + sz * 1.35, { size: sz, weight: 700, color: HUMAN, alpha: k2 });
   } else {
     let x = HX; parts.forEach(([s, c]) => { txt(s, x, ys, { size: sz, weight: 700, color: c, alpha: k2 }); x += tw(s, sz, 700); });
   }
