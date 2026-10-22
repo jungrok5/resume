@@ -65,7 +65,7 @@ public/motion/
 | `ownership` | client-delegated NPC simulation, ownership migration | make the flow visible |
 | `pipeline` | proto single source → code · CSV · validation | real artifacts in space |
 | `ai` | in-house MCP server, agent team, local LLM | real artifacts in space |
-| `collab` | personal project: 5 AI tools → one AGENTS.md, same checks, 2 human decisions | make the flow visible (`git log --graph` look) |
+| `collab` | personal project: AI-era bottlenecks (review · duplicate work · contracts between repos) and a device for each, on one base (5 AI tools → one AGENTS.md, 2 human decisions) | make the flow visible (`git log --graph` look) |
 
 ### Piece contract
 

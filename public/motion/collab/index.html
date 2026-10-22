@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI 협업 개발 구조</title>
+<title>AI 네이티브 팀 개발 구조</title>
 <script>
   // mode classes before first paint: ?embed (résumé iframe), ?render (render script), ?layout=tall (4:5)
   (function () { var q = location.search, c = document.documentElement.classList;
@@ -12,7 +12,8 @@
 </script>
 <style>
   /* One stage (16:9, or 4:5 with ?layout=tall), a slim transport bar, chapter chips, short notes.
-     Look: `git log --graph` in a dark terminal. Five tool branches of light run through the same checkpoints into one main. */
+     Look: `git log --graph` in a dark terminal. Branch lanes of light run into a review gate; the three places
+     where AI-speed work jams (review, duplicate work, contracts between repos) are lit, then each gets its device. */
   :root {
     --bg: #06080a; --surface: #10151a; --line: #22303a; --fg: #e8f1f8; --dim: #8fa3b3; --text2: #c3d1dc;
     --accent: #8fd8ff; --human: #ffb43c;
@@ -82,15 +83,15 @@
 <body>
 <div class="player">
   <div class="stage" id="stage">
-    <canvas id="c" width="1920" height="1080" aria-label="AI 도구 5종의 변경이 같은 규칙 파일과 같은 검사를 거쳐 main에 머지되고, 사람이 두 곳에서 판단하는 구조 모션그래픽"></canvas>
+    <canvas id="c" width="1920" height="1080" aria-label="AI로 코드 작성이 빨라진 팀에서 병목이 리뷰, 중복 작업, 레포 간 계약으로 옮겨 가고 설계 먼저와 겹침 확인, 계약 먼저, 리뷰 상한, 지적의 규칙화로 각각 대응하는 구조 모션그래픽"></canvas>
     <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
   </div>
   <div class="bar">
     <button class="btn" id="play" aria-label="재생"></button>
-    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="34" aria-valuenow="0">
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="40" aria-valuenow="0">
       <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
     </div>
-    <div class="time" id="time">0:00 / 0:34</div>
+    <div class="time" id="time">0:00 / 0:40</div>
     <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
     <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
   </div>
@@ -98,26 +99,28 @@
   <nav class="set" aria-label="이동"><a href="../../interactive.html">← 이력서로</a><a href="https://github.com/jungrok5/ai-code-collaboration-best-practices" target="_blank" rel="noreferrer">GitHub 레포</a></nav>
 </div>
 <section class="notes" id="notes">
-<h2>AI 에이전트 협업 개발 구조 <small>· 개인 프로젝트 · 공개 · MIT · 2026</small></h2>
-<article data-ch="01"><p><span class="n">규칙</span>팀원마다 다른 AI 도구(Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Gemini)를 씁니다. 규칙은 <code>AGENTS.md</code> 하나(약 60줄)에 두고, 도구별 파일(<code>CLAUDE.md</code>, <code>copilot-instructions.md</code>, <code>.cursor/rules/</code>, <code>GEMINI.md</code>)은 이 파일을 먼저 읽게 합니다.</p></article>
-<article data-ch="02"><p><span class="n">흐름</span>이슈 하나가 머지되기까지 7단계입니다. 이슈 등록 → AI 분류(라벨 부여) → <b>사람이 <code>ai:ready</code> 부여</b> → AI 구현(테스트 먼저, 별도 worktree) → 초안 PR · CI · AI 리뷰(참고용) → <b>사람 CODEOWNER 승인</b> → squash 머지 · <code>ai:done</code> · 릴리스 PR. 초안 PR을 ready로 바꾸고 머지하는 것도 리뷰어가 합니다. AI 작업은 각자 자리에서 본인의 <code>claude</code> 로그인으로, API 키 없이 실행합니다(<code>make ai-triage / ai-review / ai-implement / ai-queue</code>).</p></article>
-<article data-ch="03"><p><span class="n">내 PC</span>내 PC에서 먼저 막습니다. Claude Code 플러그인 <code>team-ai-workflow</code>의 훅이 보호 경로(비밀 파일, 락파일, CODEOWNERS, 룰셋, <code>.claude/settings.json</code>) 수정과 main 커밋, 공유 브랜치 강제 푸시를 차단하고, 수정 직후 포맷합니다. 훅은 Claude Code에서만 동작하므로 다른 도구의 변경은 pre-commit(비밀·형식 검사)과 CI와 같은 명령인 <code>make check</code>로 확인합니다. 사람의 커밋에도 같이 적용됩니다.</p></article>
-<article data-ch="04"><p><span class="n">GitHub</span>GitHub 쪽에서 같은 규칙으로 한 번 더 검사합니다. 룰셋이 PR, 사람 승인, <code>ci-ok</code>, squash 머지만 허용하고, CODEOWNERS, CodeQL(기본은 워크플로 파일), 비밀 스캔, Dependabot이 함께 동작합니다. 룰셋과 비밀 스캔은 관리자가 <code>make github-setup</code>으로 한 번 적용합니다. AI 리뷰는 참고용이라 승인으로 세지 않고, <code>agent-approval-check</code>가 Claude·Copilot 커밋이 든 PR의 사람 승인을 한 번 더 확인합니다.</p></article>
-<article data-ch="05"><p><span class="n">결과</span>AI 도구 5종이 규칙 파일 하나와 같은 검사를 거치고, 사람은 두 곳에서 판단합니다. 워크플로 23개, 스킬 11개, 서브에이전트 5개입니다. 서버 자동화는 선택입니다(<code>AI_BACKEND</code>: 사내 로컬 LLM 또는 Anthropic). 설정하지 않으면 AI 워크플로는 skipped로 끝납니다. 여러 레포에는 템플릿 복사(<code>make new-repo</code>)와 플러그인 마켓플레이스(<code>claude plugin update</code>)로 배포합니다.</p>
-<p><small>화면의 그래프는 개념도입니다. 레인 5개는 도구 5종을 나타내며, 커밋 수와 머지 순서는 예시입니다.</small></p></article>
+<h2>AI 네이티브 팀 개발 구조 <small>· 개인 프로젝트 · 공개 · MIT · 2026</small></h2>
+<article data-ch="01"><p><span class="n">병목</span>AI로 코드 작성이 빨라진 팀에서는 병목이 다른 단계로 옮겨 갑니다. 리뷰를 기다리는 PR이 쌓입니다. 두 사람의 AI가 같은 영역을 따로 작업하기도 하고 레포 사이의 API·이벤트·스키마가 알림 없이 깨지기도 합니다. 이 레포는 세 병목마다 대응 장치를 설계해 공개했습니다.</p></article>
+<article data-ch="02"><p><span class="n">설계 먼저</span>일의 크기에 따라 절차를 나눕니다. T0(한 문장으로 설명되는 변경)는 이슈와 PR, T1(여러 파일)은 PR 본문 맨 위에 AI 계획, T2(여러 모듈·레포, 계약 변경, 하루 이상)는 1쪽 설계 PR을 먼저 머지합니다. 허브의 팀 작업 보드는 30분마다 모든 레포의 활성 설계와 열린 PR을 모읍니다. LLM 없이 결정적으로 동작해 토큰을 쓰지 않습니다. 작업 전에 <code>/check-overlap</code>이나 <code>make overlap</code>으로 같은 영역(<code>src/auth/**</code> 같은 경로 글롭)을 누가 작업 중인지 확인합니다. 겹치면 담당자와 대화해 합치거나 영역을 나누거나 순서를 정합니다.</p></article>
+<article data-ch="03"><p><span class="n">계약 먼저</span>여러 레포가 함께 일할 때 비용이 가장 큰 사고는 API·이벤트·스키마가 알림 없이 깨지는 경우입니다. 계약 PR을 구현 PR보다 먼저 머지합니다. <code>contract-check</code> 워크플로가 계약 파일이 바뀐 PR에 댓글을 답니다. OpenAPI는 oasdiff, protobuf는 buf로 깨지는 변경을 찾습니다. 깨지는 변경은 소비자와 전환 계획을 합의했다는 <code>breaking-change</code> 라벨이 있어야 통과합니다.</p></article>
+<article data-ch="04"><p><span class="n">리뷰</span>리뷰 시간은 늘릴 수 없으므로 유입량을 조절합니다. <code>pr-checks</code>의 Review load가 1인당 리뷰 대기 PR 상한(<code>MAX_OPEN_PRS_PER_AUTHOR</code>, 기본 3)을 넘으면 알립니다. 차단하지는 않습니다. PR 템플릿의 Reviewer guide에는 먼저 볼 곳, 확인한 것, 확인 못 한 것을 적습니다. AI 리뷰는 참고용이고 승인은 사람 CODEOWNER가 합니다. 같은 지적이 두 번 나오면 규칙으로 바꿉니다. 매주 월요일 <code>review-comments.sh</code>가 지난주 리뷰 댓글을 토큰 없이 모읍니다. 유지보수 리포트는 2개 이상의 PR에서 나온 주제마다 수정 방법을 하나씩 제안합니다. 린트 규칙이나 테스트가 먼저이고 <code>AGENTS.md</code> 한 줄은 그다음입니다. 제안은 이슈로 등록되고 반영은 사람이 PR로 합니다. 팀 스킬도 긍정·부정 평가 케이스(<code>design-for-cross-area-work</code>, <code>no-design-for-typo</code>)로 테스트합니다.</p></article>
+<article data-ch="05"><p><span class="n">기반</span>모든 장치는 같은 기반 위에서 동작합니다. AI 도구 5종(Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Gemini)의 도구별 파일이 <code>AGENTS.md</code>(약 60줄)를 먼저 읽게 합니다. <code>make check</code>는 CI와 같은 명령을 실행합니다. 사람은 <code>ai:ready</code> 부여와 CODEOWNER 승인 두 곳에서 판단합니다. 훅은 보호 경로 수정, main 커밋, 공유 브랜치 강제 푸시를 막습니다. <code>agent-approval-check</code>는 Claude·Copilot 커밋이 든 PR의 사람 승인을 한 번 더 확인합니다. 허브 레포 하나가 템플릿(<code>make new-repo</code>)과 플러그인 마켓플레이스(<code>claude plugin update</code>)로 규칙, 훅, 스킬을 여러 레포에 배포합니다. 워크플로는 23개, 스킬 11개, 서브에이전트 5개입니다.</p>
+<p><small>화면의 그래프는 개념도입니다. 레인 수, A·B, <code>svc-a</code>·<code>web</code>, <code>src/auth/**</code>는 예시입니다. 도입 사례나 측정한 효과가 아니라 설계해 공개한 참조 구현입니다.</small></p></article>
 </section>
 <script type="importmap">{"imports": {"three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/"}}</script>
 <script type="module">
 // ─────────────────────────────────────────────────────────────
-//  AI 협업 개발 구조 — collab (34 s; 1920×1080, or 1080×1350 with ?layout=tall)
-//  흐름과 관계를 빛으로, in the look of `git log --graph`: five tool branches (one colour each) run left → right
-//  (tall: top → bottom) through the same checkpoints and merge into one main. People are the only warm colour;
-//  the flow stops at exactly two warm gates. Red is only the one blocked edit.
-//    01  0–6.5     5 tools, one rule file (AGENTS.md)
-//    02  6.5–13.5  issue → AI 분류 → 사람: ai:ready (wait) → AI 구현
-//    03  13.5–20.5 hook blocks .claude/settings.json ✗ · pre-commit / make check · push
-//    04  20.5–29.5 CI · CodeQL · 비밀 스캔 → AI 리뷰(참고용) → 사람: CODEOWNER 승인 (wait) → 룰셋 → squash → main
-//    결과 29.5–34   end card (settled by 31, held)
+//  AI 네이티브 팀 개발 구조 — collab (40 s; 1920×1080, or 1080×1350 with ?layout=tall)
+//  흐름과 관계를 빛으로, in the look of `git log --graph`: seven branch lanes in two repos (svc-a, web) carry
+//  AI-fast PRs into one review gate. Three bottlenecks are lit: the review queue (dots bunch and slow before the
+//  gate), duplicate work (two lanes converge on one area glob) and the contract between repos (a link that
+//  cracks). People are the only warm colour; red is only a break.
+//    01  0–7       the bottlenecks (poster frame: overview with all three marked)
+//    02  7–16      size tiers T0/T1/T2 → work board flags A/B on src/auth/** → talk, split the area
+//    03  16–22.5   contract PR first · contract-check fails a breaking change without the label
+//    04  22.5–31.6 per-author open-PR cap (alerts) · Reviewer guide · AI review / CODEOWNER → weekly rule loop (return arc)
+//    05  31.6–36.6 base: 5 tools read AGENTS.md, same checks, 2 human points · hub spreads to many repos
+//    결과 36.6–40   end card (settled by 37.4, held)
 //  Every frame is a pure function of t. three.js renders offscreen; #c composites it and draws text on top.
 // ─────────────────────────────────────────────────────────────
 import * as THREE from 'three';
@@ -132,7 +135,7 @@ const TALL = QS.get('layout') === 'tall';
 const EMBED = QS.has('embed'), RENDER = QS.has('render');
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const Q = EMBED ? clamp(+(QS.get('q') || 1) || 1, .4, 1) : 1;
-const W = TALL ? 1080 : 1920, H = TALL ? 1350 : 1080, DURATION = 34;
+const W = TALL ? 1080 : 1920, H = TALL ? 1350 : 1080, DURATION = 40;
 const FOV = TALL ? 40 : 30;
 const cv = document.getElementById('c');
 cv.width = Math.round(W * Q); cv.height = Math.round(H * Q);
@@ -148,96 +151,98 @@ const eio = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const ss = t => t * t * (3 - 2 * t);
 const win = (t, s, e, f = .45) => Math.min(eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
 const fract = x => x - Math.floor(x);
+const smin = (a, b, k) => Math.min(a, b) - k * Math.log1p(Math.exp(-Math.abs(a - b) / k));
 function eback(t) { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); }
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let x = Math.imul(seed ^ seed >>> 15, 1 | seed); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
 // ── timeline ─────────────────────────────────────────────────
-// [start, number, chip label, title, sub (wide), sub (tall)]
+// [start, number, chip label, title, sub (wide), sub (tall)] · rows without a number continue the beat above
 const HEAD = [
-  [0.0, '01', '규칙 하나', 'AI 도구 5종, 규칙 파일 하나', 'AGENTS.md 약 60줄 · 도구별 파일은 이 파일을 먼저 읽게 함', 'AGENTS.md 약 60줄 · 도구별 파일이 먼저 읽음'],
-  [6.5, '02', 'ai:ready', 'ai:ready 붙은 이슈를 AI가 구현', '이슈 → AI 분류 → 사람: ai:ready → 테스트 먼저 · 별도 worktree', '사람이 ai:ready를 붙여야 AI가 시작'],
-  [13.5, '03', '내 PC', '내 PC에서 먼저 막고 검사', '훅이 보호 경로 · main 커밋 · 공유 브랜치 강제 푸시 차단, make check는 CI와 같은 명령', '훅이 막고, make check가 CI와 같은 명령'],
-  [20.5, '04', 'GitHub', 'GitHub에서 같은 검사, 사람 승인', 'AI 리뷰는 참고용 · 승인은 사람만', 'AI 리뷰는 참고용 · 승인은 사람만'],
-  [29.5, '', '결과', '', '', ''],
+  [0.0, '01', '병목', 'AI로 코드는 빨라졌다', '병목은 리뷰 · 중복 작업 · 레포 간 계약으로', '병목은 리뷰 · 중복 · 계약으로'],
+  [7.0, '02', '설계 · 겹침', '큰 일은 설계 먼저', '일의 크기에 따라 3단계 · T2는 1쪽 설계 PR을 먼저 머지', 'T2는 1쪽 설계 PR을 먼저 머지'],
+  [10.6, '', '', '같은 영역 작업은 코드 전에 찾음', '팀 작업 보드 · /check-overlap', '팀 작업 보드 · /check-overlap'],
+  [16.0, '03', '계약', '레포 사이의 계약 먼저', '계약 PR을 구현 PR보다 먼저 머지 · 깨지는 변경은 검사에서 실패', '계약 PR 먼저 · 깨지는 변경은 실패'],
+  [22.5, '04', '리뷰', '리뷰 대기에 상한', '1인당 리뷰 대기 PR 기본 3개 · 넘으면 알림 · 승인은 사람', '1인당 기본 3개 · 넘으면 알림'],
+  [27.2, '', '', '같은 지적이 두 번 나오면 규칙으로', '매주 리뷰 댓글 수집 → 수정 제안 → 사람이 반영', '매주 수집 → 수정 제안 → 사람이 반영'],
+  [31.6, '05', '기반', 'AI 도구 5종, 규칙 파일 하나', 'TOOLS', 'TOOLS'],
+  [34.2, '', '', '허브 레포 하나에서 여러 레포로', '템플릿 make new-repo · 플러그인 claude plugin update', '템플릿 · 플러그인 마켓플레이스'],
+  [36.6, '', '결과', '', '', ''],
 ];
-const T_END = 29.5;
-const T_OK1 = 10.0, T_OK2 = 25.0;       // the two human decisions
-const T_HOOK = 14.3;                     // Claude's edit to .claude/settings.json is attempted
-const T_BLOCK = 15.0;                    // … and blocked by the hook
+const T_END = 36.6;
 
 // ── palette ──────────────────────────────────────────────────
-// lanes: one colour per tool · ice = shared structure (rules, checks, main) · amber = people only · red = blocked only
+// lanes: one colour per AI tool · ice = shared structure · amber = people only · red = a break only
 const TOOLS = [
-  { name: 'Claude Code', file: 'CLAUDE.md', col: '#b28cff' },
-  { name: 'GitHub Copilot', file: 'copilot-instructions.md', col: '#5aa2ff' },
-  { name: 'Cursor', file: '.cursor/rules/', col: '#35dcc0' },
-  { name: 'OpenAI Codex', file: 'AGENTS.md', col: '#ff7ac6' },
-  { name: 'Gemini', file: 'GEMINI.md', col: '#c3ec5c' },
+  { name: 'Claude Code', col: '#b28cff' },
+  { name: 'Copilot', col: '#5aa2ff' },
+  { name: 'Cursor', col: '#35dcc0' },
+  { name: 'Codex', col: '#ff7ac6' },
+  { name: 'Gemini', col: '#c3ec5c' },
 ];
-const NL = TOOLS.length;
-const ICE = '#dcebf7', STEEL = '#7f98ad', HUMAN = '#ffb43c', RED = '#ff4b55', PASS = '#9dffc4';
+const ICE = '#dcebf7', STEEL = '#7f98ad', HUMAN = '#ffb43c', RED = '#ff4b55', PASS = '#9dffc4', ACC = '#8fd8ff';
 const C3 = h => new THREE.Color(h);
-const LC3 = TOOLS.map(o => C3(o.col));
 const ICE3 = C3(ICE), STEEL3 = C3(STEEL), HUM3 = C3(HUMAN), RED3 = C3(RED), PASS3 = C3(PASS);
 
 // ═════════════════════════════════════════════════════════════
-//  GRAPH (world units). s = along the flow, a = across the lanes.
-//  wide: x = s, y = a (Claude on top) · tall: x = a (Claude on the left), y = −s
+//  WORLD (units). s = along the flow, a = across the lanes (svc-a above web).
+//  wide: x = s, y = a · tall: x = −a (svc-a on the left), y = −s (flow top → bottom)
 // ═════════════════════════════════════════════════════════════
-const LSP = TALL ? .8 : .62;                 // lane spacing
-const laneA = i => (TALL ? 1 : -1) * (i - 2) * LSP;   // Claude on top (wide) / on the left (tall)
-const HL = 2 * LSP + .45;                     // gate half-span across the lanes
-const GD = .55;                              // gate half-depth
-function G(s, a, z = 0, out = new THREE.Vector3()) { return TALL ? out.set(a, -s, z) : out.set(s, a, z); }
+const SPREAD = TALL ? 1.3 : 1, SSC = TALL ? .8 : 1;
+function G(s, a, z = 0, out = new THREE.Vector3()) { return TALL ? out.set(-a * SPREAD, -s * SSC, z) : out.set(s, a, z); }
+// seven lanes in two repos (개념도): each lane is one person's AI tool
+const LANES = [
+  { a: 2.1, tool: 0, repo: 0 }, { a: 1.5, tool: 1, repo: 0 }, { a: .9, tool: 2, repo: 0 }, { a: .3, tool: 3, repo: 0 },
+  { a: -1.1, tool: 4, repo: 1 }, { a: -1.7, tool: 1, repo: 1 }, { a: -2.3, tool: 0, repo: 1 },
+];
+const NL = LANES.length;
+const LC3 = LANES.map(L => C3(TOOLS[L.tool].col));
+const REPOS = [{ name: 'svc-a', main: 1.2 }, { name: 'web', main: -1.7 }];
+const A_TOP = 2.1, A_BOT = -2.3, HM = .45;            // lane extent, gate margin
+const S0 = -9.0, S_RULE = -8.1, S_READY = -7.1, S_CT = -.6, S_CI = .9, S_AIR = 1.75, S_OWN = 3.9, S_F0 = 4.3, S_M = 5.9, S_END = 8.3;
+const BOX = { s0: -4.4, s1: -2.8, a0: .62, a1: 1.78, s: -3.6, a: 1.2 };   // the area glob src/auth/** (between lanes A and B)
+const BOARD = { s: -3.6, a: 3.05 };                    // team work board (hub)
+const HUB = { s: -12.6, a: -.1 };
+const GHOST = [{ a: [4.6, 4.05], main: 4.33 }, { a: [-4.0, -4.55], main: -4.28 }];   // more repos (B5)
+const funnel = s => ss(p(s, S_F0, S_M - S_F0));
+const laneA = (i, s) => lerp(LANES[i].a, REPOS[LANES[i].repo].main, funnel(s));
+const laneP = (i, s, out = new THREE.Vector3()) => G(s, laneA(i, s), 0, out);
 
-const S0 = TALL ? -9.0 : -9.4, S_RULE = -7.9, S_ISSUE = -6.7, S_READY = -5.3;
-const C1 = -4.3, C2 = -3.4, S_HOOK = -2.75, C3S = -1.75, S_PRE = -.8, S_DIV = .4;
-const S_PR = 1.15, S_CI = 2.0, S_REV = 3.0, S_OWN = 4.05, S_RS = 5.2, S_F0 = 5.65, S_M = 7.3;
-const SLOT = j => S_M + (TALL ? .6 : .78) * (j + 1);       // squash commits on main, newest at the tip
-const S_END = TALL ? 11.3 : 12.3;
-const funnel = s => 1 - ss(p(s, S_F0, S_M - S_F0));
-const laneP = (i, s, out = new THREE.Vector3()) => G(s, laneA(i) * funnel(s), 0, out);
-const CJ = [[.05, -.1, .08], [-.08, .06, -.04], [.1, -.04, .1], [-.04, .1, -.08], [.0, -.07, .05]];   // commit jitter per lane
-const COMMITS = i => [C1 + CJ[i][0], C2 + CJ[i][1], C3S + CJ[i][2]];
-
-// per-lane head (the work item) — keyframes [t, s]; stagger d keeps lanes from moving in lockstep
-const DL = [0, .32, .14, .46, .24];
-const MERGE_ORDER = [2, 0, 4, 1, 3];         // j-th merge → lane
-const T_MERGE = j => 26.9 + j * .42;
-const KEYS = TOOLS.map((_, i) => {
-  const d = DL[i], w = .36, j = MERGE_ORDER.indexOf(i);
-  return [
-    [0, S0], [6.7 + d, S0], [7.5 + d, S_ISSUE], [8.4 + d, S_ISSUE],
-    [9.15 + d, S_READY - w], [T_OK1 + .15 + d * .7, S_READY - w], [T_OK1 + .8 + d * .7, S_READY + .35],
-    [12.7 + d, C2 + CJ[i][1]], [13.9 + d, C2 + CJ[i][1]], [15.1 + d, C3S + CJ[i][2]], [15.9 + d, S_PRE - .14], [16.6 + d, S_PRE + .14],
-    [18.5 + d, S_PR], [20.9 + d * .6, S_PR], [21.6 + d * .6, S_CI - .12], [22.1 + d * .6, S_CI + .12],
-    [22.9 + d * .6, S_REV + .2], [23.7 + d * .6, S_OWN - w], [T_OK2 + .15 + d * .7, S_OWN - w], [T_OK2 + .8 + d * .7, S_OWN + .35],
-    [25.9 + d * .5, S_RS - .12], [26.3 + d * .5, S_RS + .12], [T_MERGE(j), S_M],
-  ];
+// ── PRs as tokens: spawn fast at the lane start, queue in front of the review gate, one by one through it ──
+// Pure function of t: spawn and departure times are precomputed; the queue position is a soft count of the
+// tokens ahead that have not left yet, so tokens bunch and slow before the gate.
+const V_FREE = 1.75, GAP = .3, FRONT = S_OWN - .16;
+const LQ = [5, 3, 6, 7, 3, 5, 4];                      // queue depth per lane (개념도)
+const DT = [1.3, 1.6, 1.45, 1.2, 1.75, 1.4, 1.55];     // spawn interval per lane
+const TOK = LANES.map((L, i) => {
+  const R = rng(101 + i * 7), ph = R() * DT[i], out = [];
+  let prevD = -1e9;
+  for (let k = 0; ; k++) {
+    const T = -60 + ph + k * DT[i] + (R() - .5) * .3 * DT[i];
+    if (T > DURATION + 2) break;
+    const arr = T + (FRONT - S0) / V_FREE;
+    const lq = lerp(LQ[i] - 1.8, LQ[i], ss(p(arr, -1, 8)));   // the queue keeps growing through beat 1
+    const D = Math.max(arr + lq * DT[i], prevD + DT[i] * .7);
+    out.push({ T, D }); prevD = D;
+  }
+  return out;
 });
-function headS(i, t) {
-  const k = KEYS[i];
-  if (t <= k[0][0]) return k[0][1];
-  for (let n = 0; n < k.length - 1; n++) {
-    const [t0, s0] = k[n], [t1, s1] = k[n + 1];
-    if (t <= t1) return lerp(s0, s1, ss(clamp((t - t0) / Math.max(1e-3, t1 - t0))));
-  }
-  return k[k.length - 1][1];
+function tokS(i, k, t) {   // → [s, ahead]
+  const L = TOK[i], tk = L[k];
+  if (t >= tk.D) { const u = t - tk.D, ta = .45; return [FRONT + (u < ta ? V_FREE * u * u / (2 * ta) : V_FREE * (u - ta / 2)), 0]; }
+  let ahead = 0;
+  for (let j = k - 1; j >= 0; j--) { const d = L[j].D; if (d < t - .4) break; ahead += 1 - ss(clamp((t - d) / .4)); }
+  return [smin(S0 + V_FREE * (t - tk.T), FRONT - GAP * ahead, .14), ahead];
 }
-const merged = (i, t) => t >= T_MERGE(MERGE_ORDER.indexOf(i));
-// time at which lane i's head first reaches s (scan of the keyframes; used for "has passed" states)
-function passT(i, s) {
-  const k = KEYS[i];
-  for (let n = 0; n < k.length - 1; n++) {
-    const [t0, s0] = k[n], [t1, s1] = k[n + 1];
-    if (s1 >= s && s0 < s) { let lo = t0, hi = t1; for (let it = 0; it < 24; it++) { const m = (lo + hi) / 2; if (headS(i, m) >= s) hi = m; else lo = m; } return hi; }
-  }
-  return s <= k[0][1] ? -1 : 1e9;
+const S_CAP = FRONT - GAP * 2.5;                       // between the 3rd and 4th PR in a queue
+
+// ── A and B (예시): two people's AI work heading into src/auth/** ──
+const AB = [1, 2], AB_S0 = -6.6, AB_S1 = BOX.s;
+function abU(t) {   // how far the two heads have gone (0..1) and how far the split has gone (0..1)
+  const u = lerp(.55, .66, ss(p(t, -.5, 7.2))) + .16 * ss(p(t, 10.8, 1.6)) + .18 * ss(p(t, 15.0, 1.0));
+  return [u, ss(p(t, 14.3, .9))];
 }
-const PASS_CACHE = new Map();
-const passed = (i, s, t) => { const key = i + ':' + s; if (!PASS_CACHE.has(key)) PASS_CACHE.set(key, passT(i, s)); return t - PASS_CACHE.get(key); };   // seconds since lane i passed s (<0: not yet)
-const allPassed = (s, t) => Math.min(...TOOLS.map((_, i) => passed(i, s, t)));
+const abA = (n, s, mix) => { const L = LANES[AB[n]].a; return lerp(L + (BOX.a - L) * ss(p(s, -5.5, 1.9)), L, mix); };
 
 // ═════════════════════════════════════════════════════════════
 //  THREE
@@ -258,7 +263,7 @@ const ADD = { transparent: true, depthWrite: false, depthTest: false, blending: 
 
 // ── terminal ground: a cell grid on the graph plane, and a far wall of faint `git log --graph` glyphs ──
 const BACK_Z = -1.6;
-const GROUND = (() => {
+(() => {
   const mat = new THREE.ShaderMaterial({
     uniforms: { uDim: { value: 1 } }, depthWrite: false, depthTest: false,
     vertexShader: `varying vec2 vP; void main(){ vec4 w = modelMatrix*vec4(position,1.); vP = w.xy; gl_Position = projectionMatrix*viewMatrix*w; }`,
@@ -273,10 +278,10 @@ void main(){
   gl_FragColor = vec4(col * uDim, 1.);
 }`,
   });
-  const o = new THREE.Mesh(new THREE.PlaneGeometry(140, 90), mat);
-  o.position.z = BACK_Z; o.frustumCulled = false; o.renderOrder = -10; scene.add(o); return o;
+  const o = new THREE.Mesh(new THREE.PlaneGeometry(160, 110), mat);
+  o.position.z = BACK_Z; o.frustumCulled = false; o.renderOrder = -10; scene.add(o);
 })();
-const GLYPHS = (() => {
+(() => {
   // decorative only: graph glyphs, no hashes or messages
   const cw = 2048, chh = 1024, c = document.createElement('canvas'); c.width = cw; c.height = chh;
   const g = c.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, cw, chh);
@@ -299,8 +304,8 @@ const GLYPHS = (() => {
   }
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
   const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: .12, ...ADD });
-  const o = new THREE.Mesh(new THREE.PlaneGeometry(64, 32), mat);
-  o.position.set(0, 0, -9); o.frustumCulled = false; o.renderOrder = -9; scene.add(o); return o;
+  const o = new THREE.Mesh(new THREE.PlaneGeometry(80, 40), mat);
+  o.position.set(0, 0, -9); o.frustumCulled = false; o.renderOrder = -9; scene.add(o);
 })();
 
 // ── fat lines (screen-space quads, additive) ──
@@ -350,14 +355,14 @@ void main(){
   }
   end() { const at = this.g.attributes; at.position.needsUpdate = at.aB.needsUpdate = at.aC.needsUpdate = at.aW.needsUpdate = true; this.g.setDrawRange(0, this.n * 6); }
 }
-const FAT = new Fat(2600);
+const FAT = new Fat(5200);
 
 // ── point sprites: glow (additive) and discs (commit dots, normal blending) ──
 const GVS = `attribute float size; attribute float alpha; attribute vec3 color; uniform float uPx; varying vec3 vC;
 void main(){ vec4 mv = modelViewMatrix*vec4(position,1.); gl_PointSize = max(size*uPx/max(-mv.z,.1), 1.5); vC = color*alpha; gl_Position = projectionMatrix*mv; if (alpha <= 0.) gl_Position = vec4(2.,2.,2.,1.); }`;
 const GFS = `varying vec3 vC; void main(){ vec2 c = gl_PointCoord*2.-1.; float d = dot(c,c); if (d > 1.) discard; gl_FragColor = vec4(vC*(exp(-d*4.5) + .12*exp(-d*1.2)), 1.); }`;
 const DVS = `attribute float size; attribute float alpha; attribute vec3 color; attribute vec3 ring; uniform float uPx; varying vec3 vC; varying vec3 vR; varying float vA;
-void main(){ vec4 mv = modelViewMatrix*vec4(position,1.); gl_PointSize = clamp(size*uPx/max(-mv.z,.1), 5., 80.); vC = color; vR = ring; vA = alpha; gl_Position = projectionMatrix*mv; if (alpha <= 0.) gl_Position = vec4(2.,2.,2.,1.); }`;
+void main(){ vec4 mv = modelViewMatrix*vec4(position,1.); gl_PointSize = clamp(size*uPx/max(-mv.z,.1), 4., 80.); vC = color; vR = ring; vA = alpha; gl_Position = projectionMatrix*mv; if (alpha <= 0.) gl_Position = vec4(2.,2.,2.,1.); }`;
 const DFS = `varying vec3 vC; varying vec3 vR; varying float vA;
 void main(){ vec2 c = gl_PointCoord*2.-1.; float d = length(c); float aa = fwidth(d)*1.2;
   float edge = 1. - smoothstep(1.-aa, 1., d);
@@ -387,79 +392,85 @@ function points(n, disc, order) {
   return o;
 }
 const DUST = points(260, false, 1);
-const GLOW = points(500, false, 3);
-const DOTS = points(120, true, 8);
-const GLOW2 = points(120, false, 9);
+const GLOW = points(700, false, 3);
+const DOTS = points(260, true, 8);
+const GLOW2 = points(200, false, 9);
 
 // dust: drifting specks at many depths (parallax under the moving camera)
 const DUSTP = (() => { const R = rng(5), out = [];
-  for (let k = 0; k < 260; k++) out.push({ s: -16 + R() * 34, a: (R() * 2 - 1) * 7, z: -8 + R() * 11, ph: R() * 6.28, sz: .03 + R() * .06, b: .15 + R() * .35 });
+  for (let k = 0; k < 260; k++) out.push({ s: -18 + R() * 32, a: (R() * 2 - 1) * 8, z: -8 + R() * 11, ph: R() * 6.28, sz: .03 + R() * .06, b: .15 + R() * .35 });
   return out; })();
 
 // ── gate membranes (a quad spanning the lanes, perpendicular to the flow) ──
-function membrane(s) {
+function membrane(s, a0, a1, gd) {
   const g = new THREE.BufferGeometry();
-  const P = [G(s, -HL, -GD), G(s, HL, -GD), G(s, HL, GD), G(s, -HL, GD)];
+  const P = [G(s, a0, -gd), G(s, a1, -gd), G(s, a1, gd), G(s, a0, gd)];
   g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(P.flatMap(v => [v.x, v.y, v.z])), 3));
   g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2));
   g.setIndex([0, 1, 2, 0, 2, 3]);
-  const m = new THREE.ShaderMaterial({ uniforms: { uCol: { value: new THREE.Color() }, uA: { value: 0 }, uOpen: { value: 0 }, uScan: { value: -1 } }, ...ADD, side: THREE.DoubleSide,
+  const m = new THREE.ShaderMaterial({ uniforms: { uCol: { value: new THREE.Color() }, uA: { value: 0 }, uScan: { value: -1 } }, ...ADD, side: THREE.DoubleSide,
     vertexShader: `varying vec2 vU; void main(){ vU = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
-    fragmentShader: `uniform vec3 uCol; uniform float uA, uOpen, uScan; varying vec2 vU;
+    fragmentShader: `uniform vec3 uCol; uniform float uA, uScan; varying vec2 vU;
       void main(){
         float e = min(min(vU.x, 1.-vU.x), min(vU.y, 1.-vU.y));
         float body = .35 + .65 * smoothstep(.0, .45, abs(vU.x - .5) * 2.);
         float rows = .75 + .25 * step(.5, fract(vU.x * 26.));
-        float open = smoothstep(uOpen * .52 - .02, uOpen * .52 + .02, abs(vU.x - .5));
         float scan = uScan >= 0. ? exp(-pow((vU.x - uScan) * 16., 2.)) * 1.6 : 0.;
-        float a = uA * (body * rows * open + scan) * (.55 + .45 * smoothstep(0., .06, e));
+        float a = uA * (body * rows + scan) * (.55 + .45 * smoothstep(0., .06, e));
         gl_FragColor = vec4(uCol * a, 1.); }` });
   const o = new THREE.Mesh(g, m); o.frustumCulled = false; o.renderOrder = 2; scene.add(o); return o;
 }
-// gates along the path: kind = rule | human | check | review
+const GD = .5;
 const GATES = [
   { id: 'rule', s: S_RULE, kind: 'rule' },
-  { id: 'ready', s: S_READY, kind: 'human', ok: T_OK1 },
-  { id: 'pre', s: S_PRE, kind: 'check' },
+  { id: 'ready', s: S_READY, kind: 'human' },
   { id: 'ci', s: S_CI, kind: 'check' },
-  { id: 'rev', s: S_REV, kind: 'review' },
-  { id: 'own', s: S_OWN, kind: 'human', ok: T_OK2 },
-  { id: 'rs', s: S_RS, kind: 'check' },
+  { id: 'air', s: S_AIR, kind: 'review' },
+  { id: 'own', s: S_OWN, kind: 'human' },
 ];
-GATES.forEach(g => { g.mem = membrane(g.s); });
+GATES.forEach(g => { g.mem = membrane(g.s, A_BOT - HM, A_TOP + HM, GD); });
 const GBYID = Object.fromEntries(GATES.map(g => [g.id, g]));
 
 // ── camera ──
-// keyframes [t, sCentre, aCentre, distance, yaw, pitch]; yaw/pitch tilt the view so gates read as 3D frames
-const OVW = [.8, -.3, 23.6, -.69, .12, -250];     // wide overview (opening frame and result): 3/4 view along the flow
+// keyframes [t, sCentre, aCentre, distance, yaw, pitch, shiftX]
 const CK = TALL ? [
-  [0, -9.0, 0, 9.3, -.15, .26, 0],
-  [6.3, -9.0, 0, 9.3, -.15, .25, 0],
-  [7.2, -5.3, 0, 9.0, -.13, .24, 0],
-  [12.8, -4.6, 0, 9.0, -.13, .24, 0],
-  [14.2, -1.8, 0, 9.1, -.14, .24, -70],
-  [19.6, -1.2, 0, 9.1, -.14, .24, -70],
-  [21.0, 2.5, 0, 9.1, -.14, .24, 0],
-  [24.8, 3.0, 0, 9.1, -.13, .24, 0],
-  [26.2, 7.4, 0, 9.2, -.12, .22, 0],
-  [29.6, 7.9, 0, 9.4, -.10, .2, 0],
-  [31.0, 5.8, 0, 20.8, -.08, .18, -300],
-  [DURATION, 5.8, 0, 20.8, -.08, .18, -300],
+  [0, -.5, -.1, 17.8, -.12, .2, 0],
+  [6.3, -.7, -.1, 17.2, -.12, .2, 0],
+  [7.5, -4.6, .6, 13.5, -.12, .2, 0],
+  [10.3, -4.6, .6, 13.5, -.12, .2, 0],
+  [11.3, -4.0, 1.4, 13.4, -.12, .2, 0],
+  [15.7, -3.9, 1.4, 13.4, -.12, .2, 0],
+  [16.7, -.7, -.4, 11.5, -.12, .2, 0],
+  [22.1, -.6, -.4, 11.5, -.12, .2, 0],
+  [23.1, 3.0, -.1, 13.2, -.12, .2, 0],
+  [27.0, 3.1, -.1, 13.2, -.12, .2, 0],
+  [28.5, -1.6, .7, 23.5, -.1, .2, 0],
+  [31.2, -1.7, .7, 23.5, -.1, .2, 0],
+  [32.4, -2.9, -.1, 20.5, -.12, .2, 0],
+  [34.0, -2.8, -.1, 20.5, -.12, .2, 0],
+  [35.4, -4.0, -.1, 30, -.08, .18, 0],
+  [36.6, -4.0, -.1, 30, -.08, .18, 0],
+  [37.6, -5.6, -.1, 31, -.08, .18, 0],
+  [DURATION, -5.6, -.1, 31, -.08, .18, 0],
 ] : [
-  [0, ...OVW],
-  [.8, ...OVW],
-  [2.6, -8.2, 0, 13.4, -.24, .12, 0],
-  [6.0, -8.0, 0, 13.2, -.23, .12, 0],
-  [7.6, -4.5, 0, 13.4, -.2, .11, 0],
-  [12.8, -4.2, 0, 13.4, -.2, .11, 0],
-  [14.3, -.9, 0, 13.4, -.2, .11, 0],
-  [19.8, -.5, 0, 13.4, -.2, .11, 0],
-  [21.2, 2.9, 0, 13.4, -.2, .11, 0],
-  [25.0, 3.4, 0, 13.4, -.2, .11, 0],
-  [26.6, 7.4, 0, 14.0, -.2, .11, 0],
-  [29.4, 7.8, 0, 14.2, -.18, .11, 0],
-  [31.0, ...OVW],
-  [DURATION, ...OVW],
+  [0, -.3, .2, 21.2, -.24, .13, 0],
+  [6.3, -.4, .2, 20.6, -.24, .13, 0],
+  [7.5, -4.2, .3, 14.5, -.2, .12, -260],
+  [10.3, -4.2, .3, 14.5, -.2, .12, -260],
+  [11.3, -3.9, 1.95, 12.6, -.2, .12, 0],
+  [15.7, -3.7, 1.95, 12.6, -.2, .12, 0],
+  [16.7, -.7, -.3, 10.8, -.22, .12, 0],
+  [22.1, -.5, -.3, 10.8, -.22, .12, 0],
+  [23.1, 2.5, .5, 15.5, -.22, .12, 0],
+  [27.0, 2.7, .5, 15.5, -.22, .12, 0],
+  [28.5, -2.1, 1.5, 23.5, -.2, .12, 0],
+  [31.2, -2.3, 1.5, 23.5, -.2, .12, 0],
+  [32.4, -3.6, -.3, 18.5, -.22, .12, 0],
+  [34.0, -3.4, -.3, 18.5, -.22, .12, 0],
+  [35.4, -2.4, .1, 31, -.16, .12, 0],
+  [36.6, -2.4, .1, 31, -.16, .12, 0],
+  [37.6, -2.0, 1.5, 32, -.14, .12, 0],
+  [DURATION, -2.0, 1.5, 32, -.14, .12, 0],
 ];
 const SHIFT_Y = TALL ? 70 : 52;   // push the graph below the header
 function cameraAt(t) {
@@ -468,13 +479,11 @@ function cameraAt(t) {
   const sc = lerp(A[1], B[1], k), ac = lerp(A[2], B[2], k), d = lerp(A[3], B[3], k);
   const yaw = lerp(A[4], B[4], k) + .012 * Math.sin(t * .21), pitch = lerp(A[5], B[5], k) + .008 * Math.sin(t * .17 + 1);
   const T = G(sc, ac, 0);
-  const dir = TALL ? V(Math.sin(yaw), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)).normalize()
-                   : V(Math.sin(yaw), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)).normalize();
+  const dir = V(Math.sin(yaw), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)).normalize();
   camera.position.copy(T).addScaledVector(dir, d);
   camera.up.set(0, 1, 0);
   camera.lookAt(T);
-  const shx = lerp(A[6], B[6], k);
-  camera.setViewOffset(W, H, shx, -SHIFT_Y, W, H);
+  camera.setViewOffset(W, H, lerp(A[6], B[6], k), -SHIFT_Y, W, H);
   camera.updateMatrixWorld();
 }
 
@@ -482,24 +491,42 @@ function cameraAt(t) {
 //  SCENE UPDATE
 // ═════════════════════════════════════════════════════════════
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3(), _q = new THREE.Vector3(), _q2 = new THREE.Vector3();
-const _col = new THREE.Color(), _col2 = new THREE.Color();
-const WHITE = new THREE.Color('#ffffff'), BLACK = new THREE.Color('#000000'), DARK = new THREE.Color('#0b1015');
+const _col = new THREE.Color();
+const WHITE = new THREE.Color('#ffffff'), DARK = new THREE.Color('#0b1015');
 const bez = (a, c, b, u, out) => out.set(
   (1 - u) * (1 - u) * a.x + 2 * (1 - u) * u * c.x + u * u * b.x,
   (1 - u) * (1 - u) * a.y + 2 * (1 - u) * u * c.y + u * u * b.y,
   (1 - u) * (1 - u) * a.z + 2 * (1 - u) * u * c.z + u * u * b.z);
-// hook stub on Claude's lane: an edit that tries to leave the lane for .claude/settings.json
-const HOOK_A = laneA(0);
-const HOOK_D = TALL ? -1 : 1;           // outward from Claude's lane: up (wide) / left (tall)
-const HOOK_P0 = G(S_HOOK, HOOK_A), HOOK_C = G(S_HOOK + .05, HOOK_A + HOOK_D * (TALL ? .55 : .85)), HOOK_P1 = G(S_HOOK + (TALL ? .45 : .75), HOOK_A + HOOK_D * (TALL ? .62 : .98));
-const HOOK_U = .58;                      // checkpoint position along the stub
-const hookAlpha = t => clamp(eo(p(t, T_HOOK - .3, .4))) * (1 - eio(p(t, 20.3, .8))) + .4 * eo(p(t, T_END + .9, .8));
+function ring(c, r, col, k, w = 3, n = 18) {   // a circle in the graph plane around world point c
+  for (let m = 0; m < n; m++) {
+    const a0 = m / n * Math.PI * 2, a1 = (m + 1) / n * Math.PI * 2;
+    FAT.seg(_a.set(c.x + Math.cos(a0) * r, c.y + Math.sin(a0) * r, c.z), _b.set(c.x + Math.cos(a1) * r, c.y + Math.sin(a1) * r, c.z), col, k, w);
+  }
+}
+function dashed(A, B, col, k, w, n = 12, ph = 0) {
+  for (let m = 0; m < n; m++) { if ((m + Math.floor(ph)) % 2) continue; FAT.seg(_a.lerpVectors(A, B, m / n), _b.lerpVectors(A, B, (m + 1) / n), col, k, w); }
+}
+function rect(s0, s1, a0, a1, col, k, w, dash = 0) {
+  const P = [G(s0, a0), G(s1, a0), G(s1, a1), G(s0, a1)];
+  for (let e = 0; e < 4; e++) { const A = P[e], B = P[(e + 1) % 4]; if (dash) dashed(A, B, col, k, w, dash); else FAT.seg(A, B, col, k, w); }
+}
+// beat focus helpers
+const B1 = t => 1 - eio(p(t, 6.6, .6));
+const ARC0 = G(S_OWN, A_TOP + 1.2), ARC1 = G(S_RULE, A_TOP + HM + .05), ARCC = G((S_OWN + S_RULE) / 2, A_TOP + 2.5, .8);
+const arcU = t => eio(p(t, 28.0, 1.9));
+const CT_P = () => G(S_CT, LANES[3].a), CT_C = () => G(S_CT, LANES[4].a), CT_M = () => G(S_CT, (LANES[3].a + LANES[4].a) / 2);
+function crackK(t) {   // red only for the break: a hint in beat 1, the break in beat 3, a dim scar once agreed
+  const flick = .5 + .5 * Math.sin(t * 9.0) * Math.sin(t * 3.7 + 1);
+  return (.3 + .5 * flick * ss(p(t, 2.4, 1))) * B1(t) + win(t, 18.9, 21.0, .2) * 1.1 + .3 * eo(p(t, 20.9, .4)) * (1 - eo(p(t, 23.0, .6)));
+}
+const hubK = t => eo(p(t, 34.2, 1.2)) * (TALL ? 1 - .75 * eo(p(t, T_END, 1.2)) : 1);   // tall: the hub sits behind the end card
 
 let STATE = {};
 function update3D(t) {
   cameraAt(t);
   FAT.begin(); GLOW.begin(); DOTS.begin(); GLOW2.begin(); DUST.begin();
-  const endK = eo(p(t, T_END, 1.2));
+  const endK = eo(p(t, T_END, 1.2)), b1 = B1(t), hk = hubK(t);
+  STATE = { alerts: [] };
 
   // dust
   for (const d of DUSTP) {
@@ -507,144 +534,268 @@ function update3D(t) {
     DUST.put(_q, d.sz * (1 + Math.max(0, d.z) * .15), d.b * .35, STEEL3);
   }
 
-  // B1: rule-read pulses (lane head → AGENTS.md), then the bar glows
-  const ruleK = eo(p(t, 3.1, .9));
-  // ── lanes ──
-  const DS = .1;
+  // ── lanes: beaded flow (fast: AI writes quickly) ──
+  const DS = .12;
+  const readK = win(t, 31.8, 34.6, .5);   // B5: lanes read AGENTS.md
   for (let i = 0; i < NL; i++) {
-    const hs = headS(i, t), mg = merged(i, t);
     const col = LC3[i];
-    let prev = laneP(i, S0 - .02, _a).clone();
+    let prev = laneP(i, S0, _a).clone();
     for (let s = S0 + DS; s <= S_M + 1e-6; s += DS) {
       laneP(i, s, _b);
-      const lit = s <= hs + 1e-4 || mg;
-      // B1 read pulse
-      let pulse = 0;
-      const ph = p(t, 1.9 + DL[i] * .6, 1.3);
-      if (ph > 0 && ph < 1 && s <= S_RULE + .2) pulse = 2.6 * Math.exp(-Math.pow((s - lerp(S0, S_RULE, eio(ph))) * 3.2, 2));
-      // flow beads on the lit part
-      let bead = 0;
-      if (lit && s > S0 + .1) bead = Math.pow(Math.max(0, Math.sin((s * 1.7 - t * 2.2 + i * 1.3) * Math.PI)), 18) * .9;
-      const base = s <= S_RULE + 1e-4 ? lerp(.34, .62, ruleK) : .2;
-      let k = lit ? .72 + bead : base;
-      k += pulse;
-      k *= 1 - .25 * endK * (mg ? 0 : 1);
-      FAT.seg(prev, _b, col, k, lit ? 4.2 : 3);
+      const bead = Math.pow(Math.max(0, Math.sin((s * 1.25 - t * 3.2 + i * 1.3) * Math.PI)), 16) * .7;
+      let k = .46 + bead;
+      if (s < S_RULE + .1) {   // B5: read pulse from the lane start into AGENTS.md
+        const ph = fract((t - 31.8) * .7 + i * .13);
+        k += readK * 2.2 * Math.exp(-Math.pow((s - lerp(S0, S_RULE + .1, ph)) * 4, 2)) + .3 * readK;
+      }
+      FAT.seg(prev, _b, col, k, 3.6);
       prev.copy(_b);
     }
-    // commit dots on the lane (appear as the head passes)
-    COMMITS(i).forEach((cs, n) => {
-      const since = passed(i, cs, t); if (since < 0) return;
-      const pop = eback(clamp(since / .35));
-      laneP(i, cs, _q);
-      DOTS.put(_q, .2 * pop, 1, col, _col.copy(col).lerp(WHITE, .35));
-      GLOW.put(_q, .5, .25, col);
-    });
-    // issue node
-    const issK = eo(p(t, 7.3 + DL[i], .4));
-    if (issK > 0) { laneP(i, S_ISSUE, _q); DOTS.put(_q, .26 * eback(issK), 1, DARK, col); }
-    // lane ref dot at the head start
-    laneP(i, S0, _q); DOTS.put(_q, .24, 1, _col.copy(col).lerp(WHITE, .2), col); GLOW.put(_q, .7, .3, col);
-    // the moving head
-    if (!mg && hs > S0 + .02) {
-      laneP(i, hs, _q);
-      const waiting = (t > 9.0 && t < T_OK1 + .3 && Math.abs(hs - (S_READY - .36)) < .02) || (t > 23.6 && t < T_OK2 + .3 && Math.abs(hs - (S_OWN - .36)) < .02);
-      const pulseW = waiting ? .5 + .5 * Math.sin(t * 5.5 + i) : 0;
-      DOTS.put(_q, .3, 1, _col.copy(col).lerp(WHITE, .55), col);
-      GLOW2.put(_q, .55 + .25 * pulseW, .5 + .3 * pulseW, col);
-    }
+    laneP(i, S0, _q); DOTS.put(_q, .22, 1, _col.copy(col).lerp(WHITE, .25), col); GLOW.put(_q, .6, .3, col);
   }
-  // ── main: from the merge point to the tip; one squash commit per merged lane ──
-  {
-    let nMerged = 0; for (let j = 0; j < NL; j++) if (t >= T_MERGE(j)) nMerged = j + 1;
-    const tipS = nMerged ? lerp(nMerged > 1 ? SLOT(nMerged - 2) : S_M, SLOT(nMerged - 1), eo(clamp((t - T_MERGE(nMerged - 1)) / .45))) : S_M;
-    let prev = G(S_M, 0, 0, _a).clone();
+  // mains: one per repo, from the merge point to the tip
+  REPOS.forEach((R, r) => {
+    let prev = G(S_M, R.main, 0, _a).clone();
     for (let s = S_M + DS; s <= S_END + 1e-6; s += DS) {
-      G(s, 0, 0, _b);
-      const lit = s <= tipS + 1e-4;
-      const bead = lit ? Math.pow(Math.max(0, Math.sin((s * 1.4 - t * 1.8) * Math.PI)), 18) * .8 : 0;
-      FAT.seg(prev, _b, ICE3, lit ? .8 + bead + .25 * endK : .26, lit ? 5.5 : 3.6);
+      G(s, R.main, 0, _b);
+      const bead = Math.pow(Math.max(0, Math.sin((s * 1.4 - t * 2.2 + r) * Math.PI)), 18) * .8;
+      FAT.seg(prev, _b, ICE3, .62 + bead, 5);
       prev.copy(_b);
     }
-    // arrow head at the end of main
-    const ah = .28;
-    FAT.seg(G(S_END - ah, ah * .7, 0, _a), G(S_END + .02, 0, 0, _b), ICE3, .5, 3.6);
-    FAT.seg(G(S_END - ah, -ah * .7, 0, _a), G(S_END + .02, 0, 0, _b), ICE3, .5, 3.6);
-    for (let j = 0; j < nMerged; j++) {
-      const lane = MERGE_ORDER[j], since = t - T_MERGE(j);
-      const sPos = lerp(S_M, SLOT(j), eo(clamp(since / .45)));
-      G(sPos, 0, 0, _q);
-      const pop = eback(clamp(since / .5));
-      DOTS.put(_q, .3 * pop, 1, _col.copy(ICE3), LC3[lane]);
-      GLOW2.put(_q, 1.0 + .5 * endK, .45 + .25 * endK, LC3[lane]);
+    const ah = .26;
+    FAT.seg(G(S_END - ah, R.main + ah * .7, 0, _a), G(S_END + .02, R.main, 0, _b), ICE3, .5, 3.6);
+    FAT.seg(G(S_END - ah, R.main - ah * .7, 0, _a), G(S_END + .02, R.main, 0, _b), ICE3, .5, 3.6);
+  });
+
+  // ── PR tokens ──
+  const capK = win(t, 22.9, 27.4, .4);
+  const tokDim = 1 - .55 * win(t, 7.2, 22.2, .6);
+  const fresh = []; // departures to flash on the gate
+  for (let i = 0; i < NL; i++) {
+    const col = LC3[i], L = TOK[i];
+    let qn = 0;
+    for (let k = 0; k < L.length; k++) {
+      const tk = L[k];
+      if (t < tk.T || t > tk.D + 6) continue;
+      const [s, ahead] = tokS(i, k, t);
+      if (s > S_END + .2) continue;
+      const [s2] = tokS(i, k, Math.max(tk.T, t - .1));
+      const sp = Math.max(0, s - s2);   // distance in the last 0.1 s
+      const fadeIn = eo(clamp((t - tk.T) / .3)), fadeOut = 1 - ss(p(s, S_END - .7, .8));
+      const a = fadeIn * fadeOut * tokDim;
+      if (a <= .01) continue;
+      const waiting = t < tk.D;
+      if (waiting && s > FRONT - GAP * 7) qn++;
+      laneP(i, s, _q);
+      const merged = s > S_M - .2, queued = waiting && s > FRONT - GAP * 8 && sp < .06;
+      DOTS.put(_q, merged ? .18 : queued ? .27 : .21, a, merged ? ICE3 : _col.copy(col).lerp(WHITE, queued ? .6 : .4), col);
+      if (queued) GLOW.put(_q, .95, .2 * a, col);   // pressure: the queue glows hotter as it bunches
+      // speed streak + trailing commits (only while moving fast)
+      if (sp > .02) {
+        const len = Math.min(.9, sp * 4.5);
+        let pr = laneP(i, s - len, _a).clone();
+        for (let m = 1; m <= 6; m++) { laneP(i, s - len + len * m / 6, _b); FAT.seg(pr, _b, col, a * .9 * m / 6, 4.2); pr.copy(_b); }
+        for (const off of [.24, .42]) { laneP(i, s - off - len * .2, _q2); GLOW.put(_q2, .32, a * clamp(sp * 6) * .8, col); }
+      }
+      // over the per-author cap: alert ring (not a block)
+      if (capK > 0 && waiting && ahead > 2.6 && S0 + V_FREE * (t - tk.T) > s + .08) {
+        laneP(i, s, _q); ring(_q, .2, ICE3, capK * (.75 + .25 * Math.sin(t * 6 + k)), 2.6, 14);
+        STATE.alerts.push({ i, s });
+      }
+      if (!waiting && t - tk.D < .6) fresh.push([i, t - tk.D]);
     }
-    STATE.nMerged = nMerged;
+    // queue pressure: glow grows with the number of PRs waiting
+    laneP(i, FRONT - GAP * 1.5, _q); GLOW.put(_q, .5 + qn * .16, (.12 + qn * .05) * tokDim, col);
   }
 
   // ── gates ──
+  const ownLit = 1;
   for (const g of GATES) {
     const human = g.kind === 'human', rev = g.kind === 'review', rule = g.kind === 'rule';
-    const col = human ? HUM3 : rev ? STEEL3 : ICE3;
-    const firstPass = allPassed(g.s, t), anyPass = Math.max(...TOOLS.map((_, i) => passed(i, g.s, t)));
-    // brightness: idle frame · active while lanes cross · settled
-    let k = rule ? .55 + .6 * ruleK : human ? .75 : rev ? .32 : .5;
-    let scan = -1;
-    if (g.kind === 'check' && anyPass > -.6 && firstPass < .6) { k += .45; scan = fract(t * .9); }
-    if (g.kind === 'check' && firstPass > 0) k += .2;
-    let waitA = 0, open = 0;
-    if (human) {
-      const arr = g.id === 'ready' ? 9.0 : 23.6;
-      waitA = clamp(p(t, arr, .3)) * (1 - clamp(p(t, g.ok, .25)));
-      open = eio(p(t, g.ok, .7));
-      k += .5 * waitA * (.6 + .4 * Math.sin(t * 5.2)) + .9 * Math.exp(-Math.pow((t - g.ok - .1) * 3, 2));
-    }
-    // frame
-    const c0 = G(g.s, -HL, -GD, new THREE.Vector3()), c1 = G(g.s, HL, -GD, new THREE.Vector3()), c2 = G(g.s, HL, GD, new THREE.Vector3()), c3 = G(g.s, -HL, GD, new THREE.Vector3());
-    const wF = human ? 4.6 : rule ? 3.8 : 3.2;
-    if (rev) {   // dashed: the AI review is input, not a gate
-      const E = [[c0, c1], [c1, c2], [c2, c3], [c3, c0]];
-      for (const [a, b] of E) for (let n = 0; n < 10; n += 2) FAT.seg(_a.lerpVectors(a, b, n / 10), _b.lerpVectors(a, b, (n + 1) / 10), col, k, 2.6);
-    } else {
-      FAT.seg(c0, c1, col, k, wF); FAT.seg(c1, c2, col, k * .8, wF); FAT.seg(c2, c3, col, k, wF); FAT.seg(c3, c0, col, k * .8, wF);
-    }
-    // crossing marks: each lane's crossing point lights once it has passed
-    if (!rev) for (let i = 0; i < NL; i++) {
-      if (g.s > S_F0) continue;
-      const since = passed(i, g.s, t);
-      if (since >= 0) { laneP(i, g.s, _q); GLOW.put(_q, .55, .35 * Math.exp(-since * .6) + .12, human ? HUM3 : LC3[i]); }
-    }
-    // membrane
-    const mu = g.mem.material.uniforms;
-    mu.uCol.value.copy(col);
-    mu.uA.value = human ? (.16 + .22 * waitA) * (1 - open * .55) : rule ? .05 + .1 * ruleK : rev ? .02 : .05 + (scan >= 0 ? .05 : 0);
-    mu.uOpen.value = human ? open : 0;
-    mu.uScan.value = scan;
+    let col = human ? HUM3 : rev ? STEEL3 : ICE3, k, mA, scan = -1;
+    if (g.id === 'rule') { const land = Math.exp(-Math.pow((t - 30.0) * 2.2, 2)); k = .5 + .5 * readK + 1.2 * land + .25 * eo(p(t, 30, .5)); mA = .05 + .1 * readK + .2 * land; }
+    else if (g.id === 'ready') { const on = win(t, 31.8, 40.5, .6); k = .22 + .75 * on; mA = .03 + .16 * on; }
+    else if (g.id === 'ci') { const on = win(t, 32.2, 40.5, .6); k = .42 + .4 * on; mA = .04 + .05 * on; if (on > .05) scan = fract(t * .8); }
+    else if (g.id === 'air') { const on = win(t, 25.3, 27.6, .4); k = .3 + .5 * on; mA = .015 + .04 * on; }
+    else { k = .8 * ownLit + .3 * win(t, 25.9, 27.5, .4); mA = .14 + .08 * win(t, 25.9, 27.5, .4); }
+    const c0 = G(g.s, A_BOT - HM, -GD, new THREE.Vector3()), c1 = G(g.s, A_TOP + HM, -GD, new THREE.Vector3()), c2 = G(g.s, A_TOP + HM, GD, new THREE.Vector3()), c3 = G(g.s, A_BOT - HM, GD, new THREE.Vector3());
+    const wF = human ? 4.4 : rule ? 3.8 : 3.0;
+    if (rev) { for (const [A, B] of [[c0, c1], [c1, c2], [c2, c3], [c3, c0]]) dashed(A, B, col, k, 2.6, 10); }
+    else { FAT.seg(c0, c1, col, k, wF); FAT.seg(c1, c2, col, k * .8, wF); FAT.seg(c2, c3, col, k, wF); FAT.seg(c3, c0, col, k * .8, wF); }
+    const mu = g.mem.material.uniforms; mu.uCol.value.copy(col); mu.uA.value = mA; mu.uScan.value = scan;
+  }
+  // departures light their crossing on the review gate (warm: a person approves)
+  for (const [i, since] of fresh) { laneP(i, S_OWN, _q); GLOW.put(_q, .7, .55 * Math.exp(-since * 4), HUM3); }
+
+  // ── per-author cap line (B4) ──
+  if (capK > 0) {
+    const A = G(S_CAP, A_TOP + HM * .8), B = G(S_CAP, A_BOT - HM * .8);
+    dashed(A, B, ICE3, capK * .95, 3, 28, t * 2);
   }
 
-  // hook stub (Claude lane only)
-  const ha = hookAlpha(t);
-  if (ha > 0) {
-    const blocked = t >= T_BLOCK;
-    const attempt = eio(p(t, T_HOOK, T_BLOCK - T_HOOK)) * HOOK_U;
-    let prev = HOOK_P0.clone();
-    for (let n = 1; n <= 16; n++) {
-      const u = n / 16; bez(HOOK_P0, HOOK_C, HOOK_P1, u, _q);
-      const dash = n % 2 === 0;
-      if (u <= HOOK_U + .01) FAT.seg(prev, _q, blocked ? RED3 : LC3[0], ha * (blocked ? .9 : u <= attempt + .02 ? .9 : .25), 3.2);
-      else if (dash) FAT.seg(prev, _q, STEEL3, ha * .4, 2.4);
-      prev.copy(_q);
+  // ── overlap: the area glob src/auth/** and the two heads (A, B) ──
+  {
+    const [u, mix] = abU(t);
+    const focus = Math.max(b1, win(t, 7.0, 16.4, .6), .25);
+    const conv = ss(p(u, .45, .35)) * (1 - mix);   // collision ahead
+    const flare = conv * (.75 + .25 * Math.sin(t * 6.5));
+    const boxK = (.35 + .9 * conv) * focus;
+    // hatch (glob texture) + outline
+    for (let m = 0; m < 9; m++) {
+      const f0 = m / 9;
+      const sA = lerp(BOX.s0, BOX.s1, f0), sB = Math.min(BOX.s1, sA + (BOX.a1 - BOX.a0));
+      const aB = BOX.a0 + (sB - sA);
+      FAT.seg(G(sA, BOX.a0, 0, _a), G(sB, aB, 0, _b), ICE3, boxK * .22, 2);
     }
-    bez(HOOK_P0, HOOK_C, HOOK_P1, HOOK_U, _c);
-    // checkpoint ring
-    const rr = .2, rk = blocked ? 1.2 * ha : .6 * ha;
-    for (let n = 0; n < 16; n++) {
-      const a0 = n / 16 * Math.PI * 2, a1 = (n + 1) / 16 * Math.PI * 2;
-      FAT.seg(_a.set(_c.x + Math.cos(a0) * rr, _c.y + Math.sin(a0) * rr, _c.z), _b.set(_c.x + Math.cos(a1) * rr, _c.y + Math.sin(a1) * rr, _c.z), blocked ? RED3 : STEEL3, rk, 3);
+    rect(BOX.s0, BOX.s1, BOX.a0, BOX.a1, mix > .5 ? PASS3 : ICE3, boxK * (mix > .5 ? .6 : .9), 3, 9);
+    if (mix > 0) {   // split: one half each
+      FAT.seg(G(BOX.s0, BOX.a, 0, _a), G(BOX.s1, BOX.a, 0, _b), ICE3, mix * 1.1 * focus, 3.4);
+      rect(BOX.s0 + .06, BOX.s1 - .06, BOX.a + .06, BOX.a1 - .06, LC3[AB[0]], mix * .7 * focus, 2.6);
+      rect(BOX.s0 + .06, BOX.s1 - .06, BOX.a0 + .06, BOX.a - .06, LC3[AB[1]], mix * .7 * focus, 2.6);
     }
-    if (!blocked) { bez(HOOK_P0, HOOK_C, HOOK_P1, attempt, _q); DOTS.put(_q, .2, ha, _col.copy(LC3[0]).lerp(WHITE, .5), LC3[0]); }
-    else { GLOW2.put(_c, 1.2, .9 * ha * (.75 + .25 * Math.exp(-(t - T_BLOCK) * 2)), RED3); }
-    STATE.hookC = _c.clone();
+    G(BOX.s, BOX.a, 0, _c);
+    if (flare > 0) { GLOW2.put(_c, .55 + .45 * flare, .5 * flare * focus, WHITE); GLOW.put(_c, 1.7, .16 * flare * focus, ICE3); }
+    // heads
+    for (let n = 0; n < 2; n++) {
+      const i = AB[n], col = LC3[i], sH = lerp(AB_S0, AB_S1, u);
+      let prev = G(AB_S0, abA(n, AB_S0, mix), 0, _a).clone();
+      const N = 26;
+      for (let m = 1; m <= N; m++) {
+        const s = lerp(AB_S0, sH, m / N);
+        G(s, abA(n, s, mix), .02, _b);
+        FAT.seg(prev, _b, col, (m % 2 ? 1.25 : .5) * focus, 5);
+        prev.copy(_b);
+      }
+      G(AB_S0, abA(n, AB_S0, mix), 0, _q); DOTS.put(_q, .26, focus, DARK, col);
+      G(sH, abA(n, sH, mix), .02, _q);
+      DOTS.put(_q, .32, focus, _col.copy(col).lerp(WHITE, .6), col); GLOW2.put(_q, .8, .5 * focus, col);
+      STATE['head' + n] = _q.clone();
+    }
   }
+
+  // ── team work board (B2): gathers designs and open PRs from every lane, then flags A and B ──
+  {
+    const bk = win(t, 10.9, 16.2, .5);
+    if (bk > 0) {
+      const bw = .8, bh = .34;
+      rect(BOARD.s - bw, BOARD.s + bw, BOARD.a - bh, BOARD.a + bh, ICE3, bk * .95, 3.2);
+      for (let r = 0; r < 3; r++) { const aa = BOARD.a + bh - .17 - r * .17; FAT.seg(G(BOARD.s - bw + .14, aa, 0, _a), G(BOARD.s - bw + .5 + .3 * ((r * 7) % 3) / 2, aa, 0, _b), ICE3, bk * .6, 2.4); }
+      const sc = fract((t - 10.9) * .7);
+      FAT.seg(G(BOARD.s - bw + 2 * bw * sc, BOARD.a - bh + .04, 0, _a), G(BOARD.s - bw + 2 * bw * sc, BOARD.a + bh - .04, 0, _b), ICE3, bk * .9, 3);
+      // collection: one line from each lane up to the board
+      const ck = win(t, 11.1, 13.4, .4);
+      const top = G(BOARD.s, BOARD.a - bh, 0, new THREE.Vector3());
+      for (let i = 0; i < NL; i++) {
+        const sFrom = BOARD.s - 1.8 + i * .55;
+        const A = laneP(i, sFrom, new THREE.Vector3()), C = G(lerp(sFrom, BOARD.s, .6), BOARD.a - .9, .3);
+        let pr = A.clone();
+        for (let m = 1; m <= 14; m++) { bez(A, C, top, m / 14, _b); FAT.seg(pr, _b, LC3[i], ck * .32, 2); pr.copy(_b); }
+        const ph = fract((t - 11.1) * .9 + i * .17);
+        bez(A, C, top, ph, _q); GLOW.put(_q, .38, ck * .8, LC3[i]);
+      }
+      // flag: board → A, B
+      const fk = win(t, 12.7, 16.2, .4);
+      if (fk > 0 && STATE.head0) {
+        for (let n = 0; n < 2; n++) dashed(top, STATE['head' + n], ICE3, fk * 1.1, 3, 16, -t * 3);
+      }
+    }
+  }
+
+  // ── contract between svc-a and web (예시): a link that cracks on a breaking change ──
+  {
+    const P = CT_P(), C = CT_C(), M = CT_M();
+    const foc = Math.max(.55, win(t, 16.0, 22.6, .5), b1);
+    const merged = eo(p(t, 16.8, .4));
+    for (const ds of [-.05, .05]) FAT.seg(G(S_CT + ds, LANES[3].a - .12, 0, _a), G(S_CT + ds, LANES[4].a + .12, 0, _b), ICE3, .62 * foc, 3);
+    // pulses along the link (calls)
+    const ph = fract(t * .8);
+    _q.lerpVectors(C, P, ph); GLOW.put(_q, .35, .5 * foc, ICE3);
+    // contract file node (provider) and consumer node
+    DOTS.put(P, .36, 1, merged > .5 && t < 18.9 ? PASS3 : DARK, ICE3);
+    GLOW2.put(P, .9, (.25 + .5 * merged * (1 - eo(p(t, 18.4, .5)))) * foc, merged > .5 ? PASS3 : ICE3);
+    DOTS.put(C, .3, 1, DARK, ICE3);
+    // the crack
+    const ck = crackK(t);
+    if (ck > .01) {
+      const Z = [[-.34, .17], [-.12, -.07], [.05, .11], [.2, -.06], [.34, .14]];
+      const da = (LANES[3].a + LANES[4].a) / 2;
+      for (let m = 0; m < Z.length - 1; m++) FAT.seg(G(S_CT + Z[m][0], da + Z[m][1], .01, _a), G(S_CT + Z[m + 1][0], da + Z[m + 1][1], .01, _b), RED3, ck * 1.3, 4);
+      GLOW2.put(M, 1.2, ck * .5, RED3);
+    }
+    // contract-check ring (B3)
+    const rk = win(t, 18.2, 22.6, .4);
+    if (rk > 0) {
+      const state = t < 18.95 ? STEEL3 : t < 21.2 ? RED3 : PASS3;
+      ring(_c.copy(M).add(G(.42, 0, 0, _q2)), .2, state, rk * 1.1, 3);
+    }
+  }
+
+  // ── rule loop (B4): review comments → weekly report → back to AGENTS.md / lint ──
+  {
+    const sk = win(t, 27.2, 29.0, .4);
+    if (sk > 0) {   // sparks: comments rising from the review gate to the collector
+      for (let m = 0; m < 9; m++) {
+        const ph = fract((t - 27.2) * .9 + m * .23), sA = G(S_OWN, lerp(A_BOT, A_TOP, m / 8) + .1, 0, new THREE.Vector3());
+        _q.lerpVectors(sA, ARC0, ss(ph)); GLOW.put(_q, .3, sk * .9 * (1 - ph * .5), ICE3);
+      }
+    }
+    const ak = Math.max(eo(p(t, 27.4, .5)) * (1 - .7 * eo(p(t, 31.0, .8))), 0);
+    if (ak > 0) {
+      ring(ARC0, .18, ICE3, ak, 3);
+      DOTS.put(ARC0, .2, ak, ICE3, ICE3);
+      const U = arcU(t), N = 46;
+      let prev = ARC0.clone();
+      for (let m = 1; m <= N; m++) {
+        const u = m / N; if (u > U + 1e-4) break;
+        bez(ARC0, ARCC, ARC1, u, _b);
+        FAT.seg(prev, _b, ICE3, ak * (.55 + .9 * Math.exp(-Math.pow((u - U) * 9, 2))), 3.6);
+        prev.copy(_b);
+      }
+      if (U > 0 && U < 1) { bez(ARC0, ARCC, ARC1, U, _q); GLOW2.put(_q, 1.0, ak, ICE3); }
+      if (U >= 1) { const land = Math.exp(-(t - 29.9) * 1.6); GLOW2.put(ARC1, 1.4, .3 + .6 * land, ICE3); }
+      // arrow head at the landing
+      if (U > .98) {
+        bez(ARC0, ARCC, ARC1, .95, _q);
+        const d = _q2.copy(ARC1).sub(_q).normalize(), nrm = V(-d.y, d.x, 0).multiplyScalar(.14);
+        FAT.seg(_a.copy(ARC1).addScaledVector(d, -.24).add(nrm), ARC1, ICE3, ak, 3.4);
+        FAT.seg(_a.copy(ARC1).addScaledVector(d, -.24).sub(nrm), ARC1, ICE3, ak, 3.4);
+      }
+    }
+  }
+
+  // ── more repos and the hub (B5) ──
+  if (hk > 0) {
+    GHOST.forEach((gb, r) => {
+      gb.a.forEach((a0, j) => {
+        let prev = G(S0, a0, 0, _a).clone();
+        for (let s = S0 + .24; s <= S_END + 1e-6; s += .24) {
+          const a = lerp(a0, gb.main, ss(p(s, S_F0, S_M - S_F0)));
+          G(s, a, 0, _b);
+          const bead = Math.pow(Math.max(0, Math.sin((s * 1.25 - t * 3.2 + j + r * 2) * Math.PI)), 16) * .6;
+          FAT.seg(prev, _b, s > S_M ? ICE3 : LC3[(r * 3 + j * 2) % NL], hk * (.36 + bead), 3);
+          prev.copy(_b);
+        }
+      });
+      const a0 = Math.min(...gb.a) - .3, a1 = Math.max(...gb.a) + .3;
+      FAT.seg(G(S_RULE, a0, 0, _a), G(S_RULE, a1, 0, _b), ICE3, hk * .8, 3.6);
+      FAT.seg(G(S_READY, a0, 0, _a), G(S_READY, a1, 0, _b), HUM3, hk * .55, 3.6);
+      FAT.seg(G(S_CI, a0, 0, _a), G(S_CI, a1, 0, _b), ICE3, hk * .5, 3);
+      FAT.seg(G(S_OWN, a0, 0, _a), G(S_OWN, a1, 0, _b), HUM3, hk * .7, 3.6);
+    });
+    const H0 = G(HUB.s, HUB.a);
+    ring(H0, .36, ICE3, hk * 1.1, 3.6, 24); ring(H0, .56, ICE3, hk * .35, 2.4, 28);
+    DOTS.put(H0, .42, hk, ICE3, ICE3); GLOW2.put(H0, 2.2, .45 * hk, ICE3);
+    const targets = [REPOS[0].main, REPOS[1].main, GHOST[0].main, GHOST[1].main];
+    const sp = eio(p(t, 34.4, 1.2));
+    targets.forEach((ta, n) => {
+      const E = G(S_RULE, ta), C = G(lerp(HUB.s, S_RULE, .55), lerp(HUB.a, ta, .9), .4);
+      let prev = H0.clone();
+      for (let m = 1; m <= 26; m++) { const u = m / 26; if (u > sp + 1e-4) break; bez(H0, C, E, u, _b); FAT.seg(prev, _b, ICE3, hk * .8, 3.2); prev.copy(_b); }
+      const ph = fract((t - 34.4) * .55 + n * .25);
+      if (sp > .99) { bez(H0, C, E, ph, _q); GLOW2.put(_q, .7, hk * .8, ICE3); }
+    });
+  }
+
   FAT.end(); GLOW.end(); DOTS.end(); GLOW2.end(); DUST.end();
   bloom.strength = .6;
 }
@@ -652,8 +803,7 @@ function update3D(t) {
 // ═════════════════════════════════════════════════════════════
 //  2D OVERLAY
 // ═════════════════════════════════════════════════════════════
-const INK = '#eef6fc', DIM = 'rgba(190,210,224,.8)', FAINT = 'rgba(170,192,208,.55)';
-const SC = TALL ? 1.22 : 1;     // label scale
+const INK = '#eef6fc', DIM = 'rgba(190,210,224,.8)', FAINT = 'rgba(170,192,208,.6)';
 function txt(s, x, y, o = {}) {
   const { size = 36, weight = 600, color = INK, align = 'left', alpha = 1, mono = false, ls = 0, base = 'alphabetic' } = o;
   if (alpha <= 0) return;
@@ -669,24 +819,46 @@ function wrap(s, size, weight, maxW, mono = false) {
   if (cur) out.push(cur); return out;
 }
 function proj(v) { const q = v.clone().project(camera); return { x: (q.x + 1) / 2 * W, y: (1 - q.y) / 2 * H, z: q.z }; }
+const at = (s, a, z = 0) => proj(G(s, a, z));
 const shadow = (b = 14, c = 'rgba(0,0,0,.9)') => { ctx.shadowColor = c; ctx.shadowBlur = b; };
 // a label = runs of [text, colour, mono?] on one line, in a dark rounded box; (x, y) = anchor, ax/ay = 0..1 alignment
 function label(runs, x, y, o = {}) {
-  const { size = 34, weight = 700, alpha: a0 = 1, ax = .5, ay = .5, stroke = 'rgba(140,170,195,.35)', fill = 'rgba(6,10,14,.84)', pad = .5 } = o;
+  const { size = 34, weight = 700, alpha: a0 = 1, ax = .5, ay = .5, stroke = 'rgba(140,170,195,.35)', fill = 'rgba(6,10,14,.86)', pad = .5, zone = true } = o;
   let alpha = a0;
   if (alpha <= 0) return null;
   const ws = runs.map(([s, , m]) => tw(s, m ? size * .92 : size, weight, m));
   const w = ws.reduce((a, b) => a + b, 0) + size * pad * 2, h = size * 1.5;
   let bx = x - w * ax, by = y - h * ay;
   bx = clamp(bx, 14, W - 14 - w);
-  const zone = clamp((by - (TALL ? 236 : 178)) / (TALL ? 60 : 36)) * clamp((H - (TALL ? 112 : 92) - by - h) / 60);   // keep clear of header and step strip
-  alpha *= zone; if (alpha <= .01) return null;
+  if (zone) alpha *= clamp((by - (TALL ? 236 : 178)) / (TALL ? 60 : 36)) * clamp((H - (TALL ? 112 : 92) - by - h) / 60);   // keep clear of header and step strip
+  if (alpha <= .01) return null;
   ctx.save(); ctx.globalAlpha *= alpha; shadow(12);
   ctx.beginPath(); ctx.roundRect(bx, by, w, h, 10); ctx.fillStyle = fill; ctx.fill(); ctx.shadowBlur = 0;
   if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
   ctx.restore();
   let xx = bx + size * pad;
   runs.forEach(([s, c, m], k) => { txt(s, xx, by + h / 2 + size * .36, { size: m ? size * .92 : size, weight, color: c, mono: m, alpha }); xx += ws[k]; });
+  return { x: bx, y: by, w, h };
+}
+// a card = several lines of runs in one box
+function card(lines, x, y, o = {}) {
+  const { size = 32, alpha = 1, ax = 0, ay = 0, lh = 1.5, stroke = 'rgba(140,170,195,.4)', pad = .6, hi = -1, hiK = 0 } = o;
+  if (alpha <= .01) return null;
+  const widths = lines.map(runs => runs.reduce((w, [s, , m, sz]) => w + tw(s, sz || size, 700, m), 0));
+  const w = Math.max(...widths) + size * pad * 2, h = lines.length * size * lh + size * pad * 1.2;
+  const bx = clamp(x - w * ax, 14, W - 14 - w), by = y - h * ay;
+  ctx.save(); ctx.globalAlpha *= alpha; shadow(16);
+  ctx.beginPath(); ctx.roundRect(bx, by, w, h, 12); ctx.fillStyle = 'rgba(6,10,14,.9)'; ctx.fill(); ctx.shadowBlur = 0;
+  ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke();
+  if (hi >= 0 && hiK > 0) {
+    ctx.globalAlpha = alpha * hiK; ctx.beginPath(); ctx.roundRect(bx + 8, by + size * pad * .6 + hi * size * lh - 2, w - 16, size * lh, 8);
+    ctx.fillStyle = 'rgba(143,216,255,.12)'; ctx.fill(); ctx.strokeStyle = 'rgba(143,216,255,.7)'; ctx.stroke();
+  }
+  ctx.restore();
+  lines.forEach((runs, li) => {
+    let xx = bx + size * pad; const yy = by + size * pad * .6 + li * size * lh + size * lh / 2 + size * .36;
+    runs.forEach(([s, c, m, sz]) => { txt(s, xx, yy, { size: (sz || size) * (m ? .92 : 1), weight: 700, color: c, mono: m, alpha }); xx += tw(s, sz || size, 700, m); });
+  });
   return { x: bx, y: by, w, h };
 }
 function personGlyph(x, y, r, col, a) {   // generic person: head + shoulders
@@ -696,15 +868,23 @@ function personGlyph(x, y, r, col, a) {   // generic person: head + shoulders
   ctx.beginPath(); ctx.ellipse(x, y + r * .62, r * .78, r * .5, 0, Math.PI, 0); ctx.fill();
   ctx.restore();
 }
+function mark(x, y, kind, a, sc = 1) {   // ✓ / ✗ drawn as strokes
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a; ctx.translate(x, y); ctx.scale(sc, sc); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = 7;
+  if (kind === 'x') { ctx.strokeStyle = '#ff6a72'; shadow(14, 'rgba(255,60,70,.9)'); const r = 15; ctx.beginPath(); ctx.moveTo(-r, -r); ctx.lineTo(r, r); ctx.moveTo(r, -r); ctx.lineTo(-r, r); ctx.stroke(); }
+  else { ctx.strokeStyle = PASS; shadow(12, 'rgba(120,255,180,.7)'); ctx.beginPath(); ctx.moveTo(-15, 1); ctx.lineTo(-4, 12); ctx.lineTo(16, -12); ctx.stroke(); }
+  ctx.restore();
+}
 
 function backing(t) {
   const g = ctx.createRadialGradient(W * .5, H * .58, Math.min(W, H) * .32, W * .5, H * .58, Math.max(W, H) * .78);
   g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.55)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  const topH = TALL ? 330 : 236, end = eo(p(t, T_END, 1.2));
-  const tp = ctx.createLinearGradient(0, 0, 0, topH + end * (TALL ? 260 : 150));
+  const end = eo(p(t, T_END, 1.2));
+  const topH = (TALL ? 330 : 236) + end * (TALL ? 230 : 150);
+  const tp = ctx.createLinearGradient(0, 0, 0, topH);
   tp.addColorStop(0, 'rgba(5,7,10,.96)'); tp.addColorStop(.62, 'rgba(5,7,10,.8)'); tp.addColorStop(1, 'rgba(5,7,10,0)');
-  ctx.fillStyle = tp; ctx.fillRect(0, 0, W, topH + end * (TALL ? 260 : 150));
+  ctx.fillStyle = tp; ctx.fillRect(0, 0, W, topH);
   const bh = TALL ? 190 : 150;
   const bt = ctx.createLinearGradient(0, H - bh, 0, H); bt.addColorStop(0, 'rgba(5,7,10,0)'); bt.addColorStop(.6, 'rgba(5,7,10,.82)'); bt.addColorStop(1, 'rgba(5,7,10,.94)');
   ctx.fillStyle = bt; ctx.fillRect(0, H - bh, W, bh);
@@ -713,263 +893,337 @@ function backing(t) {
 // ── beat header ──
 const HX = TALL ? 64 : 80;
 function header(t) {
+  let num = '';
   HEAD.forEach(([s, n, , title, subW, subT], bi) => {
+    if (n) num = n;
     if (!title) return;
     const e = bi + 1 < HEAD.length ? HEAD[bi + 1][0] : DURATION;
     const fo = 1 - eio(p(t, e - .22, .22)), a = bi === 0 ? fo : Math.min(eo(p(t, s, .22)), fo); if (a <= 0) return;
+    // the number holds across rows of the same beat
+    let gs = bi; while (gs > 0 && !HEAD[gs][1]) gs--;
+    let ge = bi + 1; while (ge < HEAD.length && !HEAD[ge][1] && HEAD[ge][3]) ge++;
+    const gEnd = ge < HEAD.length ? HEAD[ge][0] : DURATION;
+    const na = Math.min(gs === 0 ? 1 : eo(p(t, HEAD[gs][0], .22)), 1 - eio(p(t, gEnd - .22, .22)));
     const sub = TALL ? subT : subW;
-    ctx.save(); ctx.globalAlpha = a; shadow(16);
-    const ts = TALL ? 62 : 56, ns = TALL ? 44 : 38, sz = TALL ? 44 : 36;
+    ctx.save(); shadow(16);
+    const ts = TALL ? 62 : 56, ns = TALL ? 44 : 38, sz = TALL ? 40 : 36;
     const y0 = TALL ? 128 : 112;
-    txt(n, HX, y0, { size: ns, weight: 700, mono: true, color: '#8fd8ff' });
-    const tx = HX + tw(n, ns, 700, true) + (TALL ? 26 : 24);
+    if (bi === gs) txt(num, HX, y0, { size: ns, weight: 700, mono: true, color: ACC, alpha: na });
+    const tx = HX + tw('00', ns, 700, true) + (TALL ? 26 : 24);
     const maxW = W - tx - HX;
     const tl = wrap(title, ts, 800, maxW);
-    tl.forEach((l, i) => txt(l, tx, y0 + i * ts * 1.16, { size: ts, weight: 800, color: INK }));
+    tl.forEach((l, i) => txt(l, tx, y0 + i * ts * 1.16, { size: ts, weight: 800, color: INK, alpha: a }));
     const y1 = y0 + (tl.length - 1) * ts * 1.16 + sz * (TALL ? 1.6 : 1.55);
-    wrap(sub, sz, 600, W - tx - HX).forEach((l, i) => txt(l, tx, y1 + i * sz * 1.32, { size: sz, weight: 600, color: DIM }));
+    if (sub === 'TOOLS') {   // each tool in its lane colour, then the one rule file
+      const rows = TALL ? [[0, 1, 2], [3, 4, -1]] : [[0, 1, 2, 3, 4, -1]];
+      rows.forEach((r, ri) => {
+        let x = tx; const y = y1 + ri * sz * 1.32;
+        r.forEach((ti, k) => {
+          if (ti < 0) { const s2 = ' → AGENTS.md 먼저 읽음'; txt(s2, x, y, { size: sz, weight: 700, color: INK, alpha: a }); return; }
+          const nm = TOOLS[ti].name + (k < r.length - 1 && r[k + 1] >= 0 ? ' · ' : '');
+          txt(nm, x, y, { size: sz, weight: 700, color: TOOLS[ti].col, alpha: a }); x += tw(nm, sz, 700);
+        });
+      });
+    } else wrap(sub, sz, 600, W - tx - HX).forEach((l, i) => txt(l, tx, y1 + i * sz * 1.32, { size: sz, weight: 600, color: DIM, alpha: a }));
     ctx.restore();
   });
 }
 
 // ── labels in the scene ──
-function gateAnchor(g, side = 1) { return proj(G(g.s, side * (HL + .02), 0)); }
-// wide: labels above (side +1) or below (side −1) a gate; tall: centred on the gate bar
-function gateLabel(g, runs, a, o = {}) {
-  const { side = 1, size = TALL ? 40 : 34, dy = 0, stroke } = o;
-  if (TALL) { const A = proj(G(g.s, 0, 0)); return label(runs, W / 2, A.y + dy, { size, alpha: a, ay: .5, stroke }); }
-  const A = gateAnchor(g, side);
-  return label(runs, A.x, A.y + (side > 0 ? -12 : 12) + dy, { size, alpha: a, ay: side > 0 ? 1 : 0, stroke });
+// wide: above (side +1) or below (side −1) a gate's ends; tall: upstream (+1) or downstream (−1) of the bar, centred
+function gateLabel(s, runs, a, o = {}) {
+  const { side = 1, size = TALL ? 36 : 32, stroke, ax = .5, dy = 0, dx = 0 } = o;
+  if (TALL) { const A = at(s, (A_TOP + A_BOT) / 2); return label(runs, W / 2 + dx, A.y + (side > 0 ? -18 : 18) + dy, { size, alpha: a, ay: side > 0 ? 1 : 0, stroke, ax }); }
+  const A = at(s, side > 0 ? A_TOP + HM + .05 : A_BOT - HM - .05);
+  return label(runs, A.x + dx, A.y + (side > 0 ? -12 : 12) + dy, { size, alpha: a, ay: side > 0 ? 1 : 0, stroke, ax });
 }
+const WARM_ST = a => `rgba(255,180,60,${a})`;
+function humanLabel(s, name, a, o = {}) {
+  const sz = o.size || (TALL ? 36 : 32);
+  const runs = [['사람  ', HUMAN], [name, HUMAN, !!o.mono]];
+  if (o.extra) runs.push(...o.extra);
+  const box = gateLabel(s, runs, a, { ...o, size: sz, stroke: WARM_ST(.7) });
+  if (box) personGlyph(box.x - sz * .7, box.y + box.h / 2, sz * .55, HUMAN, a);
+  return box;
+}
+
 function sceneLabels(t) {
-  const fs = Math.round(34 * SC), fsS = Math.round(30 * SC);
-  const endK = eo(p(t, T_END, 1.2));
-  const b1 = eo(p(t, 1.5, .6)) * (1 - eio(p(t, 6.0, .5)));   // beat 1 close view
-  const ov = TALL ? 0 : Math.max(1 - eo(p(t, 1.1, .6)), eo(p(t, T_END + .9, .8)));   // wide overview: opening and result
-  // lane names
-  if (!TALL) {
-    for (let i = 0; i < NL; i++) {
-      // close view: name + tool file, left of the lane head
-      if (b1 > 0) {
-        const P = proj(laneP(i, S0 - .3));
-        const showFile = eo(p(t, 2.6 + DL[i] * .5, .5)) * b1;
-        ctx.save(); shadow(10);
-        const dy = -fsS * .5 * showFile;
-        txt(TOOLS[i].name, P.x, P.y + fs * .36 + dy, { size: fs, weight: 800, color: TOOLS[i].col, align: 'right', alpha: b1 });
-        txt(TOOLS[i].file, P.x, P.y + fs * .36 + dy + fsS * 1.2, { size: fsS, weight: 600, color: DIM, align: 'right', mono: true, alpha: showFile });
-        ctx.restore();
-      }
-      // overview: name riding just above the lane, right of the head
-      if (ov > 0) {
-        const P = proj(laneP(i, S0 - .22));
-        ctx.save(); shadow(10);
-        txt(TOOLS[i].name, P.x, P.y + 11, { size: 30, weight: 800, color: TOOLS[i].col, align: 'right', alpha: ov });
-        ctx.restore();
-      }
-    }
-  } else {
-    // tall: a legend under the header (columns are too narrow for names)
-    const a = 1 - eio(p(t, 5.8, .45));
-    if (a > 0) {
-      const y0 = 362, rh = 64, x0 = HX;
-      for (let i = 0; i < NL; i++) {
-        const y = y0 + i * rh;
-        ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = TOOLS[i].col; shadow(8, TOOLS[i].col); ctx.beginPath(); ctx.arc(x0 + 14, y - 15, 13, 0, 7); ctx.fill(); ctx.restore();
-        txt(TOOLS[i].name, x0 + 44, y, { size: 44, weight: 800, color: TOOLS[i].col, alpha: a });
-        const fA = eo(p(t, 2.4 + DL[i] * .5, .5)) * a;
-        txt(TOOLS[i].file, W - HX, y, { size: 36, weight: 600, color: DIM, mono: true, align: 'right', alpha: fA });
-      }
-    }
-  }
-  // AGENTS.md: above in the close view, below in the overview (the human gate label sits above)
+  const fz = TALL ? 36 : 32;
+  const b1 = B1(t), endK = eo(p(t, T_END, 1.2)), hk = hubK(t);
+  const ov = Math.max(b1, eo(p(t, 34.4, .8)) * (1 - endK));   // overview labels: beat 1 and the hub shot
+
+  // repo names (예시)
   {
-    const g = GBYID.rule, k = eo(p(t, 3.2, .6));
-    const st = k > .5 ? 'rgba(220,235,247,.7)' : undefined;
-    const runs = [['AGENTS.md', INK, true], ['  약 60줄', DIM]];
-    if (TALL) gateLabel(g, runs, 1 - eio(p(t, 5.8, .45)), { stroke: st, size: 40 });
-    else {
-      if (b1 > 0) gateLabel(g, runs, b1, { side: 1, stroke: st, size: 36 });
-      if (ov > 0) gateLabel(g, runs, ov, { side: -1, size: 30 });
-    }
-  }
-  // human gates (always marked in the overview: the warm colour is the point)
-  for (const id of ['ready', 'own']) {
-    const g = GBYID[id];
-    const arr = id === 'ready' ? 9.0 : 23.6;
-    const waiting = clamp(p(t, arr, .3)) * (1 - clamp(p(t, g.ok, .3)));
-    const done = eo(p(t, g.ok, .4));
-    const focus = id === 'ready' ? (TALL ? Math.max(win(t, 0, 13.5, .5), 1 - eo(p(t, 0, .01)) ) : win(t, 1.9, 13.5, .5)) : win(t, 20.5, T_END + .6, .5);
-    const name = id === 'ready' ? 'ai:ready' : 'CODEOWNER 승인';
-    const sz = TALL ? 42 : (ov > .5 ? 32 : 36);
-    const a = Math.max(focus, ov);
-    if (a <= 0) continue;
-    const runs = [['사람  ', HUMAN], [name, HUMAN, id === 'ready']];
-    if (done > 0 && focus > 0) runs.push(['  ✓', PASS]);
-    if (TALL && waiting > .05 && focus > 0) runs.push(['  대기', HUMAN]);
-    const pulse = waiting > 0 ? .5 + .5 * Math.sin(t * 5.2) : 0;
-    const box = gateLabel(g, runs, a, { side: 1, size: sz, stroke: `rgba(255,180,60,${.55 + .45 * pulse * waiting})` });
-    if (box) {
-      personGlyph(box.x - sz * .7, box.y + box.h / 2, sz * .55, HUMAN, a);
-      if (!TALL && waiting > 0 && focus > 0) txt('대기', box.x + box.w + sz * .4, box.y + box.h / 2 + sz * .34, { size: sz * .9, weight: 800, color: HUMAN, alpha: waiting * a * (.65 + .35 * pulse) });
-      // agent-approval-check stacked above the CODEOWNER label
-      if (id === 'own') {
-        const oa = win(t, 23.4, 26.6, .4);
-        if (oa > 0) label([['agent-approval-check', '#ffd9a0', true], ['  Claude·Copilot 커밋 확인', DIM]], box.x + box.w / 2, box.y - 10, { size: TALL ? 34 : 30, alpha: oa, ay: 1, stroke: 'rgba(255,180,60,.4)' });
-      }
-    }
-  }
-  // B2: issue + AI triage, then AI 구현
-  {
-    const a = win(t, 6.7, 13.5, .4);
-    if (a > 0) {
-      for (let i = 0; i < NL; i++) {   // tag glyph next to each issue (label suggestion)
-        const P = proj(laneP(i, S_ISSUE)), k = eo(p(t, 7.7 + DL[i] * .6, .4)) * a;
-        if (k <= 0) continue;
-        const x = P.x + (TALL ? 22 : 18), y = P.y - (TALL ? 0 : 24);
-        ctx.save(); ctx.globalAlpha = k; ctx.translate(x, y);
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(10, -10); ctx.lineTo(40, -10); ctx.lineTo(40, 10); ctx.lineTo(10, 10); ctx.closePath();
-        ctx.fillStyle = 'rgba(6,10,14,.9)'; ctx.fill(); ctx.strokeStyle = TOOLS[i].col; ctx.lineWidth = 2.5; ctx.stroke();
-        ctx.fillStyle = TOOLS[i].col; ctx.beginPath(); ctx.arc(13, 0, 3.2, 0, 7); ctx.fill(); ctx.restore();
-      }
-      const ta = a * eo(p(t, 7.0, .5)) * (1 - eio(p(t, T_OK1 + .6, .4)));
-      gateLabel({ s: S_ISSUE }, [['이슈 → AI 분류', INK], ['  라벨 부여', DIM]], ta, { side: -1, dy: TALL ? 74 : 0 });
-      const ia = a * eo(p(t, T_OK1 + .9, .5));
-      gateLabel({ s: (C1 + C2) / 2 }, [['AI 구현', INK], [TALL ? '  테스트 먼저' : '  테스트 먼저 · 별도 worktree', DIM]], ia, { side: -1 });
-    }
-  }
-  // B3: hook ✗, pre-commit, PC | GitHub divider
-  {
-    const a = win(t, 13.5, 20.6, .4);
-    const ha = hookAlpha(t);
-    if (ha > 0 && STATE.hookC) {
-      const C = proj(STATE.hookC), E = proj(HOOK_P1);
-      const blocked = t >= T_BLOCK;
-      if (blocked) {
-        const k = eback(clamp((t - T_BLOCK) / .35));
-        ctx.save(); ctx.globalAlpha = ha; ctx.translate(C.x, C.y); ctx.scale(k, k);
-        ctx.strokeStyle = '#ff6a72'; ctx.lineWidth = 7; ctx.lineCap = 'round'; shadow(14, 'rgba(255,60,70,.9)');
-        const r = 16; ctx.beginPath(); ctx.moveTo(-r, -r); ctx.lineTo(r, r); ctx.moveTo(r, -r); ctx.lineTo(-r, r); ctx.stroke(); ctx.restore();
-      }
-      const la = a * ha, fz = TALL ? 38 : 32;
-      const st = blocked ? 'rgba(255,75,85,.75)' : undefined;
-      if (TALL) {
-        label([['.claude/settings.json', '#ffd0d3', true]], C.x + 34, C.y - fz * .85, { size: fz, alpha: la, ax: 0, ay: .5, stroke: st });
-        label([['훅', INK], [blocked ? '  수정 차단' : '  보호 경로 검사', blocked ? '#ff8a91' : DIM]], C.x + 34, C.y + fz * .85, { size: fz, alpha: la, ax: 0, ay: .5 });
-      } else {
-        label([['.claude/settings.json', '#ffd0d3', true]], E.x + 6, E.y - 12, { size: fz, alpha: la, ax: .15, ay: 1, stroke: st });
-        label([['훅', INK], [blocked ? '  수정 차단' : '  보호 경로 검사', blocked ? '#ff8a91' : DIM]], C.x - 34, C.y, { size: fz, alpha: la, ax: 1, ay: .5 });
-      }
-    }
-    const ok = allPassed(S_PRE, t) > 0;
-    const pa = a * eo(p(t, 15.4, .5));
-    gateLabel(GBYID.pre, [[ok ? '✓ ' : '', PASS], ['pre-commit · make check', INK, true], [TALL ? '' : '  사람 커밋에도', DIM]], pa, { side: -1 });
-    // divider: local | GitHub
-    const da = Math.max(a * eo(p(t, 17.6, .5)), win(t, 20.5, 23.0, .4) * .9);
-    if (da > 0) {
-      const D0 = proj(G(S_DIV, HL + .55, 0)), D1 = proj(G(S_DIV, -HL - .55, 0));
-      ctx.save(); ctx.globalAlpha = da * .7; ctx.strokeStyle = 'rgba(143,216,255,.55)'; ctx.lineWidth = 2; ctx.setLineDash([10, 10]);
-      ctx.beginPath(); ctx.moveTo(D0.x, D0.y); ctx.lineTo(D1.x, D1.y); ctx.stroke(); ctx.restore();
-      const fz = TALL ? 40 : 34;
-      if (TALL) {
-        const M = proj(G(S_DIV, HL, 0));
-        txt('내 PC ↑', W - HX, M.y - 16, { size: fz, weight: 800, color: '#8fd8ff', align: 'right', alpha: da });
-        txt('GitHub ↓', W - HX, M.y + fz + 8, { size: fz, weight: 800, color: '#8fd8ff', align: 'right', alpha: da });
-      } else {
-        const M = proj(G(S_DIV, HL + .3, 0));
-        txt('내 PC', M.x - 18, M.y, { size: fz, weight: 800, color: '#8fd8ff', align: 'right', alpha: da });
-        txt('GitHub', M.x + 18, M.y, { size: fz, weight: 800, color: '#8fd8ff', align: 'left', alpha: da });
-      }
-    }
-  }
-  // B4: checks below the lanes, one after another (CI → AI 리뷰 → 룰셋)
-  {
-    const a = win(t, 20.5, T_END + .6, .4);
-    const okCI = allPassed(S_CI, t) > 0;
-    gateLabel(GBYID.ci, [[okCI ? '✓ ' : '', PASS], ['CI · CodeQL · 비밀 스캔', INK]], a * eo(p(t, 20.9, .5)) * (1 - eio(p(t, 22.7, .4))), { side: -1 });
-    gateLabel(GBYID.rev, [['AI 리뷰', '#c4d2dd'], ['  참고용 · 승인 아님', FAINT]], a * eo(p(t, 22.8, .5)) * (1 - eio(p(t, 25.4, .4))), { side: -1, stroke: 'rgba(127,152,173,.4)' });
-    const okRS = allPassed(S_RS, t) > 0;
-    gateLabel(GBYID.rs, [[okRS ? '✓ ' : '', PASS], ['룰셋', INK], [TALL ? '  PR · 승인 · ci-ok · squash' : '  PR · 사람 승인 · ci-ok · squash', DIM]], a * eo(p(t, 25.6, .5)), { side: -1, size: TALL ? 36 : 32 });
-  }
-  // main + result tag
-  {
-    const M = proj(G(S_END + .15, 0, 0));
-    if (TALL) txt('main', M.x + 26, M.y + 14, { size: 48, weight: 800, color: INK, mono: true });
-    else txt('main', M.x + 16, M.y + 13, { size: ov > .5 ? 34 : 40, weight: 800, color: INK, mono: true });
-    const ta = eo(p(t, T_MERGE(0) + .2, .5));
-    if (ta > 0) {
-      const done = eo(p(t, T_MERGE(NL - 1) + .4, .5));
-      const runs = [['squash 머지', INK]];
-      if (done > 0) runs.push(['  →  ', DIM], ['ai:done', '#8fd8ff', true], [' · 릴리스 PR', '#8fd8ff']);
-      const P = proj(G((SLOT(0) + SLOT(NL - 1)) / 2, TALL ? 0 : .3, 0)), Pb = proj(G((SLOT(0) + SLOT(NL - 1)) / 2, -.3, 0));
-      if (TALL) label(runs, P.x - 40, P.y, { size: 38, alpha: ta, ay: .5, ax: 1 });
+    const a3 = win(t, 16.0, 22.6, .5);
+    const a = Math.max(b1, TALL ? a3 : 0, TALL ? 0 : win(t, 31.8, 34.6, .5)) * (1 - endK);
+    REPOS.forEach((R, r) => {
+      if (TALL) { const P = at(S_CT - 1.15, R.main); label([[R.name, INK, true], [' 예시', FAINT]], P.x, P.y, { size: 34, alpha: a, ay: .5 }); }
       else {
-        if (ov < 1) label(runs, P.x, P.y - 12, { size: 34, alpha: ta * (1 - ov), ay: 1 });
-        if (ov > 0) label(runs, Pb.x, Pb.y + 12, { size: 30, alpha: ta * ov, ay: 0, ax: .62 });   // overview: below main, clear of the gates
+        const P = at(S0 - .3, R.main); label([[R.name, INK, true], [' 예시', FAINT]], P.x - 8, P.y, { size: fz, alpha: a, ax: 1 });
+        // beat 3: name the two repos on either side of the contract gap
+        const Q = at(S_CT - 4.2, r ? LANES[4].a + .16 : LANES[3].a - .16);
+        label([[R.name, INK, true], [' 예시', FAINT]], Q.x, Q.y, { size: fz, alpha: a3, ay: r ? 1 : 0 });
+      }
+    });
+  }
+  // review gate: the queue in beat 1, the person in beat 4, both in the overview shots
+  {
+    humanLabel(S_OWN, '리뷰 대기', b1, { side: TALL ? -1 : 1 });
+    const own = Math.max(win(t, 25.9, 27.6, .4), win(t, 31.8, 34.6, .5));
+    humanLabel(S_OWN, 'CODEOWNER 승인', own, { side: TALL ? -1 : 1, ax: TALL ? .5 : .15 });
+  }
+  // overlap box
+  {
+    const [u, mix] = abU(t);
+    const P = TALL ? at(BOX.s, BOX.a0 - .15) : at(BOX.s, A_TOP + .4);
+    const runs = [['중복 작업  ', INK], ['src/auth/**', ACC, true], ['  예시', FAINT]];
+    if (TALL) label(runs, P.x + 12, P.y, { size: 34, alpha: b1, ax: 0 });
+    else label(runs, P.x, P.y, { size: fz, alpha: b1, ay: 1 });
+    // B2b: the flagged overlap, then the outcome
+    const fa = win(t, 12.9, 16.3, .4);
+    if (fa > 0) {
+      const R = TALL ? at(BOX.s, BOX.a0 - .2) : at(BOX.s1 + .2, BOX.a);
+      const r1 = mix < .5 ? [['겹침  ', INK], ['src/auth/**', ACC, true], ['  예시', FAINT]] : [['영역 나누기 ', INK], ['✓', PASS]];
+      label(r1, R.x + (TALL ? 12 : 10), R.y, { size: fz, alpha: fa, ax: 0, ay: .5, stroke: mix < .5 ? 'rgba(220,235,247,.7)' : 'rgba(157,255,196,.6)' });
+    }
+    // people A, B (예시) and their talk
+    const pa = win(t, 10.8, 16.3, .4);
+    if (pa > 0 && STATE.head0) {
+      const H0 = proj(STATE.head0), H1 = proj(STATE.head1);
+      const pz = TALL ? 40 : 36;
+      const off = TALL ? [[-58, 0], [58, 0]] : [[0, -56], [0, 56]];
+      const A0 = { x: H0.x + off[0][0], y: H0.y + off[0][1] }, A1 = { x: H1.x + off[1][0], y: H1.y + off[1][1] };
+      if (TALL) { A0.x = H0.x - 64; A1.x = H1.x + 64; A0.y = A1.y = (H0.y + H1.y) / 2 - 70; }
+      const tk = win(t, 13.3, 15.4, .4);
+      if (tk > 0) {   // talk: a warm dashed link between the two people
+        ctx.save(); ctx.globalAlpha = tk * pa; ctx.strokeStyle = HUMAN; ctx.lineWidth = 3; ctx.setLineDash([8, 9]); ctx.lineDashOffset = -t * 30; shadow(10, 'rgba(255,180,60,.6)');
+        ctx.beginPath(); ctx.moveTo(A0.x, A0.y); ctx.lineTo(A1.x, A1.y); ctx.stroke(); ctx.restore();
+      }
+      [[A0, 'A'], [A1, 'B']].forEach(([P, n]) => {
+        personGlyph(P.x, P.y, pz * .62, HUMAN, pa);
+        txt(n, P.x + pz * .62, P.y + pz * .4, { size: pz, weight: 800, color: HUMAN, alpha: pa });
+      });
+      // the options after talking
+      const oa = win(t, 13.6, 16.3, .4);
+      if (oa > 0) {
+        const hl = eo(p(t, 14.3, .4));
+        const runs = [['대화 → ', HUMAN], ['합치기', DIM], [' · ', FAINT], ['영역 나누기', hl > .5 ? INK : DIM], [' · ', FAINT], ['순서 정하기', DIM]];
+        const O = TALL ? at(BOX.s1 + .55, BOX.a) : at(BOX.s - .3, LANES[3].a - .3);
+        label(runs, TALL ? W / 2 : O.x, O.y, { size: fz, alpha: oa, ay: 0, stroke: WARM_ST(.55) });
       }
     }
+  }
+  // tier card (B2a)
+  {
+    const a = win(t, 7.3, 10.6, .45);
+    if (a > 0) {
+      const hl = eo(p(t, 8.6, .5));
+      const sz = TALL ? 34 : 32;
+      const lines = TALL ? [
+        [['T0  ', ACC, true], ['한 문장 변경 → 이슈 + PR', INK]],
+        [['T1  ', ACC, true], ['여러 파일 → PR 맨 위에 AI 계획', INK]],
+        [['T2  ', ACC, true], ['여러 모듈·레포 · 계약 변경 · 하루 이상', INK]],
+        [['    ', ACC, true], ['→ 1쪽 설계 PR을 먼저 머지', ACC]],
+      ] : [
+        [['T0  ', ACC, true], ['한 문장 변경', INK], ['  →  이슈 + PR', DIM]],
+        [['T1  ', ACC, true], ['여러 파일', INK], ['  →  PR 맨 위에 AI 계획', DIM]],
+        [['T2  ', ACC, true], ['여러 모듈·레포 · 계약 변경 · 하루 이상', INK], ['  →  1쪽 설계 PR 먼저 머지', ACC]],
+      ];
+      if (TALL) card(lines, HX - 20, H - 150, { size: sz, alpha: a, ay: 1, hi: 2, hiK: hl, lh: 1.42 });
+      else card(lines, HX - 20, H - 128, { size: sz, alpha: a, ay: 1, hi: 2, hiK: hl });
+      // the two heads are T2 work: a design PR first
+      const da = win(t, 8.8, 10.6, .4);
+      if (da > 0) { const P = at(AB_S0, LANES[AB[0]].a); label([['설계 PR', INK], ['  T2', ACC, true]], P.x, P.y - (TALL ? 40 : 28), { size: fz, alpha: da, ay: 1 }); }
+    }
+  }
+  // team work board (B2b)
+  {
+    const a = win(t, 11.0, 16.2, .4);
+    if (a > 0) {
+      const P = TALL ? at(BOARD.s, BOARD.a + .4) : at(BOARD.s, BOARD.a + .42);
+      const r1 = [['팀 작업 보드', INK]], r2 = [['모든 레포 설계 · 열린 PR', DIM]], r3 = [['30분마다 · LLM 없음 · 토큰 0', ACC]];
+      if (TALL) { const T0 = at(BOARD.s - 1.75, BOARD.a); card([r1, r2, r3], T0.x - 120, T0.y, { size: 34, alpha: a, ax: 0, ay: 1, lh: 1.36 }); }
+      else { const R = at(BOARD.s + .95, BOARD.a); card([r1, r2, r3], R.x, R.y, { size: fz, alpha: a, ax: 0, ay: .5, lh: 1.36 }); }
+    }
+  }
+  // contract (B1 hint, B3 sequence)
+  {
+    const M = TALL ? at(S_CT, (LANES[3].a + LANES[4].a) / 2) : at(S_CT + .5, (LANES[3].a + LANES[4].a) / 2);
+    const hint = b1;
+    if (TALL) label([['계약 깨짐  ', '#ffb0b5'], ['API', INK, true]], M.x, M.y + 34, { size: 34, alpha: hint, ay: 0, stroke: 'rgba(255,75,85,.6)' });
+    else label([['계약 깨짐  ', '#ffb0b5'], ['API', INK, true]], M.x, M.y, { size: fz, alpha: hint, ax: 0, stroke: 'rgba(255,75,85,.6)' });
+    const a3 = win(t, 16.2, 22.6, .4);
+    if (a3 > 0) {
+      const P = at(S_CT, LANES[3].a), C = at(S_CT, LANES[4].a);
+      // contract file + order
+      const merged = t > 16.8 && t < 18.9;
+      const lp = TALL ? { x: P.x, y: P.y - 40, ax: .5, ay: 1 } : { x: P.x - 30, y: P.y, ax: 1, ay: .5 };
+      label([['openapi.yaml', INK, true], merged ? ['  ① 계약 PR 먼저 머지', PASS] : t >= 18.9 ? ['  변경 PR', DIM] : ['', DIM]], lp.x, lp.y, { size: fz, alpha: a3 * eo(p(t, 16.3, .4)), ax: lp.ax, ay: lp.ay });
+      const ia = win(t, 17.3, 18.9, .3);
+      const cp = TALL ? { x: C.x, y: C.y + 40, ax: .5, ay: 0 } : { x: C.x - 30, y: C.y, ax: 1, ay: .5 };
+      label([['② 구현 PR', INK], ['  svc-a · web', DIM, true]], cp.x, cp.y, { size: fz, alpha: a3 * ia, ax: cp.ax, ay: cp.ay });
+      // contract-check result
+      const ck = win(t, 18.95, 22.6, .3);
+      if (ck > 0) {
+        const R = at(S_CT + .42, (LANES[3].a + LANES[4].a) / 2);
+        const fail = t < 21.2;
+        mark(R.x, R.y, fail ? 'x' : 'v', ck, .9);
+        const rp = TALL ? { x: W / 2, y: R.y + 46, ax: .5, ay: 0 } : { x: R.x + 34, y: R.y, ax: 0, ay: .5 };
+        label([['contract-check', INK, true], fail ? ['  실패: 깨지는 변경', '#ff8a91'] : ['  통과', PASS]], rp.x, rp.y, { size: fz, alpha: ck, ax: rp.ax, ay: rp.ay, stroke: fail ? 'rgba(255,75,85,.7)' : 'rgba(157,255,196,.6)' });
+        const ta = win(t, 19.5, 22.6, .3);
+        label([['OpenAPI ', DIM], ['oasdiff', INK, true], ['  ·  protobuf ', DIM], ['buf', INK, true]], rp.x, rp.y + fz * 1.5 + 10, { size: fz, alpha: ta, ax: rp.ax, ay: rp.ay === .5 ? .5 : 0 });
+        const la = win(t, 20.5, 22.6, .3);
+        if (la > 0) {
+          const y = rp.y + (fz * 1.5 + 10) * 2;
+          const box = label([['breaking-change', HUMAN, true], ['  라벨 · 소비자와 합의', HUMAN]], rp.x + (TALL ? 0 : 44), y, { size: fz, alpha: la, ax: rp.ax, ay: rp.ay === .5 ? .5 : 0, stroke: WARM_ST(.7) });
+          if (box) personGlyph(box.x - fz * .7, box.y + box.h / 2, fz * .55, HUMAN, la);
+        }
+      }
+    }
+  }
+  // B4: cap, alerts, reviewer guide, AI review
+  {
+    const ca = win(t, 22.9, 27.3, .4), cl = win(t, 22.9, 25.5, .4);
+    if (ca > 0) {
+      if (TALL) { const P = at(FRONT - GAP * 8.2, 0); label([['상한 3', INK], ['  MAX_OPEN_PRS_PER_AUTHOR', ACC, true]], W / 2, P.y, { size: 34, alpha: cl, ay: 1 }); }
+      else { const P = at(S_CAP, A_TOP + HM + .05); label([['상한 3  ', INK], ['MAX_OPEN_PRS_PER_AUTHOR', ACC, true]], P.x + 20, P.y - 12, { size: fz, alpha: cl, ax: .75, ay: 1 }); }
+      // alert tag on the deepest queue
+      const al = win(t, 23.6, TALL ? 25.5 : 27.3, .4);
+      const pick = STATE.alerts.filter(q => q.i === 3).sort((x, y) => x.s - y.s)[0] || STATE.alerts[0];
+      if (pick && al > 0) {
+        const P = at(pick.s, LANES[pick.i].a);
+        if (TALL) { const Q0 = at(FRONT - GAP * 8.2, 0); label([['넘으면 알림', INK], ['  차단 안 함', DIM]], W / 2, Q0.y - 66, { size: 34, alpha: al, ay: 1, stroke: 'rgba(220,235,247,.7)' }); }
+        else label([['넘으면 알림', INK], ['  차단 안 함', DIM]], P.x - 24, P.y, { size: fz, alpha: al, ax: 1, stroke: 'rgba(220,235,247,.7)' });
+      }
+    }
+    const ga = win(t, 24.4, 27.3, .4);
+    if (ga > 0) {
+      const lines = [[['Reviewer guide', ACC, true]], [['먼저 볼 곳', INK]], [['확인한 것', INK]], [['확인 못 한 것', INK]]];
+      if (TALL) { const P = at(S_OWN + 1.0, 0); card(lines, W - HX + 20, P.y, { size: 34, alpha: ga, ax: 1, ay: 0, lh: 1.34 }); }
+      else { const P = at(S_OWN + .5, -.25); card(lines, P.x, P.y, { size: fz, alpha: ga, ax: 0, ay: .5, lh: 1.34 }); }
+    }
+    const ra = win(t, TALL ? 25.5 : 25.3, 27.3, .4);
+    gateLabel(S_AIR, [['AI 리뷰', '#c4d2dd'], ['  참고용 · 승인 아님', FAINT]], ra, { side: 1, stroke: 'rgba(127,152,173,.45)', dx: TALL ? 0 : -90 });
+  }
+  // B4b: the rule loop
+  {
+    const a1 = win(t, 27.5, 31.5, .4);
+    if (a1 > 0) {
+      const P = proj(ARC0);
+      if (TALL) label([['review-comments.sh', INK, true], ['  매주 월 · 토큰 0', ACC]], P.x + 30, P.y + 30, { size: 34, alpha: a1, ax: 0, ay: 0 });
+      else label([['review-comments.sh', INK, true], ['  매주 월요일 · 토큰 0', ACC]], P.x + 30, P.y, { size: fz, alpha: a1, ax: 0, ay: .5 });
+    }
+    const a2 = win(t, 28.6, 30.2, .3);
+    if (a2 > 0) {
+      const _m = new THREE.Vector3(); bez(ARC0, ARCC, ARC1, .5, _m); const P = proj(_m);
+      label([['2개 이상 PR에서 나온 주제', INK], [' → 수정 제안', DIM]], TALL ? W / 2 + 40 : P.x, P.y - (TALL ? 0 : 14), { size: fz, alpha: a2, ay: TALL ? .5 : 1 });
+    }
+    const a3 = win(t, 29.8, 31.5, .4);
+    if (a3 > 0) {
+      const P = proj(ARC1);
+      const lines = [[['① ', ACC, true], ['린트 규칙 · 테스트', INK]], [['② ', ACC, true], ['AGENTS.md', INK, true], [' 한 줄', INK]]];
+      if (TALL) card(lines, P.x + 30, P.y + 10, { size: 34, alpha: a3, ax: 0, ay: 0, lh: 1.36 });
+      else card(lines, P.x - 20, P.y - 16, { size: fz, alpha: a3, ax: 0, ay: 1, lh: 1.36 });
+    }
+    const a4 = win(t, 30.3, 31.6, .3);
+    if (a4 > 0) {
+      const P = proj(ARC1);
+      const _m = new THREE.Vector3(); bez(ARC0, ARCC, ARC1, .5, _m); const Mp = proj(_m);
+      const box = TALL ? label([['이슈로 등록 → 사람이 PR로 반영', HUMAN]], W / 2 + 24, P.y + 150, { size: 34, alpha: a4, ay: 0, stroke: WARM_ST(.7) })
+                       : label([['이슈로 등록 → 사람이 PR로 반영', HUMAN]], Mp.x + 40, Mp.y - 14, { size: fz, alpha: a4, ay: 1, stroke: WARM_ST(.7) });
+      if (box) personGlyph(box.x - fz * .7, box.y + box.h / 2, fz * .55, HUMAN, a4);
+    }
+  }
+  // B5: the base
+  {
+    const a = win(t, 32.0, 34.4, .4);
+    if (a > 0) {
+      gateLabel(S_RULE, [['AGENTS.md', INK, true], ['  약 60줄', DIM]], a, { side: TALL ? 1 : -1, stroke: 'rgba(220,235,247,.6)' });
+      humanLabel(S_READY, 'ai:ready', a, { side: 1, mono: true, dx: TALL ? 0 : 60 });
+      gateLabel(S_CI, [['같은 검사  ', INK], ['make check', ACC, true], [' = CI', DIM]], a, { side: TALL ? 1 : -1 });
+    }
+    // hub
+    if (hk > 0) {
+      const ha = hk * (1 - endK * .0);
+      const H0 = proj(G(HUB.s, HUB.a));
+      if (TALL) label([['허브 레포', INK]], H0.x + 50, H0.y, { size: 34, alpha: ha * (1 - endK), ax: 0 });
+      else label([['허브 레포', INK]], H0.x, H0.y + 46, { size: fz, alpha: ha * (1 - endK), ay: 0 });
+      const sa = win(t, 35.0, 36.7, .4);
+      if (sa > 0) {
+        const M = proj(G(lerp(HUB.s, S_RULE, .55), GHOST[0].main * .9 + .35));
+        label([['규칙 · 훅 · 스킬', INK]], M.x, M.y, { size: fz, alpha: sa, ay: 1 });
+        const M2 = TALL ? proj(G(S_RULE - .9, GHOST[1].main)) : proj(G(S_END - 1.0, GHOST[1].main - .5));
+        label([['여러 레포', INK], ['  예시', FAINT]], M2.x + (TALL ? 30 : 0), M2.y, { size: fz, alpha: sa, ay: TALL ? 1 : 0, ax: TALL ? 1 : .5 });
+      }
+    }
+  }
+  // main tips
+  {
+    const a = Math.max(b1, win(t, 22.6, 31.6, .5)) * (1 - endK) * (1 - hk);
+    REPOS.forEach(R => { const M = at(S_END + .15, R.main); if (M.y < H - 150) txt('main', M.x + 14, M.y + 12, { size: TALL ? 36 : 32, weight: 800, color: INK, mono: true, alpha: a }); });
   }
 }
 
-// ── 7-step strip (bottom): steps 3 and 6 are people ──
-const STEPS = ['이슈 등록', 'AI 분류 · 라벨 부여', '사람: ai:ready', 'AI 구현 · 테스트 먼저', '초안 PR · CI · AI 리뷰', '사람: CODEOWNER 승인', 'squash 머지 · ai:done'];
-const STEP_T = [6.6, 7.6, 8.9, T_OK1 + .6, 20.6, 23.5, T_OK2 + 1.2];
+// ── step strip (bottom): the five devices ──
+const STEPS = ['설계 먼저', '겹침 확인', '계약 먼저', '리뷰 상한', '지적은 규칙으로'];
+const STEP_T = [7.3, 10.8, 16.2, 22.8, 27.4];
 function stepStrip(t) {
   let cur = -1; STEP_T.forEach((s, i) => { if (t >= s) cur = i; });
   const endK = eo(p(t, T_END, 1));
-  const x0 = TALL ? 84 : 100, gap = TALL ? 52 : 50, y = TALL ? H - 66 : H - 62, r = TALL ? 13 : 11;
+  const n = STEPS.length, x0 = TALL ? 84 : 100, gap = TALL ? 56 : 54, y = TALL ? H - 66 : H - 62, r = TALL ? 13 : 11;
   ctx.save(); shadow(8);
-  ctx.strokeStyle = 'rgba(150,175,195,.45)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x0 + gap * 6, y); ctx.stroke();
+  ctx.strokeStyle = 'rgba(150,175,195,.45)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x0 + gap * (n - 1), y); ctx.stroke();
   if (cur >= 0) { ctx.strokeStyle = 'rgba(220,235,247,.9)'; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x0 + gap * cur, y); ctx.stroke(); }
-  for (let i = 0; i < 7; i++) {
-    const human = i === 2 || i === 5, x = x0 + gap * i, on = i <= cur, now = i === cur && endK < .5;
-    ctx.beginPath();
-    if (human) { const rr = r * 1.25; ctx.moveTo(x, y - rr); ctx.lineTo(x + rr, y); ctx.lineTo(x, y + rr); ctx.lineTo(x - rr, y); ctx.closePath(); }
-    else ctx.arc(x, y, r * (now ? 1.15 : 1), 0, 7);
-    ctx.fillStyle = human ? (on ? HUMAN : 'rgba(255,180,60,.35)') : on ? ICE : '#0b1116'; ctx.fill();
-    ctx.strokeStyle = human ? HUMAN : on ? ICE : 'rgba(150,175,195,.6)'; ctx.lineWidth = 2.5; ctx.stroke();
-    if (now) { ctx.strokeStyle = human ? HUMAN : ICE; ctx.globalAlpha = .55; ctx.beginPath(); ctx.arc(x, y, r * 2, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; }
+  for (let i = 0; i < n; i++) {
+    const x = x0 + gap * i, on = i <= cur, now = i === cur && t < 31.6;
+    ctx.beginPath(); ctx.arc(x, y, r * (now ? 1.15 : 1), 0, 7);
+    ctx.fillStyle = on ? ICE : '#0b1116'; ctx.fill();
+    ctx.strokeStyle = on ? ICE : 'rgba(150,175,195,.6)'; ctx.lineWidth = 2.5; ctx.stroke();
+    if (now) { ctx.strokeStyle = ICE; ctx.globalAlpha = .55; ctx.beginPath(); ctx.arc(x, y, r * 2, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; }
   }
   ctx.restore();
-  const fz = TALL ? 38 : 34, lx = x0 + gap * 6 + (TALL ? 36 : 36);
-  if (cur < 0 || endK > 0) {
-    const s1 = TALL ? '7단계 · ' : '이슈 → main 7단계 · ', s2 = '사람 판단 2곳';
-    txt(s1, lx, y + fz * .36, { size: fz, weight: 700, color: DIM });
-    txt(s2, lx + tw(s1, fz, 700), y + fz * .36, { size: fz, weight: 800, color: HUMAN });
+  const fz = TALL ? 36 : 34, lx = x0 + gap * (n - 1) + 36;
+  if (cur < 0) {
+    txt('병목 3곳 · 대응 장치 5개', lx, y + fz * .36, { size: fz, weight: 700, color: DIM });
+  } else if (t < 31.6) {
+    const k = eo(p(t, STEP_T[cur], .35));
+    txt(String(cur + 1), lx, y + fz * .36, { size: fz, weight: 700, color: ACC, mono: true, alpha: k });
+    txt(STEPS[cur], lx + fz * 1.1, y + fz * .36, { size: fz, weight: 800, color: INK, alpha: k });
   } else {
-    const human = cur === 2 || cur === 5, k = eo(p(t, STEP_T[cur], .35));
-    txt(String(cur + 1), lx, y + fz * .36, { size: fz, weight: 700, color: human ? HUMAN : '#8fd8ff', mono: true, alpha: k });
-    txt(STEPS[cur], lx + fz * 1.1, y + fz * .36, { size: fz, weight: 800, color: human ? HUMAN : INK, alpha: k });
+    const k = eo(p(t, 31.6, .4)) * (1 - endK);
+    const s1 = '같은 기반 · ', s2 = '사람 판단 2곳';
+    txt(s1, lx, y + fz * .36, { size: fz, weight: 700, color: DIM, alpha: k });
+    txt(s2, lx + tw(s1, fz, 700), y + fz * .36, { size: fz, weight: 800, color: HUMAN, alpha: k });
   }
   // concept tag
   const tz = TALL ? 34 : 30, tag = '개념도', tw2 = tw(tag, tz, 700) + 22;
-  ctx.save(); ctx.beginPath(); ctx.roundRect(W - (TALL ? 64 : 80) - tw2, y - tz * .78, tw2, tz * 1.5, 8); ctx.strokeStyle = 'rgba(170,192,208,.5)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
-  txt(tag, W - (TALL ? 64 : 80) - tw2 / 2, y + tz * .36 - 1, { size: tz, weight: 700, color: FAINT, align: 'center' });
+  ctx.save(); ctx.beginPath(); ctx.roundRect(W - HX - tw2, y - tz * .78, tw2, tz * 1.5, 8); ctx.strokeStyle = 'rgba(170,192,208,.5)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+  txt(tag, W - HX - tw2 / 2, y + tz * .36 - 1, { size: tz, weight: 700, color: FAINT, align: 'center' });
 }
 
 // ── 결과: end card ──
 function endCard(t) {
-  const a = eo(p(t, T_END + .3, .8)); if (a <= 0) return;
-  const k2 = eo(p(t, T_END + .8, .7));
+  const a = eo(p(t, T_END + .2, .8)); if (a <= 0) return;
+  const k2 = eo(p(t, T_END + .7, .7));
   ctx.save(); shadow(20);
-  const parts = [['AI 도구 ', INK, 0], ['5', INK, 1], ['종', INK, 0], [' · ', DIM, 0], ['규칙 ', INK, 0], ['1', INK, 1], ['개', INK, 0], [' · ', DIM, 0], ['사람 판단 ', HUMAN, 0], ['2', HUMAN, 1], ['곳', HUMAN, 0]];
-  if (TALL) {
-    const lines = [[0, 3], [4, 7], [8, 11]];
-    const fw = 66, fn = 132, y0 = 196, lh = 136;
-    lines.forEach(([s, e], li) => {
-      let x = HX; const y = y0 + li * lh;
-      const la = eo(p(t, T_END + .3 + li * .18, .6));
-      for (let k = s; k < e; k++) { const [str, c, big] = parts[k]; if (str === ' · ') continue;
-        txt(str, x, y, { size: big ? fn : fw, weight: 800, color: c, alpha: la, ls: big ? -3 : 0 }); x += tw(str, big ? fn : fw, 800) - (big ? 6 : 0) + (big ? 8 : 0); }
-    });
-    txt('워크플로 23 · 스킬 11 · 서브에이전트 5', HX, y0 + 2 * lh + 86, { size: 40, weight: 700, color: DIM, alpha: k2 });
-    txt('API 키 없이 내 자리에서', HX, y0 + 2 * lh + 140, { size: 40, weight: 700, color: '#8fd8ff', alpha: k2 });
-  } else {
-    const fw = 64, fn = 118, y = 176;
+  const main = TALL ? ['설계 먼저 · 겹침 확인', '계약 먼저 · 리뷰 상한', '지적은 규칙으로'] : ['설계 먼저 · 겹침 확인 · 계약 먼저', '리뷰 상한 · 지적은 규칙으로'];
+  const fw = TALL ? 64 : 66, lh = TALL ? 84 : 84, y0 = TALL ? 168 : 150;
+  main.forEach((l, li) => {
+    const la = eo(p(t, T_END + .2 + li * .16, .6));
     let x = HX;
-    parts.forEach(([str, c, big]) => { txt(str, x, y, { size: big ? fn : fw, weight: 800, color: c, alpha: a, ls: big ? -2 : 0 }); x += tw(str, big ? fn : fw, 800) + (big ? 6 : 0); });
-    const s1 = '워크플로 23 · 스킬 11 · 서브에이전트 5 · ', s2 = 'API 키 없이 내 자리에서';
-    txt(s1, HX, y + 70, { size: 36, weight: 700, color: DIM, alpha: k2 });
-    txt(s2, HX + tw(s1, 36, 700), y + 70, { size: 36, weight: 700, color: '#8fd8ff', alpha: k2 });
+    l.split(' · ').forEach((w, wi, arr) => {
+      txt(w, x, y0 + li * lh, { size: fw, weight: 800, color: INK, alpha: la }); x += tw(w, fw, 800);
+      if (wi < arr.length - 1) { txt(' · ', x, y0 + li * lh, { size: fw, weight: 800, color: ACC, alpha: la }); x += tw(' · ', fw, 800); }
+    });
+  });
+  const ys = y0 + (main.length - 1) * lh + (TALL ? 76 : 70), sz = TALL ? 38 : 36;
+  const parts = [['AI 도구 5종 · 규칙 1개 · ', DIM], ['사람 판단 2곳', HUMAN], [' · 워크플로 23', DIM]];
+  if (TALL) {
+    txt('AI 도구 5종 · 규칙 1개', HX, ys, { size: sz, weight: 700, color: DIM, alpha: k2 });
+    txt('사람 판단 2곳', HX, ys + sz * 1.35, { size: sz, weight: 700, color: HUMAN, alpha: k2 });
+    txt(' · 워크플로 23', HX + tw('사람 판단 2곳', sz, 700), ys + sz * 1.35, { size: sz, weight: 700, color: DIM, alpha: k2 });
+  } else {
+    let x = HX; parts.forEach(([s, c]) => { txt(s, x, ys, { size: sz, weight: 700, color: c, alpha: k2 }); x += tw(s, sz, 700); });
   }
   ctx.restore();
 }
@@ -1008,7 +1262,7 @@ if (!RENDER && !EMBED) {
     pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
     replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
   };
-  const CHAPTERS = HEAD.map(h => [h[0], h[1], h[2]]);
+  const CHAPTERS = HEAD.filter(h => h[2]).map(h => [h[0], h[1], h[2]]);
   $('scrub').setAttribute('aria-valuemax', Math.round(DURATION));
   let t = 0, playing = false, started = false, last = 0;
   const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
