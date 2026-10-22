@@ -2011,7 +2011,7 @@
 <ul>
 <li><strong>무엇</strong>: AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿. 여러 AI 도구와 여러 레포를 전제로 한다. 저장소 이름은 ai-code-collaboration-best-practices.</li>
 <li><strong>기술</strong>: GitHub Actions · Claude Code 플러그인(훅·스킬·서브에이전트) · Make · <a href="https://jungrok5.github.io/ai-code-collaboration-best-practices/" target="_blank" rel="noopener">jungrok5.github.io/ai-code-collaboration-best-practices</a> · <a href="https://github.com/jungrok5/ai-code-collaboration-best-practices" target="_blank" rel="noopener">github.com/jungrok5/ai-code-collaboration-best-practices</a> (공개 · MIT)</li>
-<li><strong>구조</strong>: Claude Code·Copilot·Cursor·Codex·Gemini 어떤 도구로 작업해도 AGENTS.md 하나(약 60줄)의 규칙을 읽고 같은 검사를 통과해야 main에 반영된다.</li>
+<li><strong>구조</strong>: Claude Code·Copilot·Cursor·Codex·Gemini 어떤 도구로 작업해도 AGENTS.md 하나(약 60줄)의 규칙을 읽고 같은 검사를 통과해야 main에 반영된다. 사람이 판단하는 곳은 두 곳(ai:ready 부여, CODEOWNER 승인)이고, AI 리뷰는 승인으로 세지 않는다.</li>
 <li><strong>로컬 가드레일</strong>: Claude Code 플러그인(보호 경로 수정·main 커밋·강제 푸시 차단 훅, 스킬 11개, 서브에이전트 5개), pre-commit·make check로 사람의 커밋에도 같은 검사.</li>
 <li><strong>GitHub 거버넌스·자동화</strong>: 룰셋(PR·사람 승인·squash), CODEOWNERS, AI 사용 공개 PR 템플릿, 워크플로 22개(이슈 분류, ai:ready 이슈 구현, AI 리뷰, CI 실패 수정, 설계 겹침 알림, 릴리스).</li>
 <li><strong>운영</strong>: AI 작업은 각자 자리의 로그인으로 실행(API 키 불필요), 서버 자동화는 사내 로컬 LLM 또는 Anthropic 중 선택, 여러 레포는 템플릿 복사와 플러그인 마켓플레이스로 갱신.</li>

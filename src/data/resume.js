@@ -345,12 +345,27 @@ export const sections = [
     contact: true,
     summary: true, // 마지막 패널: 학력·수상·전체 스택도 함께 노출
   },
+  {
+    // 개인 프로젝트지만 모션 페이지에서는 회사 프로젝트와 같은 형식으로 보여 준다 (기본 이력서에는 개인 프로젝트 목록에만)
+    id: 'collab',
+    hook: 'AI 도구 5종이 같은 규칙 · 같은 검사를 거쳐 main으로',
+    accent: 'blue',
+    kicker: '개인 프로젝트 · 공개 · MIT · 2026',
+    title: 'AI 에이전트 협업 개발 구조',
+    metric: { big: '5 → 1', cap: 'AI 도구 5종 → 규칙 파일 하나 · 같은 검사 · 사람 판단 2곳' },
+    points: [
+      'AGENTS.md 하나(약 60줄)를 사람과 모든 에이전트(Claude Code·Copilot·Cursor·Codex·Gemini)의 규칙으로 두고, 도구별 설정 파일은 이 파일을 가리키게 함',
+      '사람이 판단하는 곳은 두 곳(ai:ready 부여, CODEOWNER 승인). AI 리뷰는 승인으로 세지 않고, 에이전트 커밋이 있는 PR은 사람 승인을 따로 요구',
+      '내 PC의 가드레일(보호 경로 수정·main 커밋·강제 푸시 차단 훅, pre-commit·make check)과 GitHub 쪽 룰셋·CODEOWNERS·CI·CodeQL·비밀 스캔이 같은 규칙으로 두 번 검사',
+      'API 키 없이 각자 자리에서 AI 작업(make ai-*), 서버 자동화는 필요할 때만(사내 로컬 LLM 또는 Anthropic). 워크플로 22개, 템플릿 복사와 플러그인 마켓플레이스로 여러 레포에 배포',
+    ],
+  },
 ]
 
 // 인터랙티브 페이지에서 모션 그래픽으로 보여주는 대표 이력 (보여줄 순서).
 // 각 id는 public/motion/<id>/index.html 의 모션 그래픽과 1:1로 대응한다.
 // 나머지 섹션은 '그 밖의 주요 작업' 카드로 텍스트만 노출한다.
-export const highlights = ['combat', 'giant', 'collision', 'raycast', 'trickster', 'densebuild', 'spatial', 'renderopt', 'navmesh', 'ownership', 'pipeline', 'ai']
+export const highlights = ['combat', 'giant', 'collision', 'raycast', 'trickster', 'densebuild', 'spatial', 'renderopt', 'navmesh', 'ownership', 'pipeline', 'ai', 'collab']
 
 // 타임라인 + 폴백 문서가 쓰는 경력 요약 (최신 → 과거)
 export const timeline = [
@@ -396,7 +411,7 @@ export const projects = [
     note: '공개 · MIT',
     metric: '워크플로 22개',
     points: [
-      '어떤 AI 도구로 작업해도 AGENTS.md 하나의 규칙을 읽고 같은 검사를 통과해야 main에 반영되는 구조',
+      '어떤 AI 도구로 작업해도 AGENTS.md 하나의 규칙을 읽고 같은 검사를 통과해야 main에 반영되는 구조, 사람 판단은 두 곳(ai:ready 부여, CODEOWNER 승인)',
       'Claude Code 플러그인 가드레일(차단 훅, 스킬 11개, 서브에이전트 5개)과 룰셋·CODEOWNERS·워크플로 22개로 이슈부터 머지까지 자동화',
     ],
   },

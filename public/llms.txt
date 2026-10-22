@@ -83,6 +83,7 @@ English version: https://jungrok5.github.io/resume/llms-en.txt
 - **AI 협업 개발 템플릿** (ai-code-collaboration-best-practices): AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿
   (여러 AI 도구 · 여러 레포). GitHub Actions · Claude Code 플러그인(훅·스킬·서브에이전트) · Make. Claude Code·Copilot·
   Cursor·Codex·Gemini 어떤 도구로 작업해도 AGENTS.md 하나(약 60줄)의 규칙을 읽고 같은 검사를 통과해야 main에 반영.
+  사람 판단은 두 곳(ai:ready 부여, CODEOWNER 승인), AI 리뷰는 승인으로 세지 않음.
   차단 훅·스킬 11개·서브에이전트 5개, pre-commit·make check, 룰셋·CODEOWNERS·AI 사용 공개 PR 템플릿·워크플로 22개. MIT.
   https://github.com/jungrok5/ai-code-collaboration-best-practices (설명 페이지: https://jungrok5.github.io/ai-code-collaboration-best-practices/)
 - **Hellfarm** (비공개): 디아블로식 파밍 + 뱀서라이크 한 손 조작 핵앤슬래시 액션 게임 (Windows·Android).
