@@ -99,11 +99,11 @@
 </div>
 <section class="notes" id="notes">
 <h2>AI 에이전트 협업 개발 구조 <small>· 개인 프로젝트 · 공개 · MIT · 2026</small></h2>
-<article data-ch="01"><p><span class="n">규칙</span>팀원마다 다른 AI 도구(Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Gemini)를 씁니다. 규칙은 <code>AGENTS.md</code> 하나(약 60줄)에 두고, 도구별 파일(<code>CLAUDE.md</code>, <code>copilot-instructions.md</code>, <code>.cursor/rules/</code>, <code>GEMINI.md</code>)은 이 파일을 가리키기만 합니다.</p></article>
-<article data-ch="02"><p><span class="n">흐름</span>이슈 하나가 머지되기까지 7단계입니다. 이슈 등록 → AI 분류(라벨 제안) → <b>사람이 <code>ai:ready</code> 부여</b> → AI 구현(테스트 먼저, 별도 worktree) → 초안 PR · CI · AI 리뷰(참고용) → <b>사람 CODEOWNER 승인</b> → squash 머지 · <code>ai:done</code> · 릴리스. AI 작업은 각자 자리에서 본인의 <code>claude</code> 로그인으로, API 키 없이 실행합니다(<code>make ai-triage / ai-review / ai-implement / ai-queue</code>).</p></article>
-<article data-ch="03"><p><span class="n">내 PC</span>내 PC에서 먼저 막습니다. Claude Code 플러그인 <code>team-ai-workflow</code>의 훅이 보호 경로(비밀 파일, 락파일, CODEOWNERS, 룰셋, <code>.claude/settings.json</code>) 수정과 main 커밋, 강제 푸시를 차단하고, 수정 직후 포맷합니다. 훅은 Claude Code에서만 동작하므로 다른 도구의 변경은 pre-commit과 <code>make check</code>가 CI와 같은 검사로 받습니다. 사람의 커밋에도 같은 검사가 적용됩니다.</p></article>
-<article data-ch="04"><p><span class="n">GitHub</span>GitHub 쪽에서 같은 규칙으로 한 번 더 검사합니다. 룰셋이 PR, 사람 승인, <code>ci-ok</code>, squash 머지만 허용하고, CODEOWNERS, CodeQL, 비밀 스캔, Dependabot이 함께 동작합니다. AI 리뷰는 참고용이라 승인으로 세지 않고, 에이전트 커밋이 있는 PR은 <code>agent-approval-check</code>가 사람 승인을 따로 요구합니다.</p></article>
-<article data-ch="05"><p><span class="n">결과</span>AI 도구 5종이 규칙 파일 하나와 같은 검사를 거치고, 사람은 두 곳에서 판단합니다. 워크플로 22개, 스킬 11개, 서브에이전트 5개입니다. 서버 자동화는 선택입니다(<code>AI_BACKEND</code>: 사내 로컬 LLM 또는 Anthropic). 설정하지 않으면 AI 워크플로는 skipped로 끝납니다. 여러 레포에는 템플릿 복사(<code>make new-repo</code>)와 플러그인 마켓플레이스(<code>claude plugin update</code>)로 배포합니다.</p>
+<article data-ch="01"><p><span class="n">규칙</span>팀원마다 다른 AI 도구(Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Gemini)를 씁니다. 규칙은 <code>AGENTS.md</code> 하나(약 60줄)에 두고, 도구별 파일(<code>CLAUDE.md</code>, <code>copilot-instructions.md</code>, <code>.cursor/rules/</code>, <code>GEMINI.md</code>)은 이 파일을 먼저 읽게 합니다.</p></article>
+<article data-ch="02"><p><span class="n">흐름</span>이슈 하나가 머지되기까지 7단계입니다. 이슈 등록 → AI 분류(라벨 부여) → <b>사람이 <code>ai:ready</code> 부여</b> → AI 구현(테스트 먼저, 별도 worktree) → 초안 PR · CI · AI 리뷰(참고용) → <b>사람 CODEOWNER 승인</b> → squash 머지 · <code>ai:done</code> · 릴리스 PR. 초안 PR을 ready로 바꾸고 머지하는 것도 리뷰어가 합니다. AI 작업은 각자 자리에서 본인의 <code>claude</code> 로그인으로, API 키 없이 실행합니다(<code>make ai-triage / ai-review / ai-implement / ai-queue</code>).</p></article>
+<article data-ch="03"><p><span class="n">내 PC</span>내 PC에서 먼저 막습니다. Claude Code 플러그인 <code>team-ai-workflow</code>의 훅이 보호 경로(비밀 파일, 락파일, CODEOWNERS, 룰셋, <code>.claude/settings.json</code>) 수정과 main 커밋, 공유 브랜치 강제 푸시를 차단하고, 수정 직후 포맷합니다. 훅은 Claude Code에서만 동작하므로 다른 도구의 변경은 pre-commit(비밀·형식 검사)과 CI와 같은 명령인 <code>make check</code>로 확인합니다. 사람의 커밋에도 같이 적용됩니다.</p></article>
+<article data-ch="04"><p><span class="n">GitHub</span>GitHub 쪽에서 같은 규칙으로 한 번 더 검사합니다. 룰셋이 PR, 사람 승인, <code>ci-ok</code>, squash 머지만 허용하고, CODEOWNERS, CodeQL(기본은 워크플로 파일), 비밀 스캔, Dependabot이 함께 동작합니다. 룰셋과 비밀 스캔은 관리자가 <code>make github-setup</code>으로 한 번 적용합니다. AI 리뷰는 참고용이라 승인으로 세지 않고, <code>agent-approval-check</code>가 Claude·Copilot 커밋이 든 PR의 사람 승인을 한 번 더 확인합니다.</p></article>
+<article data-ch="05"><p><span class="n">결과</span>AI 도구 5종이 규칙 파일 하나와 같은 검사를 거치고, 사람은 두 곳에서 판단합니다. 워크플로 23개, 스킬 11개, 서브에이전트 5개입니다. 서버 자동화는 선택입니다(<code>AI_BACKEND</code>: 사내 로컬 LLM 또는 Anthropic). 설정하지 않으면 AI 워크플로는 skipped로 끝납니다. 여러 레포에는 템플릿 복사(<code>make new-repo</code>)와 플러그인 마켓플레이스(<code>claude plugin update</code>)로 배포합니다.</p>
 <p><small>화면의 그래프는 개념도입니다. 레인 5개는 도구 5종을 나타내며, 커밋 수와 머지 순서는 예시입니다.</small></p></article>
 </section>
 <script type="importmap">{"imports": {"three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/"}}</script>
@@ -155,10 +155,10 @@ const V = (x, y, z) => new THREE.Vector3(x, y, z);
 // ── timeline ─────────────────────────────────────────────────
 // [start, number, chip label, title, sub (wide), sub (tall)]
 const HEAD = [
-  [0.0, '01', '규칙 하나', 'AI 도구 5종, 규칙 파일 하나', 'AGENTS.md 약 60줄 · 도구별 파일은 이 파일을 가리키기만', 'AGENTS.md 약 60줄 · 도구별 파일은 가리키기만'],
-  [6.5, '02', 'ai:ready', '사람이 맡긴 이슈만 AI가 구현', '이슈 → AI 분류 → 사람: ai:ready → 테스트 먼저 · 별도 worktree', '사람이 ai:ready를 붙여야 AI가 시작'],
-  [13.5, '03', '내 PC', '내 PC에서 먼저 막고 검사', '훅이 보호 경로 · main 커밋 · 강제 푸시 차단, pre-commit은 CI와 같은 검사', '훅이 막고, pre-commit이 CI와 같은 검사'],
-  [20.5, '04', 'GitHub', 'GitHub에서 같은 검사, 사람 승인', 'AI 리뷰는 참고용 · 에이전트 커밋은 사람 승인 필수', 'AI 리뷰는 참고용 · 승인은 사람만'],
+  [0.0, '01', '규칙 하나', 'AI 도구 5종, 규칙 파일 하나', 'AGENTS.md 약 60줄 · 도구별 파일은 이 파일을 먼저 읽게 함', 'AGENTS.md 약 60줄 · 도구별 파일이 먼저 읽음'],
+  [6.5, '02', 'ai:ready', 'ai:ready 붙은 이슈를 AI가 구현', '이슈 → AI 분류 → 사람: ai:ready → 테스트 먼저 · 별도 worktree', '사람이 ai:ready를 붙여야 AI가 시작'],
+  [13.5, '03', '내 PC', '내 PC에서 먼저 막고 검사', '훅이 보호 경로 · main 커밋 · 공유 브랜치 강제 푸시 차단, make check는 CI와 같은 명령', '훅이 막고, make check가 CI와 같은 명령'],
+  [20.5, '04', 'GitHub', 'GitHub에서 같은 검사, 사람 승인', 'AI 리뷰는 참고용 · 승인은 사람만', 'AI 리뷰는 참고용 · 승인은 사람만'],
   [29.5, '', '결과', '', '', ''],
 ];
 const T_END = 29.5;
@@ -814,7 +814,7 @@ function sceneLabels(t) {
       // agent-approval-check stacked above the CODEOWNER label
       if (id === 'own') {
         const oa = win(t, 23.4, 26.6, .4);
-        if (oa > 0) label([['agent-approval-check', '#ffd9a0', true], ['  사람 승인 필수', DIM]], box.x + box.w / 2, box.y - 10, { size: TALL ? 34 : 30, alpha: oa, ay: 1, stroke: 'rgba(255,180,60,.4)' });
+        if (oa > 0) label([['agent-approval-check', '#ffd9a0', true], ['  Claude·Copilot 커밋 확인', DIM]], box.x + box.w / 2, box.y - 10, { size: TALL ? 34 : 30, alpha: oa, ay: 1, stroke: 'rgba(255,180,60,.4)' });
       }
     }
   }
@@ -832,7 +832,7 @@ function sceneLabels(t) {
         ctx.fillStyle = TOOLS[i].col; ctx.beginPath(); ctx.arc(13, 0, 3.2, 0, 7); ctx.fill(); ctx.restore();
       }
       const ta = a * eo(p(t, 7.0, .5)) * (1 - eio(p(t, T_OK1 + .6, .4)));
-      gateLabel({ s: S_ISSUE }, [['이슈 → AI 분류', INK], ['  라벨 제안', DIM]], ta, { side: -1, dy: TALL ? 74 : 0 });
+      gateLabel({ s: S_ISSUE }, [['이슈 → AI 분류', INK], ['  라벨 부여', DIM]], ta, { side: -1, dy: TALL ? 74 : 0 });
       const ia = a * eo(p(t, T_OK1 + .9, .5));
       gateLabel({ s: (C1 + C2) / 2 }, [['AI 구현', INK], [TALL ? '  테스트 먼저' : '  테스트 먼저 · 별도 worktree', DIM]], ia, { side: -1 });
     }
@@ -899,7 +899,7 @@ function sceneLabels(t) {
     if (ta > 0) {
       const done = eo(p(t, T_MERGE(NL - 1) + .4, .5));
       const runs = [['squash 머지', INK]];
-      if (done > 0) runs.push(['  →  ', DIM], ['ai:done', '#8fd8ff', true], [' · 릴리스', '#8fd8ff']);
+      if (done > 0) runs.push(['  →  ', DIM], ['ai:done', '#8fd8ff', true], [' · 릴리스 PR', '#8fd8ff']);
       const P = proj(G((SLOT(0) + SLOT(NL - 1)) / 2, TALL ? 0 : .3, 0)), Pb = proj(G((SLOT(0) + SLOT(NL - 1)) / 2, -.3, 0));
       if (TALL) label(runs, P.x - 40, P.y, { size: 38, alpha: ta, ay: .5, ax: 1 });
       else {
@@ -911,7 +911,7 @@ function sceneLabels(t) {
 }
 
 // ── 7-step strip (bottom): steps 3 and 6 are people ──
-const STEPS = ['이슈 등록', 'AI 분류 · 라벨 제안', '사람: ai:ready', 'AI 구현 · 테스트 먼저', '초안 PR · CI · AI 리뷰', '사람: CODEOWNER 승인', 'squash 머지 · ai:done'];
+const STEPS = ['이슈 등록', 'AI 분류 · 라벨 부여', '사람: ai:ready', 'AI 구현 · 테스트 먼저', '초안 PR · CI · AI 리뷰', '사람: CODEOWNER 승인', 'squash 머지 · ai:done'];
 const STEP_T = [6.6, 7.6, 8.9, T_OK1 + .6, 20.6, 23.5, T_OK2 + 1.2];
 function stepStrip(t) {
   let cur = -1; STEP_T.forEach((s, i) => { if (t >= s) cur = i; });
@@ -961,13 +961,13 @@ function endCard(t) {
       for (let k = s; k < e; k++) { const [str, c, big] = parts[k]; if (str === ' · ') continue;
         txt(str, x, y, { size: big ? fn : fw, weight: 800, color: c, alpha: la, ls: big ? -3 : 0 }); x += tw(str, big ? fn : fw, 800) - (big ? 6 : 0) + (big ? 8 : 0); }
     });
-    txt('워크플로 22 · 스킬 11 · 서브에이전트 5', HX, y0 + 2 * lh + 86, { size: 40, weight: 700, color: DIM, alpha: k2 });
+    txt('워크플로 23 · 스킬 11 · 서브에이전트 5', HX, y0 + 2 * lh + 86, { size: 40, weight: 700, color: DIM, alpha: k2 });
     txt('API 키 없이 내 자리에서', HX, y0 + 2 * lh + 140, { size: 40, weight: 700, color: '#8fd8ff', alpha: k2 });
   } else {
     const fw = 64, fn = 118, y = 176;
     let x = HX;
     parts.forEach(([str, c, big]) => { txt(str, x, y, { size: big ? fn : fw, weight: 800, color: c, alpha: a, ls: big ? -2 : 0 }); x += tw(str, big ? fn : fw, 800) + (big ? 6 : 0); });
-    const s1 = '워크플로 22 · 스킬 11 · 서브에이전트 5 · ', s2 = 'API 키 없이 내 자리에서';
+    const s1 = '워크플로 23 · 스킬 11 · 서브에이전트 5 · ', s2 = 'API 키 없이 내 자리에서';
     txt(s1, HX, y + 70, { size: 36, weight: 700, color: DIM, alpha: k2 });
     txt(s2, HX + tw(s1, 36, 700), y + 70, { size: 36, weight: 700, color: '#8fd8ff', alpha: k2 });
   }

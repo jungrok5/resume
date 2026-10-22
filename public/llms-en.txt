@@ -98,7 +98,7 @@ Full detail (Korean): https://jungrok5.github.io/resume/llms-full.txt
   Gemini, it reads the rules in a single AGENTS.md (about 60 lines) and must pass the same checks before
   reaching main. People decide at two points only (marking an issue ai:ready, CODEOWNER
   approval); AI review never counts as approval. Blocking hooks, 11 skills, 5 subagents, pre-commit and make check, rulesets, CODEOWNERS,
-  an AI-use disclosure PR template and 22 workflows. MIT.
+  an AI-use disclosure PR template and 23 workflows. MIT.
   https://github.com/jungrok5/ai-code-collaboration-best-practices (explainer: https://jungrok5.github.io/ai-code-collaboration-best-practices/)
 - **Hellfarm** (private): Diablo-style loot farming meets Vampire-Survivors-like one-hand
   hack-and-slash action game (Windows/Android), Godot + C#. A node-free, GC-free data-oriented

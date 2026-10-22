@@ -354,10 +354,10 @@ export const sections = [
     title: 'AI 에이전트 협업 개발 구조',
     metric: { big: '5 → 1', cap: 'AI 도구 5종 → 규칙 파일 하나 · 같은 검사 · 사람 판단 2곳' },
     points: [
-      'AGENTS.md 하나(약 60줄)를 사람과 모든 에이전트(Claude Code·Copilot·Cursor·Codex·Gemini)의 규칙으로 두고, 도구별 설정 파일은 이 파일을 가리키게 함',
-      '사람이 판단하는 곳은 두 곳(ai:ready 부여, CODEOWNER 승인). AI 리뷰는 승인으로 세지 않고, 에이전트 커밋이 있는 PR은 사람 승인을 따로 요구',
-      '내 PC의 가드레일(보호 경로 수정·main 커밋·강제 푸시 차단 훅, pre-commit·make check)과 GitHub 쪽 룰셋·CODEOWNERS·CI·CodeQL·비밀 스캔이 같은 규칙으로 두 번 검사',
-      'API 키 없이 각자 자리에서 AI 작업(make ai-*), 서버 자동화는 필요할 때만(사내 로컬 LLM 또는 Anthropic). 워크플로 22개, 템플릿 복사와 플러그인 마켓플레이스로 여러 레포에 배포',
+      'AGENTS.md 하나(약 60줄)를 사람과 모든 에이전트(Claude Code·Copilot·Cursor·Codex·Gemini)의 규칙으로 두고, 도구별 설정 파일은 이 파일을 먼저 읽게 함',
+      '사람이 판단하는 곳은 두 곳(ai:ready 부여, CODEOWNER 승인). AI 리뷰는 승인으로 세지 않고, Claude·Copilot 커밋이 든 PR은 agent-approval-check로 사람 승인을 다시 확인',
+      '내 PC에서는 훅(보호 경로 수정·main 커밋·공유 브랜치 강제 푸시 차단)과 CI와 같은 명령인 make check로, GitHub에서는 룰셋(PR·사람 승인·ci-ok·squash)·CODEOWNERS·CI·CodeQL로 다시 검사',
+      'API 키 없이 각자 자리에서 AI 작업(make ai-*), 서버 자동화는 필요할 때만(사내 로컬 LLM 또는 Anthropic). 워크플로 23개, 템플릿 복사와 플러그인 마켓플레이스로 여러 레포에 배포',
     ],
   },
 ]
@@ -409,10 +409,10 @@ export const projects = [
     href: 'https://github.com/jungrok5/ai-code-collaboration-best-practices',
     tech: 'GitHub Actions · Claude Code 플러그인 · Make',
     note: '공개 · MIT',
-    metric: '워크플로 22개',
+    metric: '워크플로 23개',
     points: [
       '어떤 AI 도구로 작업해도 AGENTS.md 하나의 규칙을 읽고 같은 검사를 통과해야 main에 반영되는 구조, 사람 판단은 두 곳(ai:ready 부여, CODEOWNER 승인)',
-      'Claude Code 플러그인 가드레일(차단 훅, 스킬 11개, 서브에이전트 5개)과 룰셋·CODEOWNERS·워크플로 22개로 이슈부터 머지까지 자동화',
+      'Claude Code 플러그인 가드레일(차단 훅, 스킬 11개, 서브에이전트 5개)과 룰셋·CODEOWNERS·워크플로 23개로 이슈부터 머지까지 자동화',
     ],
   },
   {

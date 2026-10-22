@@ -317,8 +317,8 @@
     </div>
     <ul class="bul">
       <li>Whichever tool does the work (Claude Code, Copilot, Cursor, Codex or Gemini), it reads the rules in <b>a single AGENTS.md</b> (about 60 lines) and must pass the same checks before anything reaches main. People decide at exactly two points (marking an issue <code>ai:ready</code> and CODEOWNER approval); AI review never counts as approval.</li>
-      <li>Local guardrails: a Claude Code plugin (hooks that block edits to protected paths, commits to main and force pushes; 11 skills; 5 subagents), plus pre-commit and make check so human commits go through the same checks.</li>
-      <li>GitHub governance and automation: rulesets (PRs, human approval, squash), CODEOWNERS, a PR template that discloses AI use, and <span class="metric">22 workflows</span> (issue triage, implementing ai:ready issues, AI review, fixing CI failures, design-overlap alerts, releases).</li>
+      <li>Local guardrails: a Claude Code plugin (hooks that block edits to protected paths, commits to main and force pushes to shared branches; 11 skills; 5 subagents), plus pre-commit and make check so human commits go through the same checks.</li>
+      <li>GitHub governance and automation: rulesets (PRs, human approval, squash), CODEOWNERS, a PR template that discloses AI use, and <span class="metric">23 workflows</span> (issue triage, implementing ai:ready issues, AI review, fixing CI failures, design-overlap alerts, releases).</li>
       <li>AI work runs under each person's own login at their desk (no API key needed); server-side automation uses either an in-house local LLM or Anthropic; multiple repos are kept up to date through template copies and a plugin marketplace.</li>
     </ul>
   </div>
