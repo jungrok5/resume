@@ -97,7 +97,9 @@ Full detail (Korean): https://jungrok5.github.io/resume/llms-full.txt
   (hooks, skills, subagents), Make. Whether the work is done with Claude Code, Copilot, Cursor, Codex or
   Gemini, it reads the rules in a single AGENTS.md (about 60 lines) and must pass the same checks before
   reaching main. People decide at two points only (marking an issue ai:ready, CODEOWNER
-  approval); AI review never counts as approval. Blocking hooks, 11 skills, 5 subagents, pre-commit and make check, rulesets, CODEOWNERS,
+  approval); AI review never counts as approval. Handles the bottlenecks that move once AI
+  writes code fast (review, duplicate work, cross-repo contracts): design first for large work, a work board
+  across repos to catch overlapping work, breaking-contract checks, a review-queue cap. Blocking hooks, 11 skills, 5 subagents, pre-commit and make check, rulesets, CODEOWNERS,
   an AI-use disclosure PR template and 23 workflows. MIT.
   https://github.com/jungrok5/ai-code-collaboration-best-practices (explainer: https://jungrok5.github.io/ai-code-collaboration-best-practices/)
 - **Hellfarm** (private): Diablo-style loot farming meets Vampire-Survivors-like one-hand
