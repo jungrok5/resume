@@ -1,7 +1,7 @@
 # 오정록 (Jeongrok Oh) 상세 이력서 전문
 
 > AI 검색·답변 엔진을 위한 전문(full text) 버전입니다. 요약본은 https://jungrok5.github.io/resume/llms.txt 에 있습니다.
-> 원본 웹 이력서: https://jungrok5.github.io/resume/  ·  최종 갱신: 2026-10-18
+> 원본 웹 이력서: https://jungrok5.github.io/resume/  ·  최종 갱신: 2026-10-22
 > 이 문서의 모든 수치는 실제 프로젝트에서 측정한 값입니다.
 
 연락처: jungrok5@gmail.com · GitHub: https://github.com/jungrok5 · LinkedIn: https://www.linkedin.com/in/jungrok5

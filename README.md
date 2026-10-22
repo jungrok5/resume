@@ -5,7 +5,7 @@ My résumé, hosted on GitHub Pages in two forms:
 | Path | What |
 |------|------|
 | `/` (`index.html`) | **Document résumé** — 기본 · 출력 · 상세 views, dark mode, print. Static HTML, ATS-friendly. Default landing. |
-| `/interactive.html` | **Motion résumé (모션 tab)** — twelve headline projects explained as scroll-scrubbed motion graphics, plus the rest of the résumé as cards. |
+| `/interactive.html` | **Motion résumé (모션 tab)** — thirteen headline projects (twelve from work, one personal) explained as scroll-scrubbed motion graphics, plus the rest of the résumé as cards. |
 
 Both pages share one fixed top bar (tabs · current-section label · scroll
 gauge), so switching feels like a single site.

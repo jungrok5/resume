@@ -20,7 +20,7 @@ https://jungrok5.github.io/resume/ (see `.github/workflows/deploy.yml`).
 
 A Korean résumé for a 20-year MMO server architect, in two pages: the document
 (`index.html`) and the motion page (`interactive.html`). On the motion page,
-twelve headline projects are explained as scroll-scrubbed motion graphics, each
+thirteen headline projects (twelve from work, one personal) are explained as scroll-scrubbed motion graphics, each
 next to its résumé bullets. **Content is primary** — every résumé fact (company,
 role, period, education, awards, stack) stays present as text.
 
@@ -49,7 +49,7 @@ public/motion/
   assets/               vendored three.js 0.170 + Pretendard / JetBrains Mono
 ```
 
-## The twelve pieces (in page order)
+## The thirteen pieces (in page order)
 
 | id | Résumé item | Approach |
 |---|---|---|
@@ -65,6 +65,7 @@ public/motion/
 | `ownership` | client-delegated NPC simulation, ownership migration | make the flow visible |
 | `pipeline` | proto single source → code · CSV · validation | real artifacts in space |
 | `ai` | in-house MCP server, agent team, local LLM | real artifacts in space |
+| `collab` | personal project: 5 AI tools → one AGENTS.md, same checks, 2 human decisions | make the flow visible (`git log --graph` look) |
 
 ### Piece contract
 
