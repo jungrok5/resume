@@ -81,7 +81,7 @@
   <h2>클라이언트 위임 분산 시뮬레이션 (Miniverse UE5)</h2>
   <p><b>문제.</b> 서버가 모든 NPC를 직접 시뮬레이션하면 서버 부하가 월드의 NPC 총수에 비례해 커진다.</p>
   <p><b>접근.</b> 로블록스 분산 물리(네트워크 오너십)와 같은 개념을 NPC AI에 자체 구현했다. NPC 시뮬레이션을 가장 가까운 클라이언트에 동적으로 위임하고, 유저가 움직이면 오너십이 끊김 없이 다음 최근접 클라이언트로 이전된다. 서버는 클라이언트가 보낸 결과를 권위 검증(이동 클램프 검증)하고 다른 클라이언트에 중계만 한다.</p>
-  <p><b>결과.</b> 서버 부하가 'NPC 총수'가 아닌 '유저 주변 활성 NPC 수'로 수렴한다.</p>
+  <p><b>결과.</b> 서버 부하가 유저 주변 활성 NPC 수에 비례한다.</p>
   <p class="fine">화면의 NPC·유저 수와 서버 부하 표시는 개념도이며 측정값이 아니다.</p>
 </section>
 
@@ -796,16 +796,16 @@ function result(t) {
   ctx.save(); ctx.globalAlpha = a; shadow(20);
   if (TALL) {
     const y = 92;
-    txt('서버 부하가 수렴하는 곳', LX, y, { size: 46, weight: 700, color: DIM });
-    const s1 = "'NPC 총수'가 아닌", f1 = 54;
+    txt('서버 부하가 비례하는 값', LX, y, { size: 46, weight: 700, color: DIM });
+    const s1 = 'NPC 총수', f1 = 54;
     txt(s1, LX, y + 78, { size: f1, weight: 700, color: 'rgba(204,198,232,.6)' });
     ctx.save(); ctx.strokeStyle = 'rgba(255,171,112,.85)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(LX - 4, y + 78 - f1 * .32); ctx.lineTo(LX + tw(s1, f1, 700) * eo(p(t, T_RES + .7, .6)) + 4, y + 78 - f1 * .32); ctx.stroke(); ctx.restore();
     const k2 = eo(p(t, T_RES + 1.0, .8));
-    txt("'유저 주변 활성 NPC 수'", LX, y + 78 + 128, { size: 104, weight: 800, color: INK, alpha: k2, ls: -2 });
+    txt('유저 주변 활성 NPC 수', LX, y + 78 + 128, { size: 104, weight: 800, color: INK, alpha: k2, ls: -2 });
   } else {
     const y = 210;
-    txt('서버 부하가 수렴하는 곳', LX, y, { size: 38, weight: 700, color: DIM });
-    const s1 = "'NPC 총수'가 아닌", f1 = 50;
+    txt('서버 부하가 비례하는 값', LX, y, { size: 38, weight: 700, color: DIM });
+    const s1 = 'NPC 총수', f1 = 50;
     txt(s1, LX, y + 84, { size: f1, weight: 700, color: 'rgba(204,198,232,.6)' });
     ctx.save(); ctx.strokeStyle = 'rgba(255,171,112,.85)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(LX - 4, y + 84 - f1 * .32); ctx.lineTo(LX + tw(s1, f1, 700) * eo(p(t, T_RES + .7, .6)) + 4, y + 84 - f1 * .32); ctx.stroke(); ctx.restore();
     const k2 = eo(p(t, T_RES + 1.0, .8));

@@ -88,7 +88,7 @@
   <h2>3단 공간 분할 · 시야 전송 <span class="fine">Miniverse UE5 · 2023 – 2024</span></h2>
   <article data-ch="01"><p><b>문제.</b> 유저가 프랍을 직접 쌓는 UGC 샌드박스 MMO에서 최악의 경우를 정량 분석하면 공간 하나에 <b>51억 프랍, 422GB</b>가 나옵니다. 서버가 전부 들고 있을 수도, 클라이언트에 전부 보낼 수도 없는 크기입니다.</p></article>
   <article data-ch="02"><p><b>접근.</b> 공간을 <b>집터 · 청크 · 셀</b> 3단으로 나눴습니다. 저장은 집터 단위의 계층 구조로 하고, 바뀐 곳에 더티 플래그를 세운 뒤 <b>1초 배치</b>로 바뀐 집터만 써서 수천만 프랍을 영속화했습니다. 전송은 시야 기반으로, 플레이어 시야에 들어온 청크만 보내고 <b>SightIn</b>에 거쳐간 청크를 기록해 다시 들어와도 재전송하지 않습니다.</p></article>
-  <article data-ch="05"><p><b>결과.</b> 처리량이 공간의 총량이 아니라 지금 보이고 바뀌는 부분, 즉 <b>활성량</b>을 따라갑니다. ‘총량 대신 활성량만 처리’.</p></article>
+  <article data-ch="05"><p><b>결과.</b> 서버는 플레이어 시야에 들어온 청크만 보내고 바뀐 집터만 저장합니다. 처리량은 지금 보이고 바뀌는 부분(<b>활성량</b>)에 비례합니다.</p></article>
   <p class="fine">화면 속 칸의 크기와 개수(집터 4×4 청크, 청크 4×4 셀), 프랍 배치, 이동 경로, 배치 주기의 화면 속도는 이해를 돕기 위한 개념도입니다. 수치는 51억 프랍 · 422GB · 1초 배치 · 수천만 프랍만 실제 이력 기준입니다.</p>
 </section>
 <script type="importmap">
@@ -145,7 +145,7 @@ const HEAD = [
   [6.5, 14.5, '02', '3단 공간 분할', '공간 → 집터 → 청크 → 셀'],
   [14.5, 21.0, '03', '집터 단위 저장', '더티 플래그 + 1초 배치'],
   [21.0, 29.0, '04', '시야 기반 전송', 'SightIn: 거쳐간 청크 기록'],
-  [29.0, 33.0, '05', '결과', '총량 대신 활성량만'],
+  [29.0, 33.0, '05', '결과', '보이고 바뀌는 부분만 처리'],
 ];
 const END = 29.0;
 
@@ -915,9 +915,9 @@ function ov05(t) {
   if (!TALL) {
     const g = ctx.createLinearGradient(0, 0, 1180, 0); g.addColorStop(0, 'rgba(10,15,27,.92)'); g.addColorStop(.72, 'rgba(10,15,27,.6)'); g.addColorStop(1, 'rgba(10,15,27,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, 1180, H);
-    txt('최악 51억 프랍 · 422GB를 다 다루지 않고', 104, 250, { size: 40, weight: 700, color: C.dim });
-    txt('총량 대신', 98, 400, { size: 110, weight: 800, color: C.dim });
-    runs([['활성량', C.blue], ['만 처리', C.text]], 96, 540, 124, 800, { alpha: k2 });
+    txt('최악 51억 프랍 · 422GB 중에서', 104, 250, { size: 40, weight: 700, color: C.dim });
+    txt('시야 안', 98, 400, { size: 110, weight: 800, color: C.dim });
+    runs([['청크', C.blue], ['만 처리', C.text]], 96, 540, 124, 800, { alpha: k2 });
     let x = 104;
     [['집터', '저장 단위', C.orange], ['청크', '전송 단위', C.blue], ['SightIn', '재전송 없음', C.mint]].forEach(([n, s, c], i) => {
       const kk = eo(p(t, 30.3 + i * .2, .5)); if (kk <= 0) return;
@@ -928,9 +928,9 @@ function ov05(t) {
     txt('밝은 곳 = 플레이어 시야 안의 청크', 104, 880, { size: 36, weight: 600, color: C.faint, alpha: k3 });
   } else {
     topShade(1, 700);
-    txt('51억 프랍 · 422GB를 다 다루지 않고', 60, 116, { size: 46, weight: 700, color: C.dim });
-    txt('총량 대신', 56, 270, { size: 130, weight: 800, color: C.dim });
-    runs([['활성량', C.blue], ['만 처리', C.text]], 54, 420, 134, 800, { alpha: k2 });
+    txt('51억 프랍 · 422GB 중에서', 60, 116, { size: 46, weight: 700, color: C.dim });
+    txt('시야 안', 56, 270, { size: 130, weight: 800, color: C.dim });
+    runs([['청크', C.blue], ['만 처리', C.text]], 54, 420, 134, 800, { alpha: k2 });
     bottomShade(1, 330);
     let x = 60;
     [['집터', '저장', C.orange], ['청크', '전송', C.blue], ['SightIn', '재전송 ✕', C.mint]].forEach(([n, s, c], i) => {
