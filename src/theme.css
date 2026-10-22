@@ -634,6 +634,22 @@ h1.hero-name {
   /* 휠·터치 스크롤이 iframe에 먹히지 않고 페이지로 가게 */
   pointer-events: none;
 }
+.ms-stage img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+/* 소유 표시: 포스터와 모션 그래픽 위에 항상 보임 (캡처·녹화에도 남음) */
+.ms-wm {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 3;
+  pointer-events: none;
+  font: 500 11px/1.2 var(--sans, system-ui, sans-serif);
+  color: rgba(255, 255, 255, 0.62);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  letter-spacing: 0.02em;
+}
 .ms-poster {
   object-fit: cover;
   z-index: 1;
@@ -857,4 +873,12 @@ h2.title {
     grid-template-columns: 1fr;
     gap: 2px;
   }
+}
+
+/* 저작권 안내 (페이지 맨 끝) */
+.rights {
+  margin: 40px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-faint);
 }

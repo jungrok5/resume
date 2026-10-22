@@ -100,7 +100,6 @@ export default function MotionSection({ s, n, flip, tall }) {
 
   const poster = base + (tall ? 'poster-tall.jpg' : 'poster.jpg')
   const solo = `${base}index.html${tall ? '?layout=tall' : ''}`
-  const mp4 = `${base}${s.id}${tall ? '-tall' : ''}.mp4`
 
   // 공유: 이 항목으로 바로 오는 링크(interactive.html#<id>).
   // 폰은 시스템 공유 시트, 그 밖에는 링크 복사.
@@ -144,8 +143,12 @@ export default function MotionSection({ s, n, flip, tall }) {
     <section className={`ms${flip ? ' flip' : ''}`} ref={secRef} id={s.id} data-sid={s.id} data-now={s.title}>
       <div className="ms-pin">
         <div className="ms-media">
-          <div className={`ms-stage ${layout}`} ref={stageRef}>
-            <img className={`ms-poster${ready ? ' off' : ''}`} src={poster} alt="" loading="lazy" decoding="async" />
+          {/* 영상 파일은 내려받을 수 없게 두지 않고, 무대 위에 소유 표시를 얹는다 */}
+          <div className={`ms-stage ${layout}`} ref={stageRef} onContextMenu={(e) => e.preventDefault()}>
+            <img className={`ms-poster${ready ? ' off' : ''}`} src={poster} alt="" loading="lazy" decoding="async" draggable={false} />
+            <span className="ms-wm" aria-hidden="true">
+              © 오정록 · 무단 사용 금지
+            </span>
             {mounted && (
               <iframe
                 key={layout}
@@ -163,9 +166,6 @@ export default function MotionSection({ s, n, flip, tall }) {
             <button type="button" className="ms-share" onClick={share} aria-label={`${s.title} 공유`}>
               {shared || '공유'}
             </button>
-            <a href={mp4} target="_blank" rel="noreferrer">
-              MP4
-            </a>
             <a href={solo} target="_blank" rel="noreferrer">
               따로 재생 ↗
             </a>

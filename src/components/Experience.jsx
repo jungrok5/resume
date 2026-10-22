@@ -149,6 +149,7 @@ export default function Experience() {
         <h2 className="title">연락처</h2>
         <Contact />
         <Summary />
+        <p className="rights">© 2026 오정록 (Jeongrok Oh). 이 사이트의 글, 모션 그래픽, 그림, 영상은 저작권으로 보호됩니다. 허락 없이 복제, 녹화, 재사용, 재배포할 수 없습니다. 문의: jungrok5@gmail.com</p>
       </section>
     </main>
   )

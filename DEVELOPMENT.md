@@ -45,8 +45,7 @@ src/
 public/motion/
   <id>/index.html       one piece per highlight id (self-contained)
   <id>/poster.jpg       16:9 first frame, <id>/poster-tall.jpg 4:5 first frame
-  <id>/<id>.mp4         baked video, 1280×720 · <id>/<id>-tall.mp4 864×1080 (linked under each stage)
-  assets/               vendored three.js 0.170 + Pretendard / JetBrains Mono
+  assets/               vendored three.js 0.170 + Pretendard / JetBrains Mono, wm.js (ownership mark on standalone pages)
 ```
 
 ## The thirteen pieces (in page order)
@@ -83,12 +82,16 @@ public/motion/
    existing piece's engine section), plus `poster.jpg` and `poster-tall.jpg` (JPEG, ~100–350 KB).
 2. Add `<id>` to `highlights` in `src/data/resume.js` (the section with that id
    provides the text panel; give it a one-line `hook`).
-3. Stills / MP4: `node <mmo-server-explained>/scripts/render.mjs public/motion/<id>/index.html out/ --stills 0,10,20`
+3. Stills: `node <mmo-server-explained>/scripts/render.mjs public/motion/<id>/index.html out/ --stills 0,10,20`
    (add `--query layout=tall --size 1080x1350` for the phone composition), run from this repo's root.
-4. MP4: render in short segments with the same script and join them with ffmpeg, e.g.
-   `--query "embed&q=0.6667" --from 0 --to 6 --crf 16` (wide → 1280×720) or
-   `--query "embed&layout=tall&q=0.8" --size 1080x1350` (tall → 864×1080), then concat and re-encode at CRF 24.
-   Re-bake a piece's MP4s whenever its index.html changes.
+4. Add `<script src="../assets/wm.js"></script>` at the end of the piece (ownership mark and copyright line when
+   the piece is opened on its own page; the résumé page draws its own mark over the stage).
+
+### No downloadable video
+
+The résumé ships no MP4s of the pieces, on purpose: the owner does not want the videos taken and reused. Each stage
+carries a "© 오정록 · 무단 사용 금지" mark, the right-click menu is off on the stage, and every page ends with a
+copyright notice (see `LICENSE`). Do not add download links or baked videos back.
 
 ## Conventions & gotchas (hard-won — keep these)
 

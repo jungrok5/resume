@@ -1,0 +1,9 @@
+Copyright (c) 2026 Jeongrok Oh (오정록). All rights reserved.
+
+The content of this repository and of the site built from it (https://jungrok5.github.io/resume/) — the résumé text,
+the motion-graphics pieces under public/motion/, images, posters and video — is protected by copyright. You may view
+it on the published site. You may not copy, record, modify, reuse or redistribute it, in whole or in part, without
+written permission from the author. For permission, write to jungrok5@gmail.com.
+
+Third-party components keep their own licenses: three.js (MIT) under public/motion/assets/vendor/three/, and the
+fonts under public/motion/assets/fonts/ (SIL Open Font License 1.1).
