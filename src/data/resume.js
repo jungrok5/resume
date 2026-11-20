@@ -404,6 +404,20 @@ export const projects = [
     ],
   },
   {
+    name: 'machine-wilds',
+    tag: '브라우저에서 걷는 3D 세계와, 그 지형 위를 걷는 거대 보행 기계를 만드는 Claude Code 스킬 · 엔진',
+    href: 'https://jungrok5.github.io/machine-wilds/',
+    tech: 'WebGL 2 · three.js · JavaScript · Node · Playwright · ffmpeg',
+    note: '공개 · PolyForm NC',
+    metric: '기계 8종 19대 · 검사 한계값 27개',
+    points: [
+      '기계를 코드로 조립한 기구로: 다리는 평면 관절 사슬을 닫힌 식으로 풀고, 구동 관절마다 단 유압 실린더의 고정점을 관절 가동 범위 전체에서 피스톤이 15% 이상 남도록 탐색',
+      '걸음은 시간의 순수 함수: 같은 시각이면 페이지 · 스틸 · 영상 프레임 · Node 검사가 같은 자세(결정성 1e-9 검사). 발은 실제 지형의 높이 · 경사에 디디고 디딘 발 미끄러짐 실측 0.00 mm',
+      '렌더 전 자동 검사: 브라우저 없이 Node에서 기계마다 한 바퀴 전체를 한계값 27개로 판정하고 시험 코스(경사로 · 턱 · 옆경사 · 도랑 · 둔덕)도 통과시킴. 실패하면 한계값이 아니라 기계의 숫자나 길을 고침',
+      '페이지가 재생하는 영화와 같은 컷의 MP4: 28컷(2분 47초)을 페이지가 실시간 재생하고, 같은 컷 목록으로 3,857프레임을 구움. GPU 없는 렌더에서 품질 항목별로 측정해 그림자 지도가 비용의 절반임을 찾아 프레임당 8.7초 → 4.1초',
+    ],
+  },
+  {
     name: 'AI 협업 개발 템플릿',
     tag: 'AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿 (여러 AI 도구 · 여러 레포)',
     href: 'https://github.com/jungrok5/ai-code-collaboration-best-practices',

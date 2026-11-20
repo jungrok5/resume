@@ -291,7 +291,7 @@
       "@type": "ItemList",
       "@id": "https://jungrok5.github.io/resume/#projects",
       "name": "개인 프로젝트 (GitHub)",
-      "numberOfItems": 7,
+      "numberOfItems": 8,
       "itemListOrder": "https://schema.org/ItemListOrderAscending",
       "itemListElement": [
         {
@@ -337,6 +337,29 @@
           "position": 3,
           "item": {
             "@type": "SoftwareSourceCode",
+            "name": "machine-wilds",
+            "description": "브라우저에서 걷는 3D 세계와, 그 지형 위를 걷는 거대 보행 기계를 만드는 Claude Code 스킬 · 엔진. 기계를 코드로 조립한 기구로: 다리는 평면 관절 사슬을 닫힌 식으로 풀고, 구동 관절마다 단 유압 실린더의 고정점을 관절 가동 범위 전체에서 피스톤이 15% 이상 남도록 탐색. 걸음은 시간의 순수 함수: 같은 시각이면 페이지 · 스틸 · 영상 프레임 · Node 검사가 같은 자세(결정성 1e-9 검사). 발은 실제 지형의 높이 · 경사에 디디고 디딘 발 미끄러짐 실측 0.00 mm. 렌더 전 자동 검사: 브라우저 없이 Node에서 기계마다 한 바퀴 전체를 한계값 27개로 판정하고 시험 코스(경사로 · 턱 · 옆경사 · 도랑 · 둔덕)도 통과시킴. 실패하면 한계값이 아니라 기계의 숫자나 길을 고침. 페이지가 재생하는 영화와 같은 컷의 MP4: 28컷(2분 47초)을 페이지가 실시간 재생하고, 같은 컷 목록으로 3,857프레임을 구움. GPU 없는 렌더에서 품질 항목별로 측정해 그림자 지도가 비용의 절반임을 찾아 프레임당 8.7초 → 4.1초. 예제 「쇠울림 골짜기」: 640 m 골짜기에 기계 8종 19대(키 73 m · 5,200 t 중계소 포함), 플레이어의 2족 보행 기계와 1인칭 · 3인칭 · 탑뷰 카메라. motion-skills 레포의 스킬에서 출발해 커밋 이력과 함께 단독 레포로 분리. 사이트: https://jungrok5.github.io/machine-wilds/",
+            "programmingLanguage": [
+              "WebGL 2",
+              "three.js",
+              "JavaScript",
+              "Node",
+              "Playwright",
+              "ffmpeg"
+            ],
+            "author": {
+              "@id": "https://jungrok5.github.io/resume/#person"
+            },
+            "creativeWorkStatus": "공개",
+            "codeRepository": "https://github.com/jungrok5/machine-wilds",
+            "url": "https://jungrok5.github.io/machine-wilds/"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "SoftwareSourceCode",
             "name": "AI 협업 개발 템플릿",
             "alternateName": "ai-code-collaboration-best-practices",
             "description": "AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿(여러 AI 도구 · 여러 레포). Claude Code·Copilot·Cursor·Codex·Gemini 어떤 도구로 작업해도 AGENTS.md 하나(약 60줄)의 규칙을 읽고 같은 검사를 통과해야 main에 반영된다. 로컬에서는 Claude Code 플러그인(보호 경로 수정·main 커밋·공유 브랜치 강제 푸시 차단 훅, 스킬 11개, 서브에이전트 5개)과 pre-commit·make check로, GitHub에서는 룰셋(PR·사람 승인·squash)·CODEOWNERS·AI 사용 공개 PR 템플릿과 워크플로 23개(이슈 분류, ai:ready 이슈 구현, AI 리뷰, CI 실패 수정, 설계 겹침 알림, 릴리스)로 관리한다. 설명 페이지: https://jungrok5.github.io/ai-code-collaboration-best-practices/",
@@ -356,7 +379,7 @@
         },
         {
           "@type": "ListItem",
-          "position": 4,
+          "position": 5,
           "item": {
             "@type": "SoftwareSourceCode",
             "name": "Hellfarm",
@@ -373,7 +396,7 @@
         },
         {
           "@type": "ListItem",
-          "position": 5,
+          "position": 6,
           "item": {
             "@type": "SoftwareSourceCode",
             "name": "ZeroLlama",
@@ -390,7 +413,7 @@
         },
         {
           "@type": "ListItem",
-          "position": 6,
+          "position": 7,
           "item": {
             "@type": "SoftwareSourceCode",
             "name": "ondevice-imagen",
@@ -410,7 +433,7 @@
         },
         {
           "@type": "ListItem",
-          "position": 7,
+          "position": 8,
           "item": {
             "@type": "SoftwareSourceCode",
             "name": "one-scroll-bible",
@@ -472,7 +495,7 @@
           "name": "오정록의 개인 프로젝트에는 어떤 것이 있나요?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "개인 프로젝트는 7종입니다. 게임 렉 백서(jungrok5.github.io/mmo-lag-anatomy)는 온라인 게임 렉 원인 228가지를 13개 층으로 정리하고 원인마다 확인 방법·담당 팀·출처를 단 공개 백과(12개 언어)입니다. mmo-server-explained(jungrok5.github.io/mmo-server-explained)는 MMO 서버·네트워크 12개 주제를 코드로 그린 설명 영상으로, 브라우저에서 바로 재생되고 같은 페이지를 MP4로도 굽습니다. AI 협업 개발 템플릿(github.com/jungrok5/ai-code-collaboration-best-practices)은 Claude Code·Copilot·Cursor·Codex·Gemini 어떤 AI 도구로 작업해도 AGENTS.md 하나의 규칙을 읽고 같은 검사를 통과해야 main에 반영되게 하는 GitHub 협업 템플릿입니다. Hellfarm은 동시 1억 2,800만 마리 시뮬레이션을 실측한 핵앤슬래시 액션 게임(Godot·C#)이고, ZeroLlama는 8GB VRAM으로 35B급 모델을 구동하는 로컬 LLM 코딩 클라이언트(TypeScript·llama.cpp)입니다. ondevice-imagen은 Stable Diffusion을 안드로이드 네이티브로 구현한 온디바이스 이미지 생성 앱, one-scroll-bible은 200개 이상 언어를 지원하는 다국어 성경 웹(one-scroll-bible.com)입니다."
+            "text": "개인 프로젝트는 8종입니다. 게임 렉 백서(jungrok5.github.io/mmo-lag-anatomy)는 온라인 게임 렉 원인 228가지를 13개 층으로 정리하고 원인마다 확인 방법·담당 팀·출처를 단 공개 백과(12개 언어)입니다. mmo-server-explained(jungrok5.github.io/mmo-server-explained)는 MMO 서버·네트워크 12개 주제를 코드로 그린 설명 영상으로, 브라우저에서 바로 재생되고 같은 페이지를 MP4로도 굽습니다. machine-wilds(jungrok5.github.io/machine-wilds)는 브라우저에서 걷는 3D 세계와 지형 위를 걷는 거대 보행 기계를 만드는 Claude Code 스킬·엔진으로, 기계의 자세가 시간의 함수라 같은 시각이면 페이지·영상·검사가 같은 결과를 얻고, 렌더 전에 Node에서 기계마다 한계값 27개로 검사합니다. AI 협업 개발 템플릿(github.com/jungrok5/ai-code-collaboration-best-practices)은 Claude Code·Copilot·Cursor·Codex·Gemini 어떤 AI 도구로 작업해도 AGENTS.md 하나의 규칙을 읽고 같은 검사를 통과해야 main에 반영되게 하는 GitHub 협업 템플릿입니다. Hellfarm은 동시 1억 2,800만 마리 시뮬레이션을 실측한 핵앤슬래시 액션 게임(Godot·C#)이고, ZeroLlama는 8GB VRAM으로 35B급 모델을 구동하는 로컬 LLM 코딩 클라이언트(TypeScript·llama.cpp)입니다. ondevice-imagen은 Stable Diffusion을 안드로이드 네이티브로 구현한 온디바이스 이미지 생성 앱, one-scroll-bible은 200개 이상 언어를 지원하는 다국어 성경 웹(one-scroll-bible.com)입니다."
           }
         },
         {
@@ -1093,6 +1116,21 @@
 
     <div class="job">
       <div class="job-head">
+        <div class="job-title"><a href="https://jungrok5.github.io/machine-wilds/" target="_blank" rel="noopener">machine-wilds</a> <span class="genre">브라우저에서 걷는 3D 세계와, 그 지형 위를 걷는 거대 보행 기계를 만드는 Claude Code 스킬 · 엔진</span></div>
+        <div class="job-meta">공개 · PolyForm NC</div>
+      </div>
+      <div class="job-sub"><span class="stack">WebGL 2 · three.js · JavaScript · Node · Playwright · ffmpeg</span></div>
+      <ul class="bul">
+        <li><b>기계를 코드로 조립한 기구로</b>: 다리는 평면 관절 사슬을 닫힌 식으로 풀고, 구동 관절마다 단 유압 실린더의 고정점을 관절 가동 범위 전체에서 피스톤이 15% 이상 남도록 탐색</li>
+        <li><b>걸음은 시간의 순수 함수</b>: 같은 시각이면 페이지 · 스틸 · 영상 프레임 · Node 검사가 같은 자세(결정성 1e-9 검사). 발은 실제 지형의 높이 · 경사에 디디고 디딘 발 미끄러짐 실측 0.00 mm</li>
+        <li><b>렌더 전 자동 검사</b>: 브라우저 없이 Node에서 기계마다 한 바퀴 전체를 <span class="metric">한계값 27개</span>로 판정하고 시험 코스(경사로 · 턱 · 옆경사 · 도랑 · 둔덕)도 통과시킴. 실패하면 한계값이 아니라 기계의 숫자나 길을 고침</li>
+        <li><b>페이지가 재생하는 영화와 같은 컷의 MP4</b>: 28컷(2분 47초)을 페이지가 실시간 재생하고, 같은 컷 목록으로 3,857프레임을 구움. GPU 없는 렌더에서 품질 항목별로 측정해 그림자 지도가 비용의 절반임을 찾아 프레임당 <span class="metric">8.7초 → 4.1초</span></li>
+        <li><b>예제 「쇠울림 골짜기」</b>: <span class="metric">기계 8종 19대</span>, 키 73 m · 5,200 t 중계소, 플레이어의 2족 보행 기계와 1인칭 · 3인칭 · 탑뷰 카메라</li>
+      </ul>
+    </div>
+
+    <div class="job">
+      <div class="job-head">
         <div class="job-title"><a href="https://github.com/jungrok5/ai-code-collaboration-best-practices" target="_blank" rel="noopener">AI 협업 개발 템플릿</a> <span class="genre">AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿 (여러 AI 도구 · 여러 레포)</span></div>
         <div class="job-meta">공개 · MIT</div>
       </div>
@@ -1324,6 +1362,15 @@
       <li>MMO 서버·네트워크 12개 주제(서버 틱, 보스 렉, TCP 재전송, Nagle, 러버밴딩 등)를 주제마다 영상·설명·용어집 세트와 모바일 세로 영상으로 제작, 전문가 관점 검수 단계 포함</li>
       <li>설명 방식 7가지(분해해 들어가기, 흐름을 빛으로, 실물 늘어놓기, 게임 화면 재현, 직접 조작, 바닥부터 쌓기, 그려 가며 설명)를 3D(WebGL)로 실험하고 주제마다 맞는 방식을 골라 적용</li>
       <li>제작 과정을 Claude Code 스킬(motion-skills 레포의 tech-motion-explainer)로 만들어 같은 형식·품질로 반복 제작. 이 이력서의 모션 그래픽 페이지도 같은 방식으로 제작</li>
+    </ul>
+
+    <div class="exp">machine-wilds: 브라우저에서 걷는 3D 세계와, 그 지형 위를 걷는 거대 보행 기계를 만드는 Claude Code 스킬 · 엔진 <span class="m">· 공개 · <a href="https://jungrok5.github.io/machine-wilds/" target="_blank" rel="noopener">jungrok5.github.io/machine-wilds</a></span></div>
+    <div class="tech">기술: WebGL 2, three.js, JavaScript, Node, Playwright, ffmpeg</div>
+    <ul>
+      <li>기계를 코드로 조립한 기구로: 다리는 평면 관절 사슬을 닫힌 식으로 풀고, 구동 관절마다 단 유압 실린더의 고정점을 관절 가동 범위 전체에서 피스톤이 15% 이상 남도록 탐색</li>
+      <li>걸음은 시간의 순수 함수: 같은 시각이면 페이지 · 스틸 · 영상 프레임 · Node 검사가 같은 자세(결정성 1e-9 검사). 발은 실제 지형의 높이 · 경사에 디디고 디딘 발 미끄러짐 실측 0.00 mm</li>
+      <li>렌더 전 자동 검사: 브라우저 없이 Node에서 기계마다 한 바퀴 전체를 한계값 27개로 판정하고 시험 코스(경사로 · 턱 · 옆경사 · 도랑 · 둔덕)도 통과시킴. 실패하면 한계값이 아니라 기계의 숫자나 길을 고침</li>
+      <li>페이지가 재생하는 영화와 같은 컷의 MP4: 28컷(2분 47초)을 페이지가 실시간 재생하고, 같은 컷 목록으로 3,857프레임을 구움. GPU 없는 렌더에서 품질 항목별로 측정해 그림자 지도가 비용의 절반임을 찾아 프레임당 8.7초 → 4.1초</li>
     </ul>
 
     <div class="exp">AI 협업 개발 템플릿: AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿 (여러 AI 도구 · 여러 레포) <span class="m">· 공개 · MIT · <a href="https://github.com/jungrok5/ai-code-collaboration-best-practices" target="_blank" rel="noopener">github.com/jungrok5/ai-code-collaboration-best-practices</a></span></div>
@@ -2008,7 +2055,19 @@
 </ul>
 <hr />
 
-<h3>4-3. AI 협업 개발 템플릿: AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿 (여러 AI 도구 · 여러 레포)</h3>
+<h3>4-3. machine-wilds: 브라우저에서 걷는 3D 세계와, 그 지형 위를 걷는 거대 보행 기계를 만드는 Claude Code 스킬 · 엔진</h3>
+<ul>
+<li><strong>무엇</strong>: 장소 하나를 주면 지형과 폐허, 그곳을 다니는 보행 기계를 새로 설계해 브라우저에서 걸을 수 있는 세계로 만드는 Claude Code 스킬과 그 엔진. motion-skills 레포의 스킬에서 출발해 커밋 이력과 함께 단독 레포로 분리.</li>
+<li><strong>기술</strong>: WebGL 2 · three.js · JavaScript · Node · Playwright · ffmpeg · <a href="https://jungrok5.github.io/machine-wilds/" target="_blank" rel="noopener">jungrok5.github.io/machine-wilds</a> · <a href="https://github.com/jungrok5/machine-wilds" target="_blank" rel="noopener">github.com/jungrok5/machine-wilds</a> (공개 · 코드 PolyForm Noncommercial · 영상 무단 사용 금지)</li>
+<li><strong>기계를 코드로 조립한 기구로</strong>: 다리는 평면 관절 사슬을 닫힌 식으로 풀고, 구동 관절마다 단 유압 실린더의 고정점을 관절 가동 범위 전체에서 피스톤이 15% 이상 남도록 탐색.</li>
+<li><strong>걸음은 시간의 순수 함수</strong>: 같은 시각이면 페이지 · 스틸 · 영상 프레임 · Node 검사가 같은 자세(결정성 1e-9 검사). 발은 실제 지형의 높이 · 경사에 디디고 디딘 발 미끄러짐 실측 0.00 mm.</li>
+<li><strong>렌더 전 자동 검사</strong>: 브라우저 없이 Node에서 기계마다 한 바퀴 전체를 한계값 27개로 판정하고 시험 코스(경사로 · 턱 · 옆경사 · 도랑 · 둔덕)도 통과시킴. 실패하면 한계값이 아니라 기계의 숫자나 길을 고침.</li>
+<li><strong>페이지가 재생하는 영화와 같은 컷의 MP4</strong>: 28컷(2분 47초)을 페이지가 실시간 재생하고, 같은 컷 목록으로 3,857프레임을 구움. GPU 없는 렌더에서 품질 항목별로 측정해 그림자 지도가 비용의 절반임을 찾아 프레임당 8.7초 → 4.1초.</li>
+<li><strong>예제</strong>: 예제 「쇠울림 골짜기」: 640 m 골짜기에 기계 8종 19대(키 73 m · 5,200 t 중계소 포함), 플레이어의 2족 보행 기계와 1인칭 · 3인칭 · 탑뷰 카메라.</li>
+</ul>
+<hr />
+
+<h3>4-4. AI 협업 개발 템플릿: AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿 (여러 AI 도구 · 여러 레포)</h3>
 <ul>
 <li><strong>무엇</strong>: AI 에이전트와 함께 일하는 팀을 위한 GitHub 협업 템플릿. 여러 AI 도구와 여러 레포를 전제로 한다. 저장소 이름은 ai-code-collaboration-best-practices.</li>
 <li><strong>기술</strong>: GitHub Actions · Claude Code 플러그인(훅·스킬·서브에이전트) · Make · <a href="https://jungrok5.github.io/ai-code-collaboration-best-practices/" target="_blank" rel="noopener">jungrok5.github.io/ai-code-collaboration-best-practices</a> · <a href="https://github.com/jungrok5/ai-code-collaboration-best-practices" target="_blank" rel="noopener">github.com/jungrok5/ai-code-collaboration-best-practices</a> (공개 · MIT)</li>
@@ -2019,7 +2078,7 @@
 </ul>
 <hr />
 
-<h3>4-4. Hellfarm 🔒: 핵앤슬래시 액션 게임 (Windows·Android)</h3>
+<h3>4-5. Hellfarm 🔒: 핵앤슬래시 액션 게임 (Windows·Android)</h3>
 <div class="shots shots--one">
   <a href="hellfarm/battle_100m.mp4" target="_blank" rel="noopener">
     <video src="hellfarm/battle_100m.mp4" poster="hellfarm/battle_100m.jpg" autoplay loop muted playsinline controls></video>
@@ -2038,7 +2097,7 @@
 <li><strong>그리드 빌드 융합</strong>: 직렬 100만 삽입 루프 대신 병렬 이동 패스 안에서 무락(lock-free) 버킷 푸시(CAS)로 재구축. 마지막 직렬 O(n) 단계를 제거해 다중코어 암달 병목 방지. 버킷 체인 순서의 비결정성은 모든 쿼리가 실좌표 거리검사를 하므로 무해.</li>
 </ul>
 <hr />
-<h3>4-5. ZeroLlama 🔒: 소비자용 GPU에서 로컬 모델로 코딩하려고 만든 에이전틱 코딩 클라이언트 (VS Code 확장)</h3>
+<h3>4-6. ZeroLlama 🔒: 소비자용 GPU에서 로컬 모델로 코딩하려고 만든 에이전틱 코딩 클라이언트 (VS Code 확장)</h3>
 <ul>
 <li><strong>무엇</strong>: 소비자용 GPU(4~24GB)에서 양자화된 로컬 모델로 코딩할 수 있게 만든 에이전틱 코딩 클라이언트. 기존 에이전트/런타임은 클라우드 대형 모델을 전제로 설계돼 이 환경에서 제약이 큰데, 그 격차를 아래 레이어로 메웠다.</li>
 <li><strong>기술</strong>: TypeScript · llama.cpp · 🔒 비공개 (pre-alpha) · <code>src/zerollama/</code> 아래 35개 모듈 <strong>27,515 LOC(테스트 제외)</strong> 서브시스템</li>
@@ -2054,7 +2113,7 @@
 <li><strong>리서치</strong>: 소비자용 GPU에서 로컬 모델 코딩이 어느 수준까지 되는지 리서치.</li>
 </ul>
 <hr />
-<h3>4-6. ondevice-imagen: 온디바이스 이미지 생성 앱</h3>
+<h3>4-7. ondevice-imagen: 온디바이스 이미지 생성 앱</h3>
 <ul>
 <li><strong>무엇</strong>: 날씨·장소·시간 같은 메타정보를 토대로 그림엽서 이미지를 온디바이스에서 생성하는 앱.</li>
 <li><strong>기술</strong>: Kotlin · ONNX Runtime · Python · <a href="https://github.com/jungrok5/ondevice-imagen" target="_blank" rel="noopener">github.com/jungrok5/ondevice-imagen</a> (실기기 검증, 연구 R&amp;D)</li>
@@ -2062,7 +2121,7 @@
 <li><strong>리서치</strong>: 모바일 기기에서 로컬 모델을 이용한 이미지 생성이 어느 수준까지 되는지 리서치.</li>
 </ul>
 <hr />
-<h3>4-7. one-scroll-bible: 다국어 성경 스크롤 웹 (200+개 언어)</h3>
+<h3>4-8. one-scroll-bible: 다국어 성경 스크롤 웹 (200+개 언어)</h3>
 <ul>
 <li><strong>무엇</strong>: 성경 전체의 구속사를 한 화면 스크롤로 풀어낸 다국어 모바일 웹 (200+개 언어).</li>
 <li><strong>기술</strong>: Vanilla JS · Node · Vercel · <a href="https://github.com/jungrok5/one-scroll-bible" target="_blank" rel="noopener">github.com/jungrok5/one-scroll-bible</a> (라이브 · <a href="https://one-scroll-bible.com/" target="_blank" rel="noopener">one-scroll-bible.com</a>)</li>
