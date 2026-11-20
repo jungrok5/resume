@@ -762,6 +762,8 @@ KB온라인에서 연속 근무 | 프로그래머 | 프로그램팀장 | 형!도
 
 ### 4-3. machine-wilds: 직접 만든 디퍼드 WebGL 2 엔진으로 실사 스캔 세계와 그 지형을 걷는 거대 보행 기계를 만드는 Claude Code 스킬
 
+영화 「쇠울림 골짜기」(2분 47초)에서 10장면 27초 발췌, 무음. 모든 프레임을 엔진이 직접 그림(GPU 없는 컨테이너에서 3,857프레임 렌더). 클릭하면 페이지가 같은 영화를 실시간 재생
+
 - 무엇: 장소 하나를 주면 지형과 폐허, 그곳을 다니는 보행 기계를 새로 설계해 브라우저에서 걸을 수 있는 세계로 만드는 Claude Code 스킬과 그 엔진. 엔진은 motion-skills 레포의 living-realm(외부 에셋 없는 한 파일 세계)에서 시작해 scanned-realm(실사 스캔)을 거쳐 왔고, 커밋 이력과 함께 단독 레포로 분리.
 
 - 기술: WebGL 2 · GLSL · three.js · JavaScript · Node · Playwright · ffmpeg · Claude Code · jungrok5.github.io/machine-wilds · github.com/jungrok5/machine-wilds (공개 · 코드 PolyForm Noncommercial · 영상 무단 사용 금지)
