@@ -84,6 +84,16 @@
     },
     {
       "@type": "VideoObject",
+      "@id": "https://jungrok5.github.io/resume/#machine-wilds-video",
+      "name": "machine-wilds — 영화 「쇠울림 골짜기」 발췌",
+      "description": "개인 프로젝트 machine-wilds의 엔진이 직접 그린 영화 「쇠울림 골짜기」(2분 47초)에서 10장면 27초를 발췌한 무음 영상.",
+      "thumbnailUrl": "https://jungrok5.github.io/resume/machine-wilds/film_highlights.jpg",
+      "contentUrl": "https://jungrok5.github.io/resume/machine-wilds/film_highlights.mp4",
+      "uploadDate": "2026-11-20",
+      "creator": { "@id": "https://jungrok5.github.io/resume/#person" }
+    },
+    {
+      "@type": "VideoObject",
       "@id": "https://jungrok5.github.io/resume/#hellfarm-video",
       "name": "Hellfarm — 1억 마리 동시 전투 실측 영상",
       "description": "개인 프로젝트 Hellfarm(Godot 2D)에서 적 1억 마리를 처리하는 전투 장면의 인게임 녹화.",
@@ -1113,6 +1123,13 @@
         <div class="job-meta">공개 · PolyForm NC</div>
       </div>
       <div class="job-sub"><span class="stack">WebGL 2 · GLSL · three.js · JavaScript · Node · Playwright · ffmpeg · Claude Code</span></div>
+      <div class="shots shots--one">
+        <a href="https://jungrok5.github.io/machine-wilds/demo/iron-valley/?film=1" target="_blank" rel="noopener">
+          <video src="machine-wilds/film_highlights.mp4" poster="machine-wilds/film_highlights.jpg" autoplay loop muted playsinline controls></video>
+          <img class="print-img" src="machine-wilds/film_highlights.jpg" alt="machine-wilds 영화 「쇠울림 골짜기」 장면">
+          <span class="cap">영화 「쇠울림 골짜기」(2분 47초)에서 10장면 27초 발췌, 무음. 모든 프레임을 엔진이 직접 그림(GPU 없는 컨테이너에서 3,857프레임 렌더). 클릭하면 페이지가 같은 영화를 실시간 재생</span>
+        </a>
+      </div>
       <ul class="bul">
         <li><b>구현: 디퍼드 렌더러</b>: 세 단계로 키운 엔진. living-realm(외부 에셋 없이 HTML 한 파일, 모두 로드 시 생성)에서 렌더러를 만들고, scanned-realm에서 실사 스캔을 받아들이고, machine-wilds에서 지형 기복 · 안개 · 기계를 더함. 한 프레임은 G-buffer(RGBA8 3장), 3단 계단식 그림자, 반해상도 AO, 그림자를 따라 진행하는 볼류메트릭 안개, 화면 공간 간접광, 조명 한 패스, 물 · 파티클, 시간적 업샘플링, 블룸 · 노출 적응 · AgX 톤매핑 순. 하루의 시각과 날씨(맑음 · 비 · 눈 · 안개 · 연무)는 유니폼 몇 개로 바뀜</li>
         <li><b>구현: 실사 스캔 파이프라인</b>: Poly Haven CC0 스캔(표면 · 모델 · 잎 아틀라스)을 세계마다 목록으로 받아 머티리얼 레이어로 다시 구워, 비 · 웅덩이 · 이끼 · 눈을 모든 스캔이 같은 식으로 받게 함. 모델은 인스턴싱하고 로드 시 meshoptimizer로 LOD를 만들어 삼각형이 화면에서 약 2픽셀 폭이 되는 단계를 고름. 스캔은 저장소에 넣지 않고 페이지가 Poly Haven에서 바로 읽으며, 걷기는 다운로드를 기다리지 않음</li>
@@ -2059,6 +2076,13 @@
 <hr />
 
 <h3>4-3. machine-wilds: 직접 만든 디퍼드 WebGL 2 엔진으로 실사 스캔 세계와 그 지형을 걷는 거대 보행 기계를 만드는 Claude Code 스킬</h3>
+<div class="shots shots--one">
+  <a href="https://jungrok5.github.io/machine-wilds/demo/iron-valley/?film=1" target="_blank" rel="noopener">
+    <video src="machine-wilds/film_highlights.mp4" poster="machine-wilds/film_highlights.jpg" autoplay loop muted playsinline controls></video>
+    <img class="print-img" src="machine-wilds/film_highlights.jpg" alt="machine-wilds 영화 「쇠울림 골짜기」 장면">
+    <span class="cap">영화 「쇠울림 골짜기」(2분 47초)에서 10장면 27초 발췌, 무음. 모든 프레임을 엔진이 직접 그림(GPU 없는 컨테이너에서 3,857프레임 렌더). 클릭하면 페이지가 같은 영화를 실시간 재생</span>
+  </a>
+</div>
 <ul>
 <li><strong>무엇</strong>: 장소 하나를 주면 지형과 폐허, 그곳을 다니는 보행 기계를 새로 설계해 브라우저에서 걸을 수 있는 세계로 만드는 Claude Code 스킬과 그 엔진. 엔진은 motion-skills 레포의 <a href="https://github.com/jungrok5/motion-skills/tree/main/living-realm" target="_blank" rel="noopener">living-realm</a>(외부 에셋 없는 한 파일 세계)에서 시작해 <a href="https://github.com/jungrok5/motion-skills/tree/main/scanned-realm" target="_blank" rel="noopener">scanned-realm</a>(실사 스캔)을 거쳐 왔고, 커밋 이력과 함께 단독 레포로 분리.</li>
 <li><strong>기술</strong>: WebGL 2 · GLSL · three.js · JavaScript · Node · Playwright · ffmpeg · Claude Code · <a href="https://jungrok5.github.io/machine-wilds/" target="_blank" rel="noopener">jungrok5.github.io/machine-wilds</a> · <a href="https://github.com/jungrok5/machine-wilds" target="_blank" rel="noopener">github.com/jungrok5/machine-wilds</a> (공개 · 코드 PolyForm Noncommercial · 영상 무단 사용 금지)</li>

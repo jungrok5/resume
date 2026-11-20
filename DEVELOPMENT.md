@@ -93,6 +93,10 @@ The résumé ships no MP4s of the pieces, on purpose: the owner does not want th
 carries a "© 오정록 · 무단 사용 금지" mark, the right-click menu is off on the stage, and every page ends with a
 copyright notice (see `LICENSE`). Do not add download links or baked videos back.
 
+Two project recordings are the exception, each added because the owner asked: Hellfarm's battle capture and
+`public/machine-wilds/film_highlights.mp4`, a silent 27-second excerpt of the machine-wilds film (its frames carry the
+repository mark; the picture links to the live film page, not to the file). Add no others without the owner asking.
+
 ## Conventions & gotchas (hard-won — keep these)
 
 - **`base: './'`** in `vite.config.js` so the same build works at a domain root
